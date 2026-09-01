@@ -157,8 +157,6 @@ class CodeExecutionAPITests(SimpleTestCase):
         self.assertEqual(response.data["status"], "SUCCESS")
         self.assertEqual(response.data["stdout"].strip(), "Hello Babu")
 
-
-
     def test_runtime_error_returns_structured_failure(self):
         from rest_framework.test import force_authenticate
         from rest_framework import status
@@ -190,6 +188,149 @@ class CodeExecutionAPITests(SimpleTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("code", response.data)
+
+    def test_authenticated_repository_execution_api(self):
+        from rest_framework.test import force_authenticate
+        from rest_framework import status
+
+        request = self.factory.post(
+            "/api/execution/run/",
+            {
+                "files": {
+                    "app/calc.py": "def add(a, b): return a + b",
+                    "main.py": "from app.calc import add\nimport sys\nprint('Total:', add(10, 20))",
+                },
+                "entrypoint": "main.py",
+                "language": "Python",
+            },
+            format="json",
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "SUCCESS")
+        self.assertEqual(response.data["stdout"].strip(), "Total: 30")
+
+
+class RepositoryDockerExecutionTests(SimpleTestCase):
+    def setUp(self):
+        self.runner = DockerCodeRunner(timeout=5)
+
+    def test_1_multi_file_import_and_execution(self):
+        files = {
+            "app/__init__.py": "",
+            "app/math_helper.py": "def multiply(x, y): return x * y",
+            "main.py": "from app.math_helper import multiply\nprint(multiply(6, 7))",
+        }
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), "42")
+        self.assertEqual(result.stderr, "")
+
+    def test_2_repository_stdin(self):
+        files = {
+            "calculator.py": "a, b = map(int, input().split())\nprint(a + b)"
+        }
+        result = self.runner.run_repository(
+            files=files, entrypoint="calculator.py", stdin_data="10 25\n"
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), "35")
+
+
+    def test_3_path_traversal_forward_slash_rejected(self):
+        files = {"../escaped.py": "print('escaped')", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("path traversal", result.stderr.lower())
+
+    def test_4_path_traversal_backslash_rejected(self):
+        files = {"..\\escaped.py": "print('escaped')", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("path traversal", result.stderr.lower())
+
+    def test_5_absolute_unix_path_rejected(self):
+        files = {"/etc/passwd": "root:x:0:0", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("absolute", result.stderr.lower())
+
+    def test_6_windows_drive_letter_forward_slash_rejected(self):
+        files = {"C:/Windows/system.ini": "[drivers]", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("windows drive", result.stderr.lower())
+
+    def test_7_windows_drive_letter_backslash_rejected(self):
+        files = {"C:\\Windows\\system.ini": "[drivers]", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("windows drive", result.stderr.lower())
+
+    def test_8_unc_path_rejected(self):
+        files = {"\\\\server\\share\\file.py": "print(1)", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("unc", result.stderr.lower())
+
+    def test_9_dot_path_segment_rejected(self):
+        files = {"app/./calc.py": "print(1)", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("invalid path segment", result.stderr.lower())
+
+    def test_10_dotdot_nested_path_segment_rejected(self):
+        files = {"app/../escaped.py": "print(1)", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("path traversal", result.stderr.lower())
+
+    def test_11_valid_nested_repository_path(self):
+        files = {
+            "app/math/calc.py": "def double(n): return n * 2",
+            "main.py": "from app.math.calc import double\nprint(double(21))",
+        }
+        result = self.runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), "42")
+
+    def test_12_invalid_entrypoint_outside_repository(self):
+        files = {"main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="../outside.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("security error", result.stderr.lower())
+
+    def test_13_invalid_non_python_entrypoint(self):
+        files = {"README.md": "# Hello", "main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="README.md")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn(".py", result.stderr.lower())
+
+    def test_14_missing_entrypoint_file(self):
+        files = {"main.py": "print('ok')"}
+        result = self.runner.run_repository(files=files, entrypoint="nonexistent.py")
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("not found", result.stderr.lower())
+
+    def test_15_valid_nested_python_entrypoint(self):
+        files = {
+            "pkg/__init__.py": "",
+            "pkg/runner.py": "print('Nested entrypoint executed successfully!')",
+        }
+        result = self.runner.run_repository(files=files, entrypoint="pkg/runner.py")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), "Nested entrypoint executed successfully!")
+
+    def test_16_repository_timeout(self):
+        short_runner = DockerCodeRunner(timeout=2)
+        files = {"main.py": "import time\ntime.sleep(10)"}
+        result = short_runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 124)
+        self.assertIn("timed out", result.stderr.lower())
+
+
 
 
 
