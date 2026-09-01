@@ -55,10 +55,16 @@ class Evaluation(models.Model):
         blank=True,
     )
 
+    test_results = models.JSONField(
+        default=list,
+        blank=True,
+    )
+
     evaluated_at = models.DateTimeField(
         null=True,
         blank=True,
     )
+
 
     created_at = models.DateTimeField(
         auto_now_add=True,

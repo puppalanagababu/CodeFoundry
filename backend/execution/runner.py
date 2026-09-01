@@ -36,7 +36,7 @@ class ExecutionResult:
 
 
 class CodeRunner:
-    def run(self, code, language):
+    def run(self, code, language, stdin_data=None, timeout=None):
         raise NotImplementedError(
             "CodeRunner subclasses must implement run()."
         )
@@ -79,7 +79,7 @@ class DockerCodeRunner(CodeRunner):
             self._client = docker.from_env()
         return self._client
 
-    def run(self, code, language):
+    def run(self, code, language, stdin_data=None, timeout=None):
         if not language or language.strip().lower() != "python":
             return ExecutionResult(
                 stdout="",
@@ -89,6 +89,7 @@ class DockerCodeRunner(CodeRunner):
                 memory_used=0,
             )
 
+        effective_timeout = timeout if timeout is not None else self.timeout
         start_time = time.time()
         container = None
         stdout = ""
@@ -97,6 +98,7 @@ class DockerCodeRunner(CodeRunner):
         memory_used = 0
 
         try:
+            stdin_open = bool(stdin_data is not None)
             container = self.client.containers.create(
                 image=self.image,
                 command=["python", "-u", "-c", code],
@@ -108,13 +110,25 @@ class DockerCodeRunner(CodeRunner):
                 privileged=False,
                 cap_drop=["ALL"],
                 security_opt=["no-new-privileges:true"],
+                stdin_open=stdin_open,
                 detach=True,
             )
+
+            sock = None
+            if stdin_open:
+                sock = container.attach_socket(params={"stdin": 1, "stream": 1})
+
             container.start()
+
+            if stdin_open and sock is not None:
+                if stdin_data:
+                    data_bytes = stdin_data.encode("utf-8") if isinstance(stdin_data, str) else stdin_data
+                    sock.sendall(data_bytes)
+                sock.close()
 
             timed_out = False
             try:
-                wait_result = container.wait(timeout=self.timeout)
+                wait_result = container.wait(timeout=effective_timeout)
                 exit_code = wait_result.get("StatusCode", 0)
             except (ReadTimeout, ConnectionError):
                 timed_out = True
@@ -123,7 +137,7 @@ class DockerCodeRunner(CodeRunner):
                 except Exception:
                     pass
                 exit_code = 124
-                stderr = f"Execution timed out after {self.timeout} seconds."
+                stderr = f"Execution timed out after {effective_timeout} seconds."
 
             if not timed_out:
                 stdout = container.logs(stdout=True, stderr=False).decode(
@@ -157,4 +171,5 @@ class DockerCodeRunner(CodeRunner):
             exit_code=exit_code,
             execution_time=execution_time,
             memory_used=memory_used,
-        )
+        )
+
