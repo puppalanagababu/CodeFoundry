@@ -11,8 +11,10 @@ SEED_DATA = [
         "challenge_type": Challenge.ChallengeType.BUG_FIX,
         "programming_language": "Python",
         "points": 100,
+        "entrypoint": "app/calculator.py",
         "time_limit": 5,
         "memory_limit": 128,
+
         "description": (
             "You are given two integers from standard input separated by whitespace. "
             "The existing implementation contains a bug. Fix the program so that it reads "
@@ -21,10 +23,9 @@ SEED_DATA = [
             "Output format:\nA single integer representing the sum."
         ),
         "starter_code": (
-            "import sys\n\n"
             "def add_numbers():\n"
             "    # BUG: Reads inputs as strings without converting to integers\n"
-            "    inputs = sys.stdin.read().split()\n"
+            "    inputs = input().split()\n"
             "    if len(inputs) >= 2:\n"
             "        a = inputs[0]\n"
             "        b = inputs[1]\n"
@@ -100,10 +101,9 @@ SEED_DATA = [
                 "is_readonly": False,
                 "is_test": False,
                 "content": (
-                    "import sys\n\n"
                     "def add_numbers():\n"
                     "    # BUG: Reads inputs as strings without converting to integers\n"
-                    "    inputs = sys.stdin.read().split()\n"
+                    "    inputs = input().split()\n"
                     "    if len(inputs) >= 2:\n"
                     "        a = inputs[0]\n"
                     "        b = inputs[1]\n"
@@ -112,6 +112,8 @@ SEED_DATA = [
                     "    add_numbers()\n"
                 ),
             },
+
+
             {
                 "path": "tests/__init__.py",
                 "is_readonly": True,
@@ -405,12 +407,14 @@ class Command(BaseCommand):
                     "challenge_type": item["challenge_type"],
                     "programming_language": item["programming_language"],
                     "points": item["points"],
+                    "entrypoint": item.get("entrypoint", ""),
                     "time_limit": item.get("time_limit", 5),
                     "memory_limit": item.get("memory_limit", 128),
                     "description": item["description"],
                     "starter_code": item["starter_code"],
                     "is_active": True,
                 }
+
 
                 challenge, created = Challenge.objects.update_or_create(
                     slug=item["slug"],

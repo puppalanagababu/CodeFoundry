@@ -80,6 +80,49 @@ class EvaluationServiceTests(SimpleTestCase):
 
     @patch("evaluations.services.TestCase.objects.filter")
     @patch("evaluations.services.Evaluation.objects.get_or_create")
+    def test_repository_submission_evaluation(self, mock_get_or_create, mock_filter):
+        from challenges.models import ChallengeFile
+
+        evaluation = Evaluation(submission=self.submission)
+        evaluation.save = MagicMock()
+        mock_get_or_create.return_value = (evaluation, True)
+
+        mock_filter.return_value.order_by.return_value = [self.tc1]
+
+        cf1 = ChallengeFile(path="app/calculator.py", content="def add(): pass")
+        cf2 = ChallengeFile(path="tests/test_calc.py", content="assert True")
+
+        mock_files = MagicMock()
+        mock_files.exists.return_value = True
+        mock_files.all.return_value = [cf1, cf2]
+
+        with patch.object(Challenge, "files", mock_files):
+            self.challenge.entrypoint = "app/calculator.py"
+            self.submission.files = {"app/calculator.py": "def add(): print(5)"}
+
+            mock_execution_service = MagicMock(spec=ExecutionService)
+            mock_execution_service.execute.return_value = ExecutionResult(
+                stdout="5\n", stderr="", exit_code=0, execution_time=0.2, memory_used=10.0
+            )
+
+            service = EvaluationService(execution_service=mock_execution_service)
+            result_eval = service.evaluate(self.submission)
+
+            self.assertEqual(result_eval.status, Evaluation.Status.COMPLETED)
+            self.assertEqual(result_eval.score, 50)
+            self.assertEqual(self.submission.status, Submission.Status.PASSED)
+            mock_execution_service.execute.assert_called_once_with(
+                files={"app/calculator.py": "def add(): print(5)", "tests/test_calc.py": "assert True"},
+                entrypoint="app/calculator.py",
+                language="Python",
+                stdin_data=self.tc1.input_data,
+                timeout=5,
+            )
+
+
+
+    @patch("evaluations.services.TestCase.objects.filter")
+    @patch("evaluations.services.Evaluation.objects.get_or_create")
     def test_partial_passing_test_cases(self, mock_get_or_create, mock_filter):
         evaluation = Evaluation(submission=self.submission)
         evaluation.save = MagicMock()

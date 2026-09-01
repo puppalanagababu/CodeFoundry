@@ -49,7 +49,15 @@ class Challenge(models.Model):
         blank=True,
     )
 
+    entrypoint = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Relative entrypoint file path for repository challenges (e.g. 'app/calculator.py').",
+    )
+
     time_limit = models.PositiveIntegerField(
+
         default=10,
         help_text="Maximum execution time in seconds.",
     )

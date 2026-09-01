@@ -68,17 +68,55 @@ class EvaluationService:
             stdout_logs = []
             stderr_logs = []
 
+            # Check if this challenge is repository-based
+            is_repo_challenge = False
+            try:
+                if hasattr(submission.challenge, "files"):
+                    is_repo_challenge = bool(submission.challenge.files.exists())
+            except Exception:
+                is_repo_challenge = bool(getattr(submission, "files", None))
+
+            repo_file_map = {}
+            entrypoint = None
+
+            if is_repo_challenge:
+                try:
+                    for cf in submission.challenge.files.all():
+                        repo_file_map[cf.path] = cf.content
+                except Exception:
+                    pass
+
+                # Apply student's submitted file overrides (excluding protected tests)
+                submitted_files = getattr(submission, "files", None)
+                if isinstance(submitted_files, dict):
+                    for path, content in submitted_files.items():
+                        if not path.startswith("tests/") and "test_" not in path:
+                            repo_file_map[path] = content
+
+                entrypoint = getattr(submission.challenge, "entrypoint", "") or "app/calculator.py"
+
             for test_case in test_cases:
-                result = self.execution_service.execute(
-                    code=submission.code,
-                    language=submission.language,
-                    stdin_data=test_case.input_data,
-                    timeout=timeout,
-                )
+                if is_repo_challenge:
+                    result = self.execution_service.execute(
+                        files=repo_file_map,
+                        entrypoint=entrypoint,
+                        language=submission.language,
+                        stdin_data=test_case.input_data,
+                        timeout=timeout,
+                    )
+                else:
+                    result = self.execution_service.execute(
+                        code=submission.code,
+                        language=submission.language,
+                        stdin_data=test_case.input_data,
+                        timeout=timeout,
+                    )
+
 
                 actual_normalized = normalize_output(result.stdout)
                 expected_normalized = normalize_output(test_case.expected_output)
                 passed = (result.exit_code == 0) and (actual_normalized == expected_normalized)
+
 
                 points_awarded = test_case.points if passed else 0
                 if passed:

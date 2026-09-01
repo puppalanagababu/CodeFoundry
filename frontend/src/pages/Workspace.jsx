@@ -140,8 +140,20 @@ export default function Workspace() {
   };
 
   const handleRunCode = async () => {
-    const codeToRun = getPrimaryCode();
-    if (!codeToRun || isRunning) return;
+    if (isRunning) return;
+
+    // Filter out test files from being sent to execution
+    const filteredFiles = {};
+    if (isRepoChallenge) {
+      Object.entries(filesState).forEach(([path, content]) => {
+        if (!path.startsWith('tests/') && !path.includes('test_')) {
+          filteredFiles[path] = content;
+        }
+      });
+      if (Object.keys(filteredFiles).length === 0) return;
+    } else {
+      if (!code.trim()) return;
+    }
 
     setIsRunning(true);
     setExecutionResult(null);
@@ -149,12 +161,22 @@ export default function Workspace() {
     setActiveTab('execution');
 
     try {
-      const res = await runCode({
-        code: codeToRun,
-        language: challenge.programming_language || 'Python',
-        stdin,
-        timeout: challenge.time_limit || 5,
-      });
+      const payload = isRepoChallenge
+        ? {
+            files: filteredFiles,
+            entrypoint: challenge.entrypoint || 'app/calculator.py',
+            language: challenge.programming_language || 'Python',
+            stdin,
+            timeout: challenge.time_limit || 5,
+          }
+        : {
+            code,
+            language: challenge.programming_language || 'Python',
+            stdin,
+            timeout: challenge.time_limit || 5,
+          };
+
+      const res = await runCode(payload);
       setExecutionResult(res);
     } catch (err) {
       setExecutionError(err.message || 'Execution request failed.');
@@ -204,8 +226,19 @@ export default function Workspace() {
   };
 
   const handleSubmitSolution = async () => {
-    const codeToSubmit = getPrimaryCode();
-    if (!codeToSubmit || isSubmitting || isEvaluating) return;
+    if (isSubmitting || isEvaluating) return;
+
+    const filteredFiles = {};
+    if (isRepoChallenge) {
+      Object.entries(filesState).forEach(([path, content]) => {
+        if (!path.startsWith('tests/') && !path.includes('test_')) {
+          filteredFiles[path] = content;
+        }
+      });
+      if (Object.keys(filteredFiles).length === 0) return;
+    } else {
+      if (!code.trim()) return;
+    }
 
     setIsSubmitting(true);
     setSubmissionError(null);
@@ -213,11 +246,20 @@ export default function Workspace() {
     setActiveTab('submission');
 
     try {
-      const res = await createSubmission({
-        challenge: challenge.id,
-        code: codeToSubmit,
-        language: challenge.programming_language || 'Python',
-      });
+      const payload = isRepoChallenge
+        ? {
+            challenge: challenge.id,
+            files: filteredFiles,
+            code: getPrimaryCode(),
+            language: challenge.programming_language || 'Python',
+          }
+        : {
+            challenge: challenge.id,
+            code,
+            language: challenge.programming_language || 'Python',
+          };
+
+      const res = await createSubmission(payload);
       setIsSubmitting(false);
       setIsEvaluating(true);
       setSubmissionId(res.submission_id);
@@ -230,6 +272,7 @@ export default function Workspace() {
   };
 
   if (loading) {
+
     return (
       <div className="page-container">
         <Loading message="Loading workspace environment..." />

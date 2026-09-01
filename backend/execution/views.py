@@ -17,7 +17,9 @@ class CodeExecutionView(APIView):
         serializer = CodeExecutionRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.validated_data["code"]
+        code = serializer.validated_data.get("code", "")
+        files = serializer.validated_data.get("files")
+        entrypoint = serializer.validated_data.get("entrypoint", "")
         language = serializer.validated_data.get("language", "Python")
         stdin_data = serializer.validated_data.get("stdin", "")
         timeout = serializer.validated_data.get("timeout", 5)
@@ -28,13 +30,14 @@ class CodeExecutionView(APIView):
         elif not stdin_data:
             stdin_data = None
 
-
         try:
             result = self.execution_service.execute(
                 code=code,
                 language=language,
                 stdin_data=stdin_data,
                 timeout=timeout,
+                files=files,
+                entrypoint=entrypoint,
             )
 
             is_success = result.exit_code == 0

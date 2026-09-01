@@ -8,12 +8,49 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
     challenge = serializers.PrimaryKeyRelatedField(
         queryset=Challenge.objects.all()
     )
-    code = serializers.CharField(required=True, allow_blank=False)
+    code = serializers.CharField(required=False, allow_blank=True, default="")
+    files = serializers.DictField(
+        child=serializers.CharField(allow_blank=True),
+        required=False,
+        default=dict,
+    )
     language = serializers.CharField(default="Python", required=False)
 
     class Meta:
         model = Submission
-        fields = ["challenge", "code", "language"]
+        fields = ["challenge", "code", "files", "language"]
+
+    def validate(self, attrs):
+        code = attrs.get("code", "")
+        files = attrs.get("files", {})
+
+        if not code and not files:
+            raise serializers.ValidationError(
+                {"code": "Either 'code' or 'files' must be provided."}
+            )
+
+
+        # If files dictionary is provided, sanitize keys and remove any test files
+        if files and isinstance(files, dict):
+            sanitized_files = {}
+            for path, content in files.items():
+                if path.startswith("tests/") or path.endswith("_test.py") or "test_" in path:
+                    # Ignore/strip client-submitted test files (server files are authoritative)
+                    continue
+                sanitized_files[path] = content
+            attrs["files"] = sanitized_files
+
+            # For backward compatibility, populate code if blank
+            if not code:
+                # Use primary python file content
+                py_content = next(
+                    (content for path, content in sanitized_files.items() if path.endswith(".py")),
+                    ""
+                )
+                attrs["code"] = py_content
+
+        return attrs
+
 
 
 class EvaluationSerializer(serializers.ModelSerializer):

@@ -23,9 +23,16 @@ class Submission(models.Model):
         related_name="submissions",
     )
 
-    code = models.TextField()
+    code = models.TextField(blank=True, default="")
+
+    files = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Submitted multi-file repository map (e.g. {'app/calculator.py': '...'}).",
+    )
 
     language = models.CharField(
+
         max_length=50,
         default="Python",
     )
