@@ -403,3 +403,15 @@ class SocketStdinCompatibilityTests(SimpleTestCase):
         _close_container_stdin(sock)
         self.assertTrue(sock.shut)
         self.assertTrue(sock.closed)
+
+    def test_repository_execution_permissions_and_math_helper(self):
+        runner = DockerCodeRunner()
+        files = {
+            "app/__init__.py": "",
+            "app/math_helper.py": "def multiply(x, y):\n    return x * y\n",
+            "main.py": "from app.math_helper import multiply\nprint(multiply(6, 7))\n",
+        }
+        result = runner.run_repository(files=files, entrypoint="main.py")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), "42")
+        self.assertEqual(result.stderr, "")

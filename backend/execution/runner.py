@@ -411,6 +411,24 @@ class DockerCodeRunner(CodeRunner):
                     f"Security error: invalid entrypoint '{entrypoint}'"
                 )
 
+            # Ensure host temp directory and all enclosed files/directories
+            # have readable/executable permissions for container processes on Linux hosts
+            try:
+                os.chmod(real_temp_dir, 0o755)
+                for root, dirs, files in os.walk(real_temp_dir):
+                    for d in dirs:
+                        try:
+                            os.chmod(os.path.join(root, d), 0o755)
+                        except Exception:
+                            pass
+                    for f in files:
+                        try:
+                            os.chmod(os.path.join(root, f), 0o644)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
             # 3. Create isolated container with workspace volume mount
             stdin_open = bool(stdin_data is not None)
             mount_path = os.path.abspath(real_temp_dir)
