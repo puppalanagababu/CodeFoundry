@@ -377,4 +377,238 @@ class ChallengeFileModelAndAPITests(SimpleTestCase):
             self.assertTrue(files[1]["is_readonly"])
 
 
+class ChallengeProgressAPITests(SimpleTestCase):
+    def setUp(self):
+        from datetime import datetime, timezone as dt_timezone
+        from .views import ChallengeProgressView
+        from .progress import ChallengeProgressService
+        from submissions.models import Submission
+
+        self.service = ChallengeProgressService()
+        self.factory = APIRequestFactory()
+        self.view = ChallengeProgressView.as_view()
+
+        self.user_a = User(id=1, username="student_a", email="a@example.com")
+        self.user_b = User(id=2, username="student_b", email="b@example.com")
+
+        self.c1 = Challenge(
+            id=1,
+            title="Two Sum",
+            slug="two-sum",
+            difficulty="BEGINNER",
+            challenge_type="FEATURE",
+            programming_language="Python",
+            points=100,
+            is_active=True,
+        )
+        self.c2 = Challenge(
+            id=2,
+            title="Fix Calculator Bug",
+            slug="fix-calculator-bug",
+            difficulty="INTERMEDIATE",
+            challenge_type="BUG_FIX",
+            programming_language="Python",
+            points=150,
+            is_active=True,
+        )
+        self.c_inactive = Challenge(
+            id=99,
+            title="Draft Challenge",
+            slug="draft-chal",
+            difficulty="EXPERT",
+            challenge_type="SECURITY",
+            programming_language="Python",
+            points=200,
+            is_active=False,
+        )
+
+        self.dt1 = datetime(2026, 9, 2, 8, 0, tzinfo=dt_timezone.utc)
+        self.dt2 = datetime(2026, 9, 2, 8, 30, tzinfo=dt_timezone.utc)
+        self.dt3 = datetime(2026, 9, 2, 9, 0, tzinfo=dt_timezone.utc)
+
+    def test_1_unauthenticated_request_rejected(self):
+        request = self.factory.get("/api/challenges/progress/")
+        response = self.view(request)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_2_new_user_no_submissions(self, mock_ch_filter, mock_sub_filter):
+        mock_ch_filter.return_value.order_by.return_value = [self.c1, self.c2]
+        mock_sub_filter.return_value.order_by.return_value = []
+
+        request = self.factory.get("/api/challenges/progress/")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data["summary"]["total_challenges"], 2)
+        self.assertEqual(data["summary"]["attempted_challenges"], 0)
+        self.assertEqual(data["summary"]["completed_challenges"], 0)
+        self.assertEqual(data["summary"]["completion_percentage"], 0.0)
+
+        self.assertEqual(len(data["challenges"]), 2)
+        for ch in data["challenges"]:
+            self.assertEqual(ch["status"], "NOT_ATTEMPTED")
+            self.assertIsNone(ch["best_score"])
+            self.assertEqual(ch["attempts_count"], 0)
+            self.assertIsNone(ch["latest_attempt_at"])
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_3_inactive_challenges_are_excluded(self, mock_ch_filter, mock_sub_filter):
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        mock_sub_filter.return_value.order_by.return_value = []
+
+        progress = self.service.get_user_progress(self.user_a)
+        self.assertEqual(progress["summary"]["total_challenges"], 1)
+        self.assertEqual(len(progress["challenges"]), 1)
+        self.assertEqual(progress["challenges"][0]["challenge_id"], 1)
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_4_one_failed_submission(self, mock_ch_filter, mock_sub_filter):
+        from submissions.models import Submission
+
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        sub = Submission(
+            id=101,
+            user=self.user_a,
+            challenge=self.c1,
+            status=Submission.Status.FAILED,
+            score=45,
+            submitted_at=self.dt1,
+        )
+        sub.challenge_id = 1
+        mock_sub_filter.return_value.order_by.return_value = [sub]
+
+        progress = self.service.get_user_progress(self.user_a)
+        self.assertEqual(progress["summary"]["attempted_challenges"], 1)
+        self.assertEqual(progress["summary"]["completed_challenges"], 0)
+        self.assertEqual(progress["summary"]["completion_percentage"], 0.0)
+
+        ch_data = progress["challenges"][0]
+        self.assertEqual(ch_data["status"], "FAILED")
+        self.assertEqual(ch_data["attempts_count"], 1)
+        self.assertEqual(ch_data["best_score"], 45)
+        self.assertEqual(ch_data["latest_attempt_at"], self.dt1.isoformat())
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_5_one_passed_submission(self, mock_ch_filter, mock_sub_filter):
+        from submissions.models import Submission
+
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        sub = Submission(
+            id=102,
+            user=self.user_a,
+            challenge=self.c1,
+            status=Submission.Status.PASSED,
+            score=100,
+            submitted_at=self.dt2,
+        )
+        sub.challenge_id = 1
+        mock_sub_filter.return_value.order_by.return_value = [sub]
+
+        progress = self.service.get_user_progress(self.user_a)
+        self.assertEqual(progress["summary"]["attempted_challenges"], 1)
+        self.assertEqual(progress["summary"]["completed_challenges"], 1)
+        self.assertEqual(progress["summary"]["completion_percentage"], 100.0)
+
+        ch_data = progress["challenges"][0]
+        self.assertEqual(ch_data["status"], "PASSED")
+        self.assertEqual(ch_data["attempts_count"], 1)
+        self.assertEqual(ch_data["best_score"], 100)
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_6_multiple_attempts_on_same_challenge(self, mock_ch_filter, mock_sub_filter):
+        from submissions.models import Submission
+
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        sub1 = Submission(id=1, user=self.user_a, challenge=self.c1, status=Submission.Status.FAILED, score=40, submitted_at=self.dt1)
+        sub2 = Submission(id=2, user=self.user_a, challenge=self.c1, status=Submission.Status.FAILED, score=70, submitted_at=self.dt2)
+        sub3 = Submission(id=3, user=self.user_a, challenge=self.c1, status=Submission.Status.PASSED, score=100, submitted_at=self.dt3)
+        sub1.challenge_id = sub2.challenge_id = sub3.challenge_id = 1
+
+        mock_sub_filter.return_value.order_by.return_value = [sub3, sub2, sub1]
+
+        progress = self.service.get_user_progress(self.user_a)
+        ch_data = progress["challenges"][0]
+        self.assertEqual(ch_data["attempts_count"], 3)
+        self.assertEqual(ch_data["best_score"], 100)
+        self.assertEqual(ch_data["status"], "PASSED")
+        self.assertEqual(ch_data["latest_attempt_at"], self.dt3.isoformat())
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_7_best_score_differs_from_latest_score(self, mock_ch_filter, mock_sub_filter):
+        from submissions.models import Submission
+
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        # Older attempt had 100, newer attempt had 60
+        sub_older = Submission(id=1, user=self.user_a, challenge=self.c1, status=Submission.Status.PASSED, score=100, submitted_at=self.dt1)
+        sub_newer = Submission(id=2, user=self.user_a, challenge=self.c1, status=Submission.Status.FAILED, score=60, submitted_at=self.dt2)
+        sub_older.challenge_id = sub_newer.challenge_id = 1
+
+        mock_sub_filter.return_value.order_by.return_value = [sub_newer, sub_older]
+
+        progress = self.service.get_user_progress(self.user_a)
+        ch_data = progress["challenges"][0]
+        self.assertEqual(ch_data["best_score"], 100)
+        self.assertEqual(ch_data["status"], "PASSED")
+        self.assertEqual(ch_data["latest_attempt_at"], self.dt2.isoformat())
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_8_multiple_challenges_counts_distinct_challenges(self, mock_ch_filter, mock_sub_filter):
+        from submissions.models import Submission
+
+        mock_ch_filter.return_value.order_by.return_value = [self.c1, self.c2]
+        # 3 submissions on c1, 2 on c2
+        s1 = Submission(id=1, user=self.user_a, challenge=self.c1, status=Submission.Status.PASSED, score=100, submitted_at=self.dt1)
+        s2 = Submission(id=2, user=self.user_a, challenge=self.c1, status=Submission.Status.FAILED, score=50, submitted_at=self.dt2)
+        s3 = Submission(id=3, user=self.user_a, challenge=self.c1, status=Submission.Status.FAILED, score=40, submitted_at=self.dt3)
+        s4 = Submission(id=4, user=self.user_a, challenge=self.c2, status=Submission.Status.FAILED, score=70, submitted_at=self.dt1)
+        s5 = Submission(id=5, user=self.user_a, challenge=self.c2, status=Submission.Status.FAILED, score=80, submitted_at=self.dt2)
+        s1.challenge_id = s2.challenge_id = s3.challenge_id = 1
+        s4.challenge_id = s5.challenge_id = 2
+
+        mock_sub_filter.return_value.order_by.return_value = [s3, s2, s5, s1, s4]
+
+        progress = self.service.get_user_progress(self.user_a)
+        self.assertEqual(progress["summary"]["total_challenges"], 2)
+        self.assertEqual(progress["summary"]["attempted_challenges"], 2)
+        self.assertEqual(progress["summary"]["completed_challenges"], 1)
+        self.assertEqual(progress["summary"]["completion_percentage"], 50.0)
+
+    @patch("submissions.models.Submission.objects.filter")
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_9_user_isolation(self, mock_ch_filter, mock_sub_filter):
+        mock_ch_filter.return_value.order_by.return_value = [self.c1]
+        mock_sub_filter.return_value.order_by.return_value = []
+
+        request = self.factory.get("/api/challenges/progress/?user_id=99")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Ensure query strictly filtered by request.user
+        mock_sub_filter.assert_called_once_with(user=self.user_a, challenge__is_active=True)
+
+    @patch("challenges.models.Challenge.objects.filter")
+    def test_10_zero_active_challenges(self, mock_ch_filter):
+        mock_ch_filter.return_value.order_by.return_value = []
+
+        progress = self.service.get_user_progress(self.user_a)
+        self.assertEqual(progress["summary"]["total_challenges"], 0)
+        self.assertEqual(progress["summary"]["completion_percentage"], 0.0)
+        self.assertEqual(progress["challenges"], [])
+
+
+
 

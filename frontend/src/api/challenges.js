@@ -25,3 +25,11 @@ export async function getChallenges(params = {}) {
 export async function getChallenge(id) {
   return apiClient.get(`challenges/${id}/`);
 }
+
+/**
+ * Fetches overall challenge progress and per-challenge attempt summary for current user.
+ */
+export async function getChallengeProgress() {
+  return apiClient.get('challenges/progress/');
+}
+

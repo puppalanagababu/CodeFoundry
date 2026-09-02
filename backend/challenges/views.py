@@ -88,3 +88,15 @@ class ChallengeDetailView(APIView):
         serializer = ChallengeDetailSerializer(challenge)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class ChallengeProgressView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        from .progress import ChallengeProgressService
+
+        service = ChallengeProgressService()
+        progress_data = service.get_user_progress(request.user)
+        return Response(progress_data, status=status.HTTP_200_OK)
+
+

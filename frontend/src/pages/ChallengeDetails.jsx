@@ -60,10 +60,11 @@ export default function ChallengeDetails() {
     );
   }
 
-  const bestScore = attemptsData.results.reduce(
-    (max, item) => (item.score > max ? item.score : max),
-    0
-  );
+  const hasAttempts = attemptsData.count > 0;
+  const hasPassed = attemptsData.results.some((item) => item.status === 'PASSED');
+  const bestScore = hasAttempts
+    ? Math.max(...attemptsData.results.map((item) => (typeof item.score === 'number' ? item.score : 0)))
+    : null;
 
   return (
     <div className="detail-container">
@@ -72,7 +73,30 @@ export default function ChallengeDetails() {
           <Link to="/challenges" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'inline-block' }}>
             &larr; All Challenges
           </Link>
-          <h1 className="page-title">{challenge.title}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 className="page-title" style={{ margin: 0 }}>{challenge.title}</h1>
+            {hasPassed ? (
+              <span className="badge badge-PASSED" style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>
+                Solved · Best Score: {bestScore}/{challenge.points} · {attemptsData.count} {attemptsData.count === 1 ? 'attempt' : 'attempts'}
+              </span>
+            ) : hasAttempts ? (
+              <span className="badge badge-FAILED" style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>
+                Attempted · Best Score: {bestScore}/{challenge.points} · {attemptsData.count} {attemptsData.count === 1 ? 'attempt' : 'attempts'}
+              </span>
+            ) : (
+              <span
+                className="badge"
+                style={{
+                  fontSize: '0.8rem',
+                  padding: '0.2rem 0.6rem',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                Not Attempted
+              </span>
+            )}
+          </div>
         </div>
 
         <Link to={`/workspace/${challenge.id}`} className="btn btn-primary" style={{ padding: '0.65rem 1.4rem' }}>
@@ -114,7 +138,7 @@ export default function ChallengeDetails() {
       {/* Your Attempts Summary */}
       <div className="detail-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h2>Your Attempts</h2>
+          <h2 style={{ margin: 0 }}>Your Attempts</h2>
           {attemptsData.count > 0 && (
             <Link to="/submissions" style={{ fontSize: '0.82rem', color: 'var(--accent-blue)' }}>
               View all in Submission History &rarr;
@@ -123,7 +147,7 @@ export default function ChallengeDetails() {
         </div>
 
         {attemptsData.count === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>
             You have not attempted this challenge yet. Open the workspace to start coding!
           </p>
         ) : (
@@ -169,12 +193,14 @@ export default function ChallengeDetails() {
                       {item.score} / {challenge.points} pts
                     </span>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      {new Date(item.created_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {item.submitted_at || item.created_at
+                        ? new Date(item.submitted_at || item.created_at).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '—'}
                     </span>
                   </div>
                 </div>
@@ -184,22 +210,72 @@ export default function ChallengeDetails() {
         )}
       </div>
 
+      {/* Challenge Description */}
       <div className="detail-section">
-        <h2>Description & Requirements</h2>
-        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+        <h2>Description</h2>
+        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
           {challenge.description}
         </div>
       </div>
 
+      {/* Starter Code Preview */}
       {challenge.starter_code && (
         <div className="detail-section">
-          <h2>Starter Code</h2>
-          <pre className="code-block">
-            <code>{challenge.starter_code}</code>
+          <h2>Starter Code Preview</h2>
+          <pre
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              padding: '1rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-color)',
+              overflowX: 'auto',
+              fontFamily: 'monospace',
+              fontSize: '0.9rem',
+              color: '#58a6ff',
+            }}
+          >
+            {challenge.starter_code}
           </pre>
+        </div>
+      )}
+
+      {/* Public Test Cases */}
+      {challenge.test_cases && challenge.test_cases.length > 0 && (
+        <div className="detail-section">
+          <h2>Sample Test Cases</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {challenge.test_cases.map((tc, index) => (
+              <div
+                key={tc.id || index}
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.75rem 1rem',
+                }}
+              >
+                <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.4rem' }}>
+                  Test Case #{index + 1}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Input:</span>
+                    <pre style={{ margin: '0.2rem 0', padding: '0.4rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px' }}>
+                      {tc.input_data || '(empty)'}
+                    </pre>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Expected Output:</span>
+                    <pre style={{ margin: '0.2rem 0', padding: '0.4rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px' }}>
+                      {tc.expected_output || '(empty)'}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
