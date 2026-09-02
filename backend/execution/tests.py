@@ -331,6 +331,75 @@ class RepositoryDockerExecutionTests(SimpleTestCase):
         self.assertIn("timed out", result.stderr.lower())
 
 
+class SocketStdinCompatibilityTests(SimpleTestCase):
+    def test_send_with_sendall(self):
+        from .runner import _send_container_stdin
 
+        class MockSocketSendall:
+            def __init__(self):
+                self.received = b""
 
+            def sendall(self, data):
+                self.received += data
 
+        sock = MockSocketSendall()
+        _send_container_stdin(sock, "hello sendall\n")
+        self.assertEqual(sock.received, b"hello sendall\n")
+
+    def test_send_without_sendall_underlying_send(self):
+        """Simulates Linux Unix HTTP/Socket wrappers that only have send() on raw socket."""
+        from .runner import _send_container_stdin
+
+        class MockRawSocket:
+            def __init__(self):
+                self.received = b""
+
+            def send(self, data):
+                self.received += data
+                return len(data)
+
+        class MockSocketWrapper:
+            def __init__(self):
+                self._sock = MockRawSocket()
+
+        sock = MockSocketWrapper()
+        _send_container_stdin(sock, "hello raw send\n")
+        self.assertEqual(sock._sock.received, b"hello raw send\n")
+
+    def test_send_with_file_write(self):
+        from .runner import _send_container_stdin
+
+        class MockFileSocket:
+            def __init__(self):
+                self.received = b""
+                self.flushed = False
+
+            def write(self, data):
+                self.received += data
+
+            def flush(self):
+                self.flushed = True
+
+        sock = MockFileSocket()
+        _send_container_stdin(sock, "hello file write\n")
+        self.assertEqual(sock.received, b"hello file write\n")
+        self.assertTrue(sock.flushed)
+
+    def test_safe_socket_close(self):
+        from .runner import _close_container_stdin
+
+        class MockSocketClose:
+            def __init__(self):
+                self.closed = False
+                self.shut = False
+
+            def shutdown(self, how):
+                self.shut = True
+
+            def close(self):
+                self.closed = True
+
+        sock = MockSocketClose()
+        _close_container_stdin(sock)
+        self.assertTrue(sock.shut)
+        self.assertTrue(sock.closed)

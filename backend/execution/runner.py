@@ -92,6 +92,99 @@ class CodeRunner:
         )
 
 
+def _send_container_stdin(sock, stdin_data):
+    """
+    Universally sends data to a Docker attached container socket across
+    different OS platforms (Windows npipe, Linux Unix sockets, urllib3 Socket wrappers).
+    """
+    if not stdin_data or sock is None:
+        return
+
+    data_bytes = (
+        stdin_data.encode("utf-8")
+        if isinstance(stdin_data, str)
+        else stdin_data
+    )
+
+    # 1. Direct sendall
+    if hasattr(sock, "sendall") and callable(sock.sendall):
+        sock.sendall(data_bytes)
+        return
+
+    # 2. Underlying _sock sendall
+    raw_sock = getattr(sock, "_sock", None)
+    if raw_sock and hasattr(raw_sock, "sendall") and callable(raw_sock.sendall):
+        raw_sock.sendall(data_bytes)
+        return
+
+    # 3. Direct or underlying send() in a loop
+    send_fn = getattr(sock, "send", None) or (
+        getattr(raw_sock, "send", None) if raw_sock else None
+    )
+    if send_fn and callable(send_fn):
+        total_sent = 0
+        while total_sent < len(data_bytes):
+            sent = send_fn(data_bytes[total_sent:])
+            if sent is None or sent == 0:
+                break
+            total_sent += sent
+        return
+
+    # 4. fileno() with os.write
+    fileno_fn = getattr(sock, "fileno", None) or (
+        getattr(raw_sock, "fileno", None) if raw_sock else None
+    )
+    if fileno_fn and callable(fileno_fn):
+        try:
+            fd = fileno_fn()
+            if isinstance(fd, int) and fd >= 0:
+                total_written = 0
+                while total_written < len(data_bytes):
+                    written = os.write(fd, data_bytes[total_written:])
+                    if written == 0:
+                        break
+                    total_written += written
+                return
+        except Exception:
+            pass
+
+    # 5. File-like write()
+    if hasattr(sock, "write") and callable(sock.write):
+        sock.write(data_bytes)
+        if hasattr(sock, "flush") and callable(sock.flush):
+            sock.flush()
+        return
+
+    raise TypeError(
+        f"Unable to send data to Docker socket of type {type(sock).__name__}"
+    )
+
+
+def _close_container_stdin(sock):
+    """
+    Safely shuts down write stream and closes the attached Docker socket.
+    """
+    if sock is None:
+        return
+
+    try:
+        if hasattr(sock, "shutdown") and callable(sock.shutdown):
+            sock.shutdown(1)
+        elif (
+            hasattr(sock, "_sock")
+            and hasattr(sock._sock, "shutdown")
+            and callable(sock._sock.shutdown)
+        ):
+            sock._sock.shutdown(1)
+    except Exception:
+        pass
+
+    try:
+        sock.close()
+    except Exception:
+        pass
+
+
 class DockerCodeRunner(CodeRunner):
     """
     Executes code in an isolated Docker container with resource constraints
@@ -171,16 +264,8 @@ class DockerCodeRunner(CodeRunner):
             container.start()
 
             if stdin_open and sock is not None:
-                if stdin_data:
-                    data_bytes = stdin_data.encode("utf-8") if isinstance(stdin_data, str) else stdin_data
-                    sock.sendall(data_bytes)
-                try:
-                    if hasattr(sock, "_sock") and sock._sock:
-                        sock._sock.shutdown(1)
-                except Exception:
-                    pass
-                sock.close()
-
+                _send_container_stdin(sock, stdin_data)
+                _close_container_stdin(sock)
 
             timed_out = False
             try:
@@ -361,19 +446,8 @@ class DockerCodeRunner(CodeRunner):
             container.start()
 
             if stdin_open and sock is not None:
-                if stdin_data:
-                    data_bytes = (
-                        stdin_data.encode("utf-8")
-                        if isinstance(stdin_data, str)
-                        else stdin_data
-                    )
-                    sock.sendall(data_bytes)
-                try:
-                    if hasattr(sock, "_sock") and sock._sock:
-                        sock._sock.shutdown(1)
-                except Exception:
-                    pass
-                sock.close()
+                _send_container_stdin(sock, stdin_data)
+                _close_container_stdin(sock)
 
 
             timed_out = False
