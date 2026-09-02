@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
 from challenges.models import Challenge
@@ -224,11 +224,15 @@ class SeedChallengesCommandTests(SimpleTestCase):
     def test_seed_data_configuration(self):
         from challenges.management.commands.seed_challenges import SEED_DATA
 
-        self.assertEqual(len(SEED_DATA), 5)
+        self.assertEqual(len(SEED_DATA), 9)
         slugs = [c["slug"] for c in SEED_DATA]
         self.assertEqual(
             slugs,
             [
+                "fix-the-broken-calculator",
+                "the-missing-api-data",
+                "the-exposed-admin-endpoint",
+                "the-slow-report-generator",
                 "add-two-numbers",
                 "password-validator",
                 "api-response-parser",
@@ -278,9 +282,10 @@ class SeedChallengesCommandTests(SimpleTestCase):
 
         output = out.getvalue()
         self.assertIn("CodeFoundry challenge seeding complete.", output)
-        self.assertEqual(mock_challenge_uoc.call_count, 5)
-        self.assertEqual(mock_tc_uoc.call_count, 22)
-        self.assertEqual(mock_file_uoc.call_count, 6)
+        self.assertEqual(mock_challenge_uoc.call_count, 9)
+        self.assertEqual(mock_tc_uoc.call_count, 42)
+        self.assertEqual(mock_file_uoc.call_count, 40)
+
 
 
 
@@ -610,5 +615,155 @@ class ChallengeProgressAPITests(SimpleTestCase):
         self.assertEqual(progress["challenges"], [])
 
 
+class FixTheBrokenCalculatorChallengeTests(SimpleTestCase):
+    def test_challenge_seed_structure(self):
+        from challenges.management.commands.seed_challenges import SEED_DATA
+
+        calc_seed = next((c for c in SEED_DATA if c["slug"] == "fix-the-broken-calculator"), None)
+        self.assertIsNotNone(calc_seed)
+        self.assertEqual(calc_seed["title"], "Fix the Broken Calculator")
+        self.assertEqual(calc_seed["difficulty"], "BEGINNER")
+        self.assertEqual(calc_seed["challenge_type"], "BUG_FIX")
+        self.assertEqual(calc_seed["points"], 100)
+        self.assertEqual(calc_seed["entrypoint"], "app/main.py")
+
+        # Test cases
+        test_cases = calc_seed.get("test_cases", [])
+        self.assertEqual(len(test_cases), 5)
+        public_tcs = [tc for tc in test_cases if not tc.get("is_hidden", False)]
+        hidden_tcs = [tc for tc in test_cases if tc.get("is_hidden", False)]
+        self.assertEqual(len(public_tcs), 2)
+        self.assertEqual(len(hidden_tcs), 3)
+
+        # Files
+        files = calc_seed.get("files", [])
+        self.assertEqual(len(files), 7)
+        paths = {f["path"] for f in files}
+        self.assertIn("README.md", paths)
+        self.assertIn("app/calculator.py", paths)
+        self.assertIn("app/main.py", paths)
+        self.assertIn("tests/test_calculator.py", paths)
+
+        readme = next(f for f in files if f["path"] == "README.md")
+        self.assertTrue(readme["is_readonly"])
+
+        test_file = next(f for f in files if f["path"] == "tests/test_calculator.py")
+        self.assertTrue(test_file["is_test"])
+        self.assertTrue(test_file["is_readonly"])
 
 
+class TheMissingAPIDataChallengeTests(SimpleTestCase):
+    def test_challenge_seed_structure(self):
+        from challenges.management.commands.seed_challenges import SEED_DATA
+
+        api_seed = next((c for c in SEED_DATA if c["slug"] == "the-missing-api-data"), None)
+        self.assertIsNotNone(api_seed)
+        self.assertEqual(api_seed["title"], "The Missing API Data")
+        self.assertEqual(api_seed["difficulty"], "INTERMEDIATE")
+        self.assertEqual(api_seed["challenge_type"], "API")
+        self.assertEqual(api_seed["points"], 100)
+        self.assertEqual(api_seed["entrypoint"], "app/main.py")
+
+        # Test cases
+        test_cases = api_seed.get("test_cases", [])
+        self.assertEqual(len(test_cases), 5)
+        public_tcs = [tc for tc in test_cases if not tc.get("is_hidden", False)]
+        hidden_tcs = [tc for tc in test_cases if tc.get("is_hidden", False)]
+        self.assertEqual(len(public_tcs), 2)
+        self.assertEqual(len(hidden_tcs), 3)
+
+        # Files
+        files = api_seed.get("files", [])
+        self.assertEqual(len(files), 9)
+        paths = {f["path"] for f in files}
+        self.assertIn("README.md", paths)
+        self.assertIn("app/models.py", paths)
+        self.assertIn("app/responses.py", paths)
+        self.assertIn("app/service.py", paths)
+        self.assertIn("app/main.py", paths)
+        self.assertIn("tests/test_api.py", paths)
+
+        readme = next(f for f in files if f["path"] == "README.md")
+        self.assertTrue(readme["is_readonly"])
+
+        test_file = next(f for f in files if f["path"] == "tests/test_api.py")
+        self.assertTrue(test_file["is_test"])
+        self.assertTrue(test_file["is_readonly"])
+
+
+class TheExposedAdminEndpointChallengeTests(SimpleTestCase):
+    def test_challenge_seed_structure(self):
+        from challenges.management.commands.seed_challenges import SEED_DATA
+
+        admin_seed = next((c for c in SEED_DATA if c["slug"] == "the-exposed-admin-endpoint"), None)
+        self.assertIsNotNone(admin_seed)
+        self.assertEqual(admin_seed["title"], "The Exposed Admin Endpoint")
+        self.assertEqual(admin_seed["difficulty"], "INTERMEDIATE")
+        self.assertEqual(admin_seed["challenge_type"], "SECURITY")
+        self.assertEqual(admin_seed["points"], 100)
+        self.assertEqual(admin_seed["entrypoint"], "app/main.py")
+
+        # Test cases
+        test_cases = admin_seed.get("test_cases", [])
+        self.assertEqual(len(test_cases), 5)
+        public_tcs = [tc for tc in test_cases if not tc.get("is_hidden", False)]
+        hidden_tcs = [tc for tc in test_cases if tc.get("is_hidden", False)]
+        self.assertEqual(len(public_tcs), 2)
+        self.assertEqual(len(hidden_tcs), 3)
+
+        # Files
+        files = admin_seed.get("files", [])
+        self.assertEqual(len(files), 10)
+        paths = {f["path"] for f in files}
+        self.assertIn("README.md", paths)
+        self.assertIn("app/models.py", paths)
+        self.assertIn("app/auth.py", paths)
+        self.assertIn("app/responses.py", paths)
+        self.assertIn("app/service.py", paths)
+        self.assertIn("app/main.py", paths)
+        self.assertIn("tests/test_access.py", paths)
+
+        readme = next(f for f in files if f["path"] == "README.md")
+        self.assertTrue(readme["is_readonly"])
+
+        test_file = next(f for f in files if f["path"] == "tests/test_access.py")
+        self.assertTrue(test_file["is_test"])
+        self.assertTrue(test_file["is_readonly"])
+
+
+class TheSlowReportGeneratorChallengeTests(SimpleTestCase):
+    def test_challenge_seed_structure(self):
+        from challenges.management.commands.seed_challenges import SEED_DATA
+
+        perf_seed = next((c for c in SEED_DATA if c["slug"] == "the-slow-report-generator"), None)
+        self.assertIsNotNone(perf_seed)
+        self.assertEqual(perf_seed["title"], "The Slow Report Generator")
+        self.assertEqual(perf_seed["difficulty"], "INTERMEDIATE")
+        self.assertEqual(perf_seed["challenge_type"], "PERFORMANCE")
+        self.assertEqual(perf_seed["points"], 100)
+        self.assertEqual(perf_seed["entrypoint"], "app/main.py")
+
+        # Test cases
+        test_cases = perf_seed.get("test_cases", [])
+        self.assertEqual(len(test_cases), 5)
+        public_tcs = [tc for tc in test_cases if not tc.get("is_hidden", False)]
+        hidden_tcs = [tc for tc in test_cases if tc.get("is_hidden", False)]
+        self.assertEqual(len(public_tcs), 2)
+        self.assertEqual(len(hidden_tcs), 3)
+
+        # Files
+        files = perf_seed.get("files", [])
+        self.assertEqual(len(files), 8)
+        paths = {f["path"] for f in files}
+        self.assertIn("README.md", paths)
+        self.assertIn("app/models.py", paths)
+        self.assertIn("app/generator.py", paths)
+        self.assertIn("app/main.py", paths)
+        self.assertIn("tests/test_generator.py", paths)
+
+        readme = next(f for f in files if f["path"] == "README.md")
+        self.assertTrue(readme["is_readonly"])
+
+        test_file = next(f for f in files if f["path"] == "tests/test_generator.py")
+        self.assertTrue(test_file["is_test"])
+        self.assertTrue(test_file["is_readonly"])

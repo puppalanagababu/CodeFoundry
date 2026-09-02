@@ -7,6 +7,9 @@ import Loading from '../components/Loading';
 import CodeEditor from '../components/CodeEditor';
 import RepositoryTree from '../components/RepositoryTree';
 
+const MAX_POLL_ATTEMPTS = 60;
+const ACTIVE_SUBMISSION_STORAGE_KEY = 'devforge_active_submission_id';
+
 const SKILL_DIMENSION_NAMES = {
   problem_solving: 'Problem Solving',
   debugging: 'Debugging',
@@ -45,6 +48,47 @@ export default function Workspace() {
 
   const pollingTimerRef = useRef(null);
 
+  // Unified polling function
+  const startPolling = (subId) => {
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+    }
+
+    let attempts = 0;
+
+    pollingTimerRef.current = setInterval(async () => {
+      attempts += 1;
+      try {
+        const data = await getSubmission(subId);
+        const evalData = data.evaluation;
+
+        const isTerminal =
+          data.status === 'PASSED' ||
+          data.status === 'FAILED' ||
+          data.status === 'ERROR' ||
+          (evalData && (evalData.status === 'COMPLETED' || evalData.status === 'FAILED'));
+
+        if (isTerminal) {
+          clearInterval(pollingTimerRef.current);
+          pollingTimerRef.current = null;
+          setSubmissionResult(data);
+          setIsEvaluating(false);
+          sessionStorage.removeItem(ACTIVE_SUBMISSION_STORAGE_KEY);
+        } else if (attempts >= MAX_POLL_ATTEMPTS) {
+          clearInterval(pollingTimerRef.current);
+          pollingTimerRef.current = null;
+          setIsEvaluating(false);
+          setSubmissionError('Evaluation is taking longer than expected. You can check your submissions later.');
+        }
+      } catch (err) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+        setIsEvaluating(false);
+        setSubmissionError(err.message || 'Failed to poll evaluation status.');
+      }
+    }, 1000);
+  };
+
   // Clean up polling timer on unmount
   useEffect(() => {
     return () => {
@@ -60,7 +104,7 @@ export default function Workspace() {
     setError(null);
 
     getChallenge(id)
-      .then((data) => {
+      .then(async (data) => {
         if (!isMounted) return;
         setChallenge(data);
 
@@ -88,6 +132,44 @@ export default function Workspace() {
           setFilesState({});
           setActiveFilePath('');
           setCode(data.starter_code || '');
+        }
+
+        // Check for active submission in sessionStorage to resume after refresh
+        const savedSubId = sessionStorage.getItem(ACTIVE_SUBMISSION_STORAGE_KEY);
+        if (savedSubId) {
+          try {
+            const subData = await getSubmission(savedSubId);
+            if (!isMounted) return;
+
+            // Ensure submission belongs to the current challenge
+            if (subData && Number(subData.challenge) === Number(id)) {
+              const evalData = subData.evaluation;
+              const isTerminal =
+                subData.status === 'PASSED' ||
+                subData.status === 'FAILED' ||
+                subData.status === 'ERROR' ||
+                (evalData && (evalData.status === 'COMPLETED' || evalData.status === 'FAILED'));
+
+              setSubmissionId(Number(savedSubId));
+              setActiveTab('submission');
+
+              if (isTerminal) {
+                setSubmissionResult(subData);
+                setIsEvaluating(false);
+                sessionStorage.removeItem(ACTIVE_SUBMISSION_STORAGE_KEY);
+              } else {
+                setIsEvaluating(true);
+                startPolling(Number(savedSubId));
+              }
+            } else {
+              // Stale submission from another challenge; clear it
+              sessionStorage.removeItem(ACTIVE_SUBMISSION_STORAGE_KEY);
+            }
+          } catch {
+            if (isMounted) {
+              sessionStorage.removeItem(ACTIVE_SUBMISSION_STORAGE_KEY);
+            }
+          }
         }
 
         setLoading(false);
@@ -229,46 +311,6 @@ export default function Workspace() {
     }
   };
 
-  const startPolling = (subId) => {
-    if (pollingTimerRef.current) {
-      clearInterval(pollingTimerRef.current);
-    }
-
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    pollingTimerRef.current = setInterval(async () => {
-      attempts += 1;
-      try {
-        const data = await getSubmission(subId);
-        const evalData = data.evaluation;
-
-        const isTerminal =
-          data.status === 'PASSED' ||
-          data.status === 'FAILED' ||
-          data.status === 'ERROR' ||
-          (evalData && (evalData.status === 'COMPLETED' || evalData.status === 'FAILED'));
-
-        if (isTerminal) {
-          clearInterval(pollingTimerRef.current);
-          pollingTimerRef.current = null;
-          setSubmissionResult(data);
-          setIsEvaluating(false);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(pollingTimerRef.current);
-          pollingTimerRef.current = null;
-          setIsEvaluating(false);
-          setSubmissionError('Evaluation timed out. Please check back shortly.');
-        }
-      } catch (err) {
-        clearInterval(pollingTimerRef.current);
-        pollingTimerRef.current = null;
-        setIsEvaluating(false);
-        setSubmissionError(err.message || 'Failed to poll evaluation status.');
-      }
-    }, 1000);
-  };
-
   const handleSubmitSolution = async () => {
     if (isSubmitting || isEvaluating) return;
 
@@ -307,6 +349,7 @@ export default function Workspace() {
       setIsSubmitting(false);
       setIsEvaluating(true);
       setSubmissionId(res.submission_id);
+      sessionStorage.setItem(ACTIVE_SUBMISSION_STORAGE_KEY, String(res.submission_id));
       startPolling(res.submission_id);
     } catch (err) {
       setIsSubmitting(false);
