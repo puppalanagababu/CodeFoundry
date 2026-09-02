@@ -444,6 +444,370 @@ class SkillScoringServiceTests(SimpleTestCase):
         self.assertEqual(converted_mb, 15.0)
 
 
+from datetime import datetime, timezone as dt_timezone
+from unittest.mock import MagicMock, patch
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class SkillProfileServiceTests(SimpleTestCase):
+    def setUp(self):
+        from .skill_profile import SkillProfileService
+        self.service = SkillProfileService()
+        self.user = User(id=42, username="student_tester", email="student@example.com")
+        self.other_user = User(id=99, username="other_student", email="other@example.com")
+
+        self.c1 = Challenge(id=1, title="Challenge 1", slug="chal-1", challenge_type="FEATURE", points=100)
+        self.c2 = Challenge(id=2, title="Challenge 2", slug="chal-2", challenge_type="BUG_FIX", points=100)
+        self.c3 = Challenge(id=3, title="Challenge 3", slug="chal-3", challenge_type="SECURITY", points=100)
+
+    def _mock_eval(self, challenge, score, skill_breakdown, evaluated_at=None, user=None):
+        sub = Submission(
+            id=10,
+            user=user or self.user,
+            challenge=challenge,
+            score=score,
+        )
+        sub.challenge_id = challenge.id
+        ev = Evaluation(
+            id=20,
+            submission=sub,
+            status=Evaluation.Status.COMPLETED,
+            score=score,
+            skill_breakdown=skill_breakdown,
+            evaluated_at=evaluated_at or datetime(2026, 9, 2, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        return ev
+
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_1_user_with_no_evaluations(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+        profile = self.service.get_user_profile(self.user)
+        self.assertIsNone(profile["overall_score"])
+        self.assertEqual(profile["total_evaluations_analyzed"], 0)
+        self.assertEqual(len(profile["skills"]), 6)
+        self.assertEqual(profile["skills"]["problem_solving"]["status"], "insufficient_data")
+        self.assertEqual(profile["skills"]["code_quality"]["status"], "not_measured")
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_2_user_with_only_non_completed_evaluations(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+        profile = self.service.get_user_profile(self.user)
+        self.assertIsNone(profile["overall_score"])
+        self.assertEqual(profile["total_evaluations_analyzed"], 0)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_3_one_completed_evaluation(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": 100,
+                    "debugging": None,
+                    "security": None,
+                    "performance": 90,
+                    "code_quality": None,
+                    "testing": None,
+                },
+                "evidence": {
+                    "problem_solving": "functional_tests",
+                    "performance": "execution_metrics",
+                },
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 1)
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 100)
+        self.assertEqual(profile["skills"]["problem_solving"]["sample_size"], 1)
+        self.assertEqual(profile["skills"]["problem_solving"]["status"], "measured")
+        self.assertEqual(profile["skills"]["performance"]["score"], 90)
+        self.assertEqual(profile["skills"]["debugging"]["status"], "insufficient_data")
+        self.assertEqual(profile["overall_score"], 95)  # round((100 + 90)/2) = 95
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_4_multiple_completed_evaluations_across_different_challenges(self, mock_filter):
+        ev1 = self._mock_eval(
+            self.c1,
+            score=80,
+            skill_breakdown={"scores": {"problem_solving": 80, "performance": 80}},
+        )
+        ev2 = self._mock_eval(
+            self.c2,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100, "debugging": 100, "performance": 90}},
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 2)
+        # problem_solving: (80 + 100)/2 = 90
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 90)
+        self.assertEqual(profile["skills"]["problem_solving"]["sample_size"], 2)
+        # debugging: 100 (1 sample)
+        self.assertEqual(profile["skills"]["debugging"]["score"], 100)
+        self.assertEqual(profile["skills"]["debugging"]["sample_size"], 1)
+        # performance: (80 + 90)/2 = 85
+        self.assertEqual(profile["skills"]["performance"]["score"], 85)
+        # overall: round((90 + 100 + 85)/3) = 92
+        self.assertEqual(profile["overall_score"], 92)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_5_multiple_attempts_on_same_challenge_deduplicated(self, mock_filter):
+        now = datetime(2026, 9, 2, 12, 0, tzinfo=dt_timezone.utc)
+        ev_low = self._mock_eval(
+            self.c1,
+            score=40,
+            skill_breakdown={"scores": {"problem_solving": 40, "performance": 40}},
+            evaluated_at=datetime(2026, 9, 1, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        ev_high = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100, "performance": 90}},
+            evaluated_at=now,
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_high, ev_low]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 1)
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 100)
+        self.assertEqual(profile["skills"]["problem_solving"]["sample_size"], 1)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_6_best_attempt_selection_by_highest_score(self, mock_filter):
+        now = datetime(2026, 9, 2, 12, 0, tzinfo=dt_timezone.utc)
+        ev_high = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100}},
+            evaluated_at=datetime(2026, 9, 2, 10, 0, tzinfo=dt_timezone.utc),
+        )
+        ev_low = self._mock_eval(
+            self.c1,
+            score=60,
+            skill_breakdown={"scores": {"problem_solving": 60}},
+            evaluated_at=now,
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_high, ev_low]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 1)
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 100)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_7_tie_on_score_selects_newest_evaluated_at(self, mock_filter):
+        t1 = datetime(2026, 9, 2, 10, 0, tzinfo=dt_timezone.utc)
+        t2 = datetime(2026, 9, 2, 12, 0, tzinfo=dt_timezone.utc)
+
+        ev_older = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100, "performance": 70}},
+            evaluated_at=t1,
+        )
+        ev_newer = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100, "performance": 95}},
+            evaluated_at=t2,
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_newer, ev_older]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 1)
+        self.assertEqual(profile["skills"]["performance"]["score"], 95)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_8_null_skill_dimensions_are_ignored(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": 80,
+                    "debugging": None,
+                    "security": None,
+                    "performance": None,
+                }
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 80)
+        self.assertIsNone(profile["skills"]["debugging"]["score"])
+        self.assertEqual(profile["skills"]["debugging"]["status"], "insufficient_data")
+        self.assertEqual(profile["overall_score"], 80)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_9_mixed_measured_unmeasured_dimensions(self, mock_filter):
+        ev = self._mock_eval(
+            self.c3,
+            score=80,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": 80,
+                    "security": 80,
+                    "performance": 90,
+                }
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["skills"]["security"]["status"], "measured")
+        self.assertEqual(profile["skills"]["security"]["score"], 80)
+        self.assertEqual(profile["skills"]["code_quality"]["status"], "not_measured")
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_10_code_quality_and_testing_not_measured(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["skills"]["code_quality"]["status"], "not_measured")
+        self.assertEqual(profile["skills"]["testing"]["status"], "not_measured")
+        self.assertIsNone(profile["skills"]["code_quality"]["score"])
+        self.assertIsNone(profile["skills"]["testing"]["score"])
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_11_insufficient_data_behavior(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100}},
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["skills"]["security"]["status"], "insufficient_data")
+        self.assertEqual(profile["skills"]["debugging"]["status"], "insufficient_data")
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_12_overall_score_excludes_null_dimensions(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=80,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": 70,
+                    "performance": 90,
+                    "debugging": None,
+                    "security": None,
+                }
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        # Only problem_solving (70) and performance (90) count -> (70+90)/2 = 80
+        self.assertEqual(profile["overall_score"], 80)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_13_overall_score_with_no_measured_dimensions_returns_null(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=0,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": None,
+                    "performance": None,
+                }
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertIsNone(profile["overall_score"])
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_14_scores_remain_bounded_0_to_100(self, mock_filter):
+        ev = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={
+                "scores": {
+                    "problem_solving": 150,  # malformed overflow
+                    "performance": -20,     # malformed underflow
+                }
+            },
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["skills"]["problem_solving"]["score"], 100)
+        self.assertEqual(profile["skills"]["performance"]["score"], 0)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_15_malformed_skill_breakdown_does_not_crash(self, mock_filter):
+        ev1 = self._mock_eval(
+            self.c1,
+            score=50,
+            skill_breakdown="not-a-dict",  # invalid JSON
+        )
+        ev2 = self._mock_eval(
+            self.c2,
+            score=50,
+            skill_breakdown={"scores": "not-a-dict"},
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2]
+
+        profile = self.service.get_user_profile(self.user)
+        self.assertEqual(profile["total_evaluations_analyzed"], 2)
+        self.assertIsNone(profile["overall_score"])
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_16_different_users_evaluations_isolated(self, mock_filter):
+        ev_other = self._mock_eval(
+            self.c1,
+            score=100,
+            skill_breakdown={"scores": {"problem_solving": 100}},
+            user=self.other_user,
+        )
+
+        def side_effect(*args, **kwargs):
+            user_arg = kwargs.get("submission__user")
+            mock_res = MagicMock()
+            if user_arg == self.user:
+                mock_res.select_related.return_value.order_by.return_value = []
+            else:
+                mock_res.select_related.return_value.order_by.return_value = [ev_other]
+            return mock_res
+
+        mock_filter.side_effect = side_effect
+
+        profile_user = self.service.get_user_profile(self.user)
+        self.assertEqual(profile_user["total_evaluations_analyzed"], 0)
+        self.assertIsNone(profile_user["overall_score"])
+
+        profile_other = self.service.get_user_profile(self.other_user)
+        self.assertEqual(profile_other["total_evaluations_analyzed"], 1)
+        self.assertEqual(profile_other["skills"]["problem_solving"]["score"], 100)
+
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_17_all_six_dimensions_always_returned(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+        profile = self.service.get_user_profile(self.user)
+        expected_dims = {
+            "problem_solving",
+            "debugging",
+            "security",
+            "performance",
+            "code_quality",
+            "testing",
+        }
+        self.assertEqual(set(profile["skills"].keys()), expected_dims)
+        for dim, data in profile["skills"].items():
+            self.assertIn("score", data)
+            self.assertIn("sample_size", data)
+            self.assertIn("status", data)
+
+
+
 
 
 
