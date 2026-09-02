@@ -334,6 +334,7 @@ class DockerCodeRunner(CodeRunner):
             container = self.client.containers.create(
                 image=self.image,
                 command=["python", "-u", clean_entry],
+                environment={"PYTHONPATH": "/workspace"},
                 working_dir="/workspace",
                 volumes={
                     mount_path: {
@@ -428,4 +429,4 @@ class DockerCodeRunner(CodeRunner):
             memory_used=memory_used,
         )
 
-
+

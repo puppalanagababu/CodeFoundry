@@ -37,7 +37,7 @@ raw_allowed_hosts = os.getenv('ALLOWED_HOSTS', '')
 if raw_allowed_hosts:
     ALLOWED_HOSTS = [h.strip() for h in raw_allowed_hosts.split(',') if h.strip()]
 elif DEBUG:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', 'testserver']
 else:
     ALLOWED_HOSTS = []
 
