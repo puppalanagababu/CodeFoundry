@@ -1,12 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getDashboard } from '../api/dashboard';
+import { getDashboard, getSkillProfile } from '../api/dashboard';
 import Loading from '../components/Loading';
+
+const SKILL_DIMENSIONS = [
+  {
+    key: 'problem_solving',
+    name: 'Problem Solving',
+    description: 'Functional correctness & algorithm logic',
+  },
+  {
+    key: 'debugging',
+    name: 'Debugging',
+    description: 'Fault localization & bug fix accuracy',
+  },
+  {
+    key: 'security',
+    name: 'Security',
+    description: 'Vulnerability prevention & safety standards',
+  },
+  {
+    key: 'performance',
+    name: 'Performance',
+    description: 'Execution speed & memory efficiency',
+  },
+  {
+    key: 'code_quality',
+    name: 'Code Quality',
+    description: 'Maintainability, style & cleanliness',
+  },
+  {
+    key: 'testing',
+    name: 'Testing',
+    description: 'Test-driven validation & suite completeness',
+  },
+];
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [data, setData] = useState(null);
+  const [skillProfile, setSkillProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,10 +49,14 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
 
-    getDashboard()
-      .then((res) => {
+    Promise.all([
+      getDashboard(),
+      getSkillProfile().catch(() => null),
+    ])
+      .then(([dashboardRes, skillRes]) => {
         if (!isMounted) return;
-        setData(res);
+        setData(dashboardRes);
+        setSkillProfile(skillRes);
         setLoading(false);
       })
       .catch((err) => {
@@ -47,10 +85,16 @@ export default function Dashboard() {
     }
   };
 
+  const getScoreColor = (score) => {
+    if (score >= 80) return '#3fb950';
+    if (score >= 50) return '#e3b341';
+    return '#f85149';
+  };
+
   if (loading) {
     return (
       <div className="page-container">
-        <Loading message="Loading student dashboard metrics..." />
+        <Loading message="Loading student dashboard & skill profile..." />
       </div>
     );
   }
@@ -124,14 +168,181 @@ export default function Dashboard() {
             </div>
 
             <div className="stat-card">
-              <div className="stat-label">Average Score</div>
-              <div className="stat-value" style={{ color: '#58a6ff' }}>
-                {overview.average_score} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 100</span>
+              <div className="stat-label">Overall Skill Score</div>
+              <div
+                className="stat-value"
+                style={{
+                  color:
+                    skillProfile?.overall_score !== null && skillProfile?.overall_score !== undefined
+                      ? getScoreColor(skillProfile.overall_score)
+                      : 'var(--text-muted)',
+                }}
+              >
+                {skillProfile?.overall_score !== null && skillProfile?.overall_score !== undefined ? (
+                  <>
+                    {skillProfile.overall_score}{' '}
+                    <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>/ 100</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: '1.05rem', fontWeight: '500' }}>Not enough data</span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* 2. Engineering Progress by Difficulty */}
+          {/* 2. Skill Profile & Competencies Section */}
+          <div className="detail-section" style={{ margin: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Skill Profile &amp; Competencies</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+                  Deterministic competency breakdown evaluated across your best challenge attempts.
+                </p>
+              </div>
+              {skillProfile?.total_evaluations_analyzed !== undefined && (
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--text-muted)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  Evaluations Analyzed: <strong>{skillProfile.total_evaluations_analyzed}</strong>
+                </span>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1rem',
+              }}
+            >
+              {SKILL_DIMENSIONS.map((dim) => {
+                const skillData = skillProfile?.skills?.[dim.key] || {
+                  score: null,
+                  sample_size: 0,
+                  status: 'insufficient_data',
+                };
+                const isMeasured = skillData.status === 'measured' && skillData.score !== null;
+                const isNotMeasured = skillData.status === 'not_measured';
+
+                return (
+                  <div
+                    key={dim.key}
+                    style={{
+                      backgroundColor: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '1.15rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h3 style={{ fontSize: '0.98rem', fontWeight: '600', margin: 0, color: 'var(--text-primary)' }}>
+                          {dim.name}
+                        </h3>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                          {dim.description}
+                        </p>
+                      </div>
+
+                      {isMeasured ? (
+                        <span
+                          style={{
+                            fontSize: '1.1rem',
+                            fontWeight: '700',
+                            color: getScoreColor(skillData.score),
+                          }}
+                        >
+                          {skillData.score}%
+                        </span>
+                      ) : isNotMeasured ? (
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '4px',
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--text-muted)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Not Measured
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '4px',
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--text-secondary)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Insufficient Data
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress Bar Track */}
+                    <div
+                      style={{
+                        height: '6px',
+                        backgroundColor: 'var(--bg-tertiary)',
+                        borderRadius: '3px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${isMeasured ? skillData.score : 0}%`,
+                          backgroundColor: isMeasured ? getScoreColor(skillData.score) : 'transparent',
+                          borderRadius: '3px',
+                          transition: 'width 0.3s ease',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      <span>
+                        {isMeasured
+                          ? `Evidence: ${skillData.sample_size} ${skillData.sample_size === 1 ? 'challenge' : 'challenges'}`
+                          : isNotMeasured
+                          ? 'Not evaluated in MVP'
+                          : 'Solve relevant challenges to measure'}
+                      </span>
+                      {isMeasured && (
+                        <span style={{ color: getScoreColor(skillData.score), fontWeight: '600' }}>
+                          {skillData.score >= 80 ? 'Proficient' : skillData.score >= 50 ? 'Developing' : 'Novice'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Engineering Progress by Difficulty */}
           <div className="detail-section" style={{ margin: 0 }}>
             <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Engineering Progress</h2>
             <div
@@ -191,7 +402,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* 3. Recent Activity Section */}
+          {/* 4. Recent Activity Section */}
           <div className="detail-section" style={{ margin: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 style={{ fontSize: '1.2rem' }}>Recent Activity</h2>

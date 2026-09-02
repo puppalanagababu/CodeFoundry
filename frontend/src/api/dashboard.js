@@ -6,3 +6,11 @@ import { apiClient } from './client';
 export async function getDashboard() {
   return apiClient.get('dashboard/');
 }
+
+/**
+ * Fetches the deterministic aggregated skill profile for current user.
+ */
+export async function getSkillProfile() {
+  return apiClient.get('users/skill-profile/');
+}
+
