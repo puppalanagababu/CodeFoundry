@@ -1,22 +1,293 @@
-# CodeFoundry
+# DevForge — Software Engineering Readiness & Simulation Platform
 
-CodeFoundry is a production-grade software engineering practice platform designed to simulate real-world developer workflows. 
+> **"Practice Software Engineering. Not Just Coding."**
 
-Developers work directly on realistic existing codebases, diagnose bugs and performance issues, implement fixes, validate changes against automated test suites, submit pull-request-style solutions, and receive actionable engineering feedback.
+---
 
-## Project Structure
+## 1. Project Overview
+
+**DevForge** is a production-grade software engineering simulation platform designed to evaluate real-world engineering competency. Unlike traditional competitive-programming platforms that focus purely on algorithmic puzzle-solving in single files, DevForge immerses developers in realistic multi-file codebases.
+
+Engineers investigate real repositories, diagnose structural defects, patch API endpoints, remediate security vulnerabilities, optimize algorithmic bottlenecks, run tests, and submit production-ready solutions through an automated evaluation and skill-scoring pipeline.
+
+---
+
+## 2. Problem Statement
+
+There is a significant gap between algorithmic interview preparation and daily software engineering reality:
+
+| Traditional Coding Platforms | Real-World Software Engineering | DevForge Approach |
+| :--- | :--- | :--- |
+| Single-file isolated functions | Multi-file modular architectures | Multi-file repository workspace |
+| Standard array/string algorithms | Real APIs, auth, serialization, and DB models | Practical architectural scenarios |
+| Synthetic inputs/outputs | Edge cases, security exploits, performance constraints | Deterministic grading with hidden edge workloads |
+| Memorized algorithmic tricks | Debugging, system design, security, and refactoring | Multi-dimensional skill profiling |
+
+---
+
+## 3. Key Features
+
+- **JWT-Based Authentication**: Secure registration, login, token refresh, and user session management.
+- **Interactive Multi-File Workspace**: Monaco code editor with file-tree navigation, multi-tab editing, syntax highlighting, and instant state recovery via `sessionStorage`.
+- **Repository-Style Challenges**: Multi-file projects featuring domain models, business services, HTTP handlers, and test suites.
+- **Docker Sandbox Execution**: Isolated, resource-constrained container runtime for safe code execution and verification.
+- **Hidden Test Cases & Authoritative Grading**: Server-authoritative test execution preventing test tampering and cheat vulnerabilities.
+- **Asynchronous Evaluation Pipeline**: Non-blocking submission queuing via **Celery + Redis**, providing real-time evaluation polling.
+- **Multi-Dimensional Skill Scoring**: Automated, deterministic evaluation across Problem Solving, Debugging, Security, and Performance.
+- **Challenge Progress & History Tracking**: User-scoped tracking of attempt counts, best scores, solved statuses, and submission archives.
+- **Strict User Isolation**: Strict ownership enforcement ensuring submissions, evaluations, and progress metrics are private to each user.
+
+---
+
+## 4. How It Works
 
 ```text
-codefoundry/
-├── backend/       # Core API, database models, business logic, and orchestration services
-├── frontend/      # User interface and client-side application
-├── challenges/   # Curated real-world challenge scenarios, task definitions, and initial codebases
-├── execution/    # Isolated runner / sandbox orchestration for automated code execution
-├── tests/        # Integration and end-to-end test suites
-├── docs/         # Architecture notes, design documentation, and setup guides
-└── README.md     # Project overview and introduction
+Student / Candidate
+       │
+       ▼
+Selects Challenge from Catalog
+       │
+       ▼
+Inspects Multi-File Workspace (Monaco Editor)
+       │
+       ▼
+Edits Source Code & Clicks "Run Code" / "Submit Solution"
+       │
+       ▼
+Django REST API receives POST /api/submissions/ (Status: PENDING)
+       │
+       ▼
+Dispatches Task to Redis Queue (evaluate_submission.delay)
+       │
+       ▼
+Celery Worker consumes task & spins up Docker Sandbox
+       │
+       ▼
+Docker Container mounts repository in /workspace (Isolated, Network-Disabled)
+       │
+       ▼
+Runs Test Suite & Benchmarks against hidden workloads
+       │
+       ▼
+EvaluationService computes Score & Multi-Dimensional Skill Breakdown
+       │
+       ▼
+Results persisted in PostgreSQL & Polled by Frontend via GET /api/submissions/<id>/
 ```
 
-## Status
+---
 
-Initial project structure initialized. Awaiting architectural specifications for core subsystems.
+## 5. Challenge Types
+
+DevForge categorizes real-world engineering tasks into distinct challenge types:
+
+- `BUG_FIX`: Root-cause diagnosis and regression fixing in existing legacy modules.
+- `API`: Implementation and correction of RESTful endpoints, serializers, query parameters, and response structures.
+- `SECURITY`: Access control auditing, authorization enforcement, and vulnerability remediation.
+- `PERFORMANCE`: Algorithmic refactoring, time/space complexity optimization, and high-throughput data processing.
+
+---
+
+## 6. Flagship Challenges
+
+| Challenge Title | Type | Difficulty | Core Engineering Competency |
+| :--- | :--- | :--- | :--- |
+| **Fix the Broken Calculator** | `BUG_FIX` | Beginner | Operator precedence, division-by-zero handling, and parser debugging. |
+| **The Missing API Data** | `API` | Intermediate | REST serialization, query parameter handling, and collection response contracts. |
+| **The Exposed Admin Endpoint** | `SECURITY` | Intermediate | Role-based access control (RBAC), token authorization, and privilege escalation prevention. |
+| **The Slow Report Generator** | `PERFORMANCE` | Intermediate | Refactoring $O(T \times U)$ quadratic lookups to $O(T + U)$ hash mappings under 128MB limits. |
+
+---
+
+## 7. Technology Stack
+
+### Backend
+- **Python 3.11+**
+- **Django 5.2** & **Django REST Framework (DRF)**
+- **PostgreSQL 16+** (Relational storage & persistence)
+- **Celery** (Distributed task queue)
+- **Redis 7+** (Message broker & task cache)
+- **SimpleJWT** (Authentication & token rotation)
+
+### Frontend
+- **React 18** & **Vite**
+- **Monaco Editor** (`@monaco-editor/react`)
+- **Vanilla CSS** (Custom responsive design system)
+- **Lucide Icons**
+
+### Sandbox & Infrastructure
+- **Docker Engine** (`python:3.11-slim` runtime)
+- **Nginx** (Reverse proxy & static SPA serving)
+- **Gunicorn** (WSGI application server)
+
+---
+
+## 8. Security Architecture
+
+The sandbox execution environment enforces strict multi-layered isolation:
+
+- **Network Disabled**: Containers are executed with `network_disabled=True` to prevent data exfiltration or external socket calls.
+- **Unprivileged Execution**: `privileged=False` and all Linux kernel capabilities dropped (`cap_drop=['ALL']`).
+- **No New Privileges**: `security_opt=['no-new-privileges:true']` blocks privilege escalation exploits.
+- **Resource Constraints**: Strict limits on memory (`128MB`), CPU (`1.0 CPU`), process IDs (`pids_limit=64`), and execution timeout (`5.0s`).
+- **Canonical Path Traversal Guards**: Strict verification that all file paths remain within the ephemeral `/workspace` mount.
+- **Server-Authoritative Test Protection**: Hidden test files and expected outputs are never exposed to client-side code.
+- **Strict User Isolation**: Multi-tenant authorization checks ensure users cannot access other developers' submissions or metrics.
+
+---
+
+## 9. Skill Measurement System
+
+DevForge evaluates performance across six core software engineering dimensions:
+
+1. **Problem Solving**: Verified functional correctness against baseline and hidden test suites.
+2. **Debugging**: Precision of fixes in bug-fix scenarios, penalizing collateral regressions.
+3. **Security**: Proper authorization checks, token validation, and rejection of unauthorized inputs.
+4. **Performance**: Algorithmic efficiency, execution speed, and memory usage under high-volume workloads.
+5. **Code Quality**: *(Reserved for future automated linting/static analysis integration)*.
+6. **Testing**: *(Reserved for future candidate test-authoring challenge types)*.
+
+---
+
+## 10. System Architecture
+
+```text
+                      +------------------------------------------+
+                      |               Client Browser             |
+                      |    (React 18 + Vite + Monaco Workspace)  |
+                      +------------------------------------------+
+                                           │
+                                     HTTPS / JSON
+                                           │
+                                           ▼
+                      +------------------------------------------+
+                      |            Nginx Reverse Proxy           |
+                      |  (Static SPA Assets + /api/ Proxy Pass)  |
+                      +------------------------------------------+
+                                           │
+                                           ▼
+                      +------------------------------------------+
+                      |         Gunicorn / Django API            |
+                      |  (Auth, Challenges, Submissions, Eval)   |
+                      +--------------------+---------------------+
+                                           │
+                       ┌───────────────────┴───────────────────┐
+                       ▼                                       ▼
+            +--------------------+                  +--------------------+
+            | PostgreSQL 16+     |                  | Redis Broker 7+    |
+            | (Entities, Scores) |                  | (Task Queue)       |
+            +--------------------+                  +---------+----------+
+                                                              │
+                                                              ▼
+                                                    +--------------------+
+                                                    |   Celery Worker    |
+                                                    | (Evaluation Engine)|
+                                                    +---------+----------+
+                                                              │
+                                                              ▼
+                                                    +--------------------+
+                                                    |   Docker Sandbox   |
+                                                    | (python:3.11-slim) |
+                                                    +--------------------+
+```
+
+---
+
+## 11. Local Development Setup
+
+### Prerequisites
+- **Python 3.11+**
+- **Node.js 18+** & **npm**
+- **Docker Engine** (Running locally)
+- **PostgreSQL 16+**
+- **Redis 7+**
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/puppalanagababu/DevForge.git
+cd DevForge
+```
+
+### 2. Backend Setup
+```bash
+# Create and activate Python virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r backend/requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your local PostgreSQL credentials
+
+# Run database migrations
+python backend/manage.py migrate
+
+# Seed challenge catalog & test suites
+python backend/manage.py seed_challenges
+
+# Pull the Docker execution runtime image
+docker pull python:3.11-slim
+```
+
+### 3. Run Backend Services
+```bash
+# Terminal 1: Django API server
+python backend/manage.py runserver 127.0.0.1:8000
+
+# Terminal 2: Celery evaluation worker
+cd backend
+celery -A config worker --loglevel=info
+```
+
+### 4. Frontend Setup
+```bash
+# Terminal 3: React Vite frontend
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+---
+
+## 12. Automated Testing
+
+DevForge includes a comprehensive backend test suite covering models, API serialization, Docker sandbox execution, Celery dispatch, evaluation grading, and user isolation.
+
+To run the full test suite:
+```bash
+python backend/manage.py test
+```
+
+**Test Suite Coverage:**
+```text
+Ran 139 tests in 9.970s
+OK (139/139 passing, 100%)
+```
+
+---
+
+## 13. Project Roadmap
+
+The following enhancements are planned for future iterations:
+
+- [ ] **AI-Assisted Code Reviews**: Automated feedback on design patterns, complexity, and idiomatic practices.
+- [ ] **Multi-Language Sandbox**: Support for TypeScript, Go, Java, and Rust execution.
+- [ ] **Interactive Terminal**: WebSocket-based interactive shell inside sandboxed environments.
+- [ ] **Trainer & Recruiter Dashboard**: Batch candidate assessment, custom challenge authoring, and skill analytics.
+- [ ] **Automated Code Quality & Test Suite Scoring**: Linter integration and candidate unit test coverage evaluation.
+
+---
+
+## 14. Author
+
+- **GitHub**: [@puppalanagababu](https://github.com/puppalanagababu)
+- **Repository**: [https://github.com/puppalanagababu/DevForge](https://github.com/puppalanagababu/DevForge)
+
+---
+
+## 15. License
+
+License: Not yet specified.
