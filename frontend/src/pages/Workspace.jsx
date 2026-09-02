@@ -7,6 +7,15 @@ import Loading from '../components/Loading';
 import CodeEditor from '../components/CodeEditor';
 import RepositoryTree from '../components/RepositoryTree';
 
+const SKILL_DIMENSION_NAMES = {
+  problem_solving: 'Problem Solving',
+  debugging: 'Debugging',
+  security: 'Security',
+  performance: 'Performance',
+  code_quality: 'Code Quality',
+  testing: 'Testing',
+};
+
 export default function Workspace() {
   const { id } = useParams();
   const [challenge, setChallenge] = useState(null);
@@ -64,8 +73,9 @@ export default function Workspace() {
           });
           setFilesState(initialMap);
 
-          // Select default file: prioritize editable app python file, then first non-test file, then first file
+          // Select default file: prioritize entrypoint, then editable app python file, then first non-test file, then first file
           const defaultFile =
+            repoFiles.find((f) => data.entrypoint && f.path === data.entrypoint) ||
             repoFiles.find((f) => !f.is_readonly && !f.is_test && f.path.endsWith('.py')) ||
             repoFiles.find((f) => !f.is_test) ||
             repoFiles[0];
@@ -124,10 +134,44 @@ export default function Workspace() {
     }
   };
 
+  const handleResetCode = () => {
+    if (!challenge) return;
+    const confirmed = window.confirm(
+      'Reset all code to the starter version? Your current unsaved changes will be lost.'
+    );
+    if (!confirmed) return;
+
+    if (isRepoChallenge) {
+      const initialMap = {};
+      repoFiles.forEach((f) => {
+        initialMap[f.path] = f.content || '';
+      });
+      setFilesState(initialMap);
+
+      const defaultFile =
+        repoFiles.find((f) => challenge.entrypoint && f.path === challenge.entrypoint) ||
+        repoFiles.find((f) => !f.is_readonly && !f.is_test && f.path.endsWith('.py')) ||
+        repoFiles.find((f) => !f.is_test) ||
+        repoFiles[0];
+
+      const defaultPath = defaultFile ? defaultFile.path : (repoFiles[0]?.path || '');
+      setActiveFilePath(defaultPath);
+      setCode(initialMap[defaultPath] || '');
+    } else {
+      setCode(challenge.starter_code || '');
+    }
+
+    setExecutionResult(null);
+    setExecutionError(null);
+  };
+
   // Helper to obtain the primary execution code
   const getPrimaryCode = () => {
     if (isRepoChallenge) {
-      // Find main runnable code (e.g. app/calculator.py or current active python file or first non-readonly)
+      // Find main runnable code (e.g. entrypoint, or app/calculator.py or current active python file)
+      if (challenge.entrypoint && filesState[challenge.entrypoint] !== undefined) {
+        return filesState[challenge.entrypoint];
+      }
       const pyFile =
         repoFiles.find((f) => !f.is_readonly && !f.is_test && f.path.endsWith('.py')) ||
         repoFiles.find((f) => f.path.endsWith('.py'));
@@ -272,7 +316,6 @@ export default function Workspace() {
   };
 
   if (loading) {
-
     return (
       <div className="page-container">
         <Loading message="Loading workspace environment..." />
@@ -347,7 +390,23 @@ export default function Workspace() {
               </span>
             )}
           </div>
-          <span>{challenge.programming_language}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              type="button"
+              onClick={handleResetCode}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '0.72rem',
+                padding: '0.2rem 0.55rem',
+                height: 'auto',
+                color: 'var(--text-muted)',
+              }}
+              title="Reset all files to original starter code"
+            >
+              Reset Code
+            </button>
+            <span>{challenge.programming_language}</span>
+          </div>
         </div>
 
         {/* Code Editor Area: Multi-file layout or Single-file */}
@@ -522,7 +581,7 @@ export default function Workspace() {
 
         {/* Tab 2: Submission Result Panel */}
         {activeTab === 'submission' && (
-          <div className="terminal-panel" style={{ height: '240px', minHeight: '180px' }}>
+          <div className="terminal-panel" style={{ height: '280px', minHeight: '180px' }}>
             <div className="terminal-header">
               <span>Evaluation & Grading</span>
               {isSubmitting && <span style={{ color: '#58a6ff' }}>Submitting...</span>}
@@ -534,7 +593,7 @@ export default function Workspace() {
               )}
             </div>
 
-            <div className="submission-result-container">
+            <div className="submission-result-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {isSubmitting && (
                 <div style={{ color: 'var(--text-muted)' }}>
                   Queueing solution for evaluation...
@@ -593,6 +652,90 @@ export default function Workspace() {
                       </>
                     )}
                   </div>
+
+                  {/* Skill Breakdown */}
+                  {evaluation && (
+                    <div
+                      style={{
+                        backgroundColor: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.85rem 1rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: '600',
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          marginBottom: '0.6rem',
+                        }}
+                      >
+                        Skill Breakdown
+                      </div>
+                      {(() => {
+                        const breakdownScores = evaluation.skill_breakdown?.scores;
+                        const validSkills = Object.entries(SKILL_DIMENSION_NAMES)
+                          .filter(([key]) => typeof breakdownScores?.[key] === 'number')
+                          .map(([key, label]) => ({
+                            key,
+                            label,
+                            score: breakdownScores[key],
+                          }));
+
+                        if (validSkills.length === 0) {
+                          return (
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>
+                              Skill breakdown is not available for this evaluation.
+                            </p>
+                          );
+                        }
+
+                        return (
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                              gap: '0.6rem',
+                            }}
+                          >
+                            {validSkills.map((skill) => (
+                              <div
+                                key={skill.key}
+                                style={{
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  padding: '0.5rem 0.75rem',
+                                  borderRadius: '4px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontSize: '0.85rem',
+                                }}
+                              >
+                                <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                                  {skill.label}
+                                </span>
+                                <span
+                                  style={{
+                                    fontWeight: '700',
+                                    color:
+                                      skill.score >= 80
+                                        ? '#3fb950'
+                                        : skill.score >= 50
+                                        ? '#e3b341'
+                                        : '#f85149',
+                                  }}
+                                >
+                                  {skill.score}%
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <Link
