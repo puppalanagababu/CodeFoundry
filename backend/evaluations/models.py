@@ -60,7 +60,14 @@ class Evaluation(models.Model):
         blank=True,
     )
 
+    skill_breakdown = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Deterministic skill score breakdown across dimensions.",
+    )
+
     evaluated_at = models.DateTimeField(
+
         null=True,
         blank=True,
     )

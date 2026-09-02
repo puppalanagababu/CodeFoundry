@@ -204,11 +204,13 @@ class DockerCodeRunner(CodeRunner):
                 )
                 try:
                     stats = container.stats(stream=False)
-                    memory_used = stats.get("memory_stats", {}).get(
+                    memory_bytes = stats.get("memory_stats", {}).get(
                         "max_usage", 0
                     )
+                    memory_used = round(memory_bytes / (1024 * 1024), 2)
                 except Exception:
-                    memory_used = 0
+                    memory_used = 0.0
+
 
         except Exception as e:
             exit_code = 1
@@ -395,11 +397,13 @@ class DockerCodeRunner(CodeRunner):
                 )
                 try:
                     stats = container.stats(stream=False)
-                    memory_used = stats.get("memory_stats", {}).get(
+                    memory_bytes = stats.get("memory_stats", {}).get(
                         "max_usage", 0
                     )
+                    memory_used = round(memory_bytes / (1024 * 1024), 2)
                 except Exception:
-                    memory_used = 0
+                    memory_used = 0.0
+
 
         except Exception as e:
             exit_code = 1

@@ -3,6 +3,7 @@ from challenges.models import TestCase
 from execution.services import ExecutionService
 from submissions.models import Submission
 from .models import Evaluation
+from .skill_scoring import SkillScoringService
 
 
 def normalize_output(text: str) -> str:
@@ -19,8 +20,10 @@ def normalize_output(text: str) -> str:
 
 
 class EvaluationService:
-    def __init__(self, execution_service=None):
+    def __init__(self, execution_service=None, skill_scoring_service=None):
         self.execution_service = execution_service or ExecutionService()
+        self.skill_scoring_service = skill_scoring_service or SkillScoringService()
+
 
     def evaluate(self, submission: Submission) -> Evaluation:
         evaluation, _ = Evaluation.objects.get_or_create(submission=submission)
@@ -48,8 +51,17 @@ class EvaluationService:
                 evaluation.stdout = ""
                 evaluation.stderr = "Evaluation error: No active test cases configured for this challenge."
                 evaluation.test_results = []
+                evaluation.skill_breakdown = self.skill_scoring_service.calculate_skill_breakdown(
+                    challenge=submission.challenge,
+                    tests_total=0,
+                    tests_passed=0,
+                    tests_failed=0,
+                    execution_time=0.0,
+                    memory_used=0.0,
+                )
                 evaluation.evaluated_at = timezone.now()
                 evaluation.save()
+
 
                 submission.status = Submission.Status.FAILED
                 submission.score = 0
@@ -154,6 +166,16 @@ class EvaluationService:
             final_score = min(total_score, max_challenge_points)
             all_passed = (tests_failed == 0 and tests_passed > 0)
 
+            # Calculate deterministic skill breakdown
+            evaluation.skill_breakdown = self.skill_scoring_service.calculate_skill_breakdown(
+                challenge=submission.challenge,
+                tests_total=len(test_cases),
+                tests_passed=tests_passed,
+                tests_failed=tests_failed,
+                execution_time=total_execution_time,
+                memory_used=max_memory_used,
+            )
+
             # Update Evaluation
             evaluation.status = Evaluation.Status.COMPLETED
             evaluation.score = final_score
@@ -167,6 +189,7 @@ class EvaluationService:
             evaluation.test_results = test_results
             evaluation.evaluated_at = timezone.now()
             evaluation.save()
+
 
             # Update Submission
             submission.status = (

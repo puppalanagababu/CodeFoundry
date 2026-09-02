@@ -264,3 +264,186 @@ class EvaluateSubmissionTaskTests(SimpleTestCase):
 
 
 
+class SkillScoringServiceTests(SimpleTestCase):
+
+    def setUp(self):
+        from .skill_scoring import SkillScoringService
+        self.service = SkillScoringService()
+
+    def test_1_normal_challenge_problem_solving(self):
+        challenge = Challenge(challenge_type="FEATURE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=5,
+            tests_passed=4,
+            tests_failed=1,
+            execution_time=0.5,
+            memory_used=30.0,
+        )
+        self.assertEqual(breakdown["scores"]["problem_solving"], 80)
+        self.assertEqual(breakdown["evidence"]["problem_solving"], "functional_tests")
+
+    def test_2_bug_fix_challenge_debugging(self):
+        challenge = Challenge(challenge_type="BUG_FIX", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=4,
+            tests_passed=4,
+            tests_failed=0,
+            execution_time=0.2,
+            memory_used=20.0,
+        )
+        self.assertEqual(breakdown["scores"]["problem_solving"], 100)
+        self.assertEqual(breakdown["scores"]["debugging"], 100)
+        self.assertEqual(breakdown["evidence"]["debugging"], "bug_fix_tests")
+
+    def test_3_debugging_challenge_debugging(self):
+        challenge = Challenge(challenge_type="DEBUGGING", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=4,
+            tests_passed=3,
+            tests_failed=1,
+            execution_time=0.4,
+            memory_used=25.0,
+        )
+        self.assertEqual(breakdown["scores"]["problem_solving"], 75)
+        self.assertEqual(breakdown["scores"]["debugging"], 75)
+        self.assertEqual(breakdown["evidence"]["debugging"], "bug_fix_tests")
+
+    def test_4_security_challenge_security(self):
+        challenge = Challenge(challenge_type="SECURITY", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=5,
+            tests_passed=3,
+            tests_failed=2,
+            execution_time=0.3,
+            memory_used=15.0,
+        )
+        self.assertEqual(breakdown["scores"]["problem_solving"], 60)
+        self.assertEqual(breakdown["scores"]["security"], 60)
+        self.assertEqual(breakdown["evidence"]["security"], "security_tests")
+
+    def test_5_non_security_challenge_security_is_null(self):
+        challenge = Challenge(challenge_type="FEATURE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=5,
+            tests_passed=5,
+            tests_failed=0,
+            execution_time=0.2,
+            memory_used=10.0,
+        )
+        self.assertIsNone(breakdown["scores"]["security"])
+        self.assertEqual(breakdown["evidence"]["security"], "not_measured")
+
+    def test_6_non_bug_fix_challenge_debugging_is_null(self):
+        challenge = Challenge(challenge_type="FEATURE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=5,
+            tests_passed=5,
+            tests_failed=0,
+            execution_time=0.2,
+            memory_used=10.0,
+        )
+        self.assertIsNone(breakdown["scores"]["debugging"])
+        self.assertEqual(breakdown["evidence"]["debugging"], "not_measured")
+
+    def test_7_performance_score_within_range(self):
+        challenge = Challenge(challenge_type="PERFORMANCE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=2,
+            tests_passed=2,
+            tests_failed=0,
+            execution_time=0.5,
+            memory_used=50.0,
+        )
+        perf = breakdown["scores"]["performance"]
+        self.assertIsNotNone(perf)
+        self.assertTrue(0 <= perf <= 100)
+        self.assertEqual(breakdown["evidence"]["performance"], "execution_metrics")
+
+    def test_8_missing_metrics_performance_is_null(self):
+        challenge = Challenge(challenge_type="FEATURE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=2,
+            tests_passed=2,
+            tests_failed=0,
+            execution_time=None,
+            memory_used=None,
+        )
+        self.assertIsNone(breakdown["scores"]["performance"])
+        self.assertEqual(breakdown["evidence"]["performance"], "not_measured")
+
+    def test_9_zero_test_cases_problem_solving_is_null(self):
+        challenge = Challenge(challenge_type="FEATURE", time_limit=5, memory_limit=256)
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=0,
+            tests_passed=0,
+            tests_failed=0,
+            execution_time=0.0,
+            memory_used=0.0,
+        )
+        self.assertIsNone(breakdown["scores"]["problem_solving"])
+        self.assertEqual(breakdown["evidence"]["problem_solving"], "not_measured")
+
+    def test_10_api_serializer_includes_skill_breakdown(self):
+        from submissions.serializers import EvaluationSerializer
+        breakdown = {
+            "scores": {
+                "problem_solving": 100,
+                "debugging": None,
+                "security": None,
+                "performance": 95,
+                "code_quality": None,
+                "testing": None,
+            },
+            "evidence": {
+                "problem_solving": "functional_tests",
+                "debugging": "not_measured",
+                "security": "not_measured",
+                "performance": "execution_metrics",
+                "code_quality": "not_measured",
+                "testing": "not_measured",
+            },
+        }
+        evaluation = Evaluation(
+            id=1,
+            status=Evaluation.Status.COMPLETED,
+            score=100,
+            skill_breakdown=breakdown,
+        )
+        serializer = EvaluationSerializer(evaluation)
+        self.assertIn("skill_breakdown", serializer.data)
+        self.assertEqual(serializer.data["skill_breakdown"]["scores"]["problem_solving"], 100)
+        self.assertEqual(serializer.data["skill_breakdown"]["scores"]["performance"], 95)
+
+    def test_11_performance_memory_mb_scaling(self):
+        challenge = Challenge(challenge_type="PERFORMANCE", time_limit=10, memory_limit=256)
+        # 1 test case, time: 1.0s (time_ratio = 1/10 = 0.1, time_score = 0.90)
+        # memory: 25.6 MB (mem_ratio = 25.6/256 = 0.10, mem_score = 0.90)
+        # combined: 0.7 * 0.90 + 0.3 * 0.90 = 0.90 -> 90%
+        breakdown = self.service.calculate_skill_breakdown(
+            challenge=challenge,
+            tests_total=1,
+            tests_passed=1,
+            tests_failed=0,
+            execution_time=1.0,
+            memory_used=25.6,
+        )
+        self.assertEqual(breakdown["scores"]["performance"], 90)
+
+    def test_12_docker_byte_to_mb_conversion(self):
+        memory_bytes = 15728640  # 15 MB in bytes
+        converted_mb = round(memory_bytes / (1024 * 1024), 2)
+        self.assertEqual(converted_mb, 15.0)
+
+
+
+
+

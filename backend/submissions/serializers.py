@@ -69,7 +69,9 @@ class EvaluationSerializer(serializers.ModelSerializer):
             "execution_time",
             "memory_used",
             "test_results",
+            "skill_breakdown",
         ]
+
 
     def get_test_results(self, obj):
         results = getattr(obj, "test_results", [])

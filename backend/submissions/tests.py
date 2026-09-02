@@ -242,8 +242,10 @@ class SubmissionDetailAPITests(SimpleTestCase):
                 "execution_time": 0.28,
                 "memory_used": 0.0,
                 "test_results": [],
+                "skill_breakdown": {},
             },
         )
+
 
 
     @patch("submissions.views.get_object_or_404")
