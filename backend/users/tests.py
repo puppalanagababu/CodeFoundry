@@ -173,3 +173,119 @@ class DashboardAPITests(SimpleTestCase):
         self.assertEqual(response.data["recent_submissions"], [])
         self.assertEqual(len(response.data["difficulty_progress"]), 4)
 
+
+class SkillProfileAPITests(SimpleTestCase):
+    def setUp(self):
+        from .views import SkillProfileView
+
+        self.factory = APIRequestFactory()
+        self.view = SkillProfileView.as_view()
+        self.user_a = User(id=1, username="student_a", email="student_a@example.com", role="STUDENT")
+        self.user_b = User(id=2, username="student_b", email="student_b@example.com", role="STUDENT")
+
+    def test_1_unauthenticated_request_rejected(self):
+        request = self.factory.get("/api/users/skill-profile/")
+        response = self.view(request)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+        )
+
+    @patch("evaluations.skill_profile.SkillProfileService.get_user_profile")
+    def test_2_authenticated_user_receives_http_200(self, mock_get_profile):
+        mock_get_profile.return_value = {
+            "overall_score": 88,
+            "skills": {
+                "problem_solving": {"score": 85, "sample_size": 4, "status": "measured"},
+                "debugging": {"score": 100, "sample_size": 2, "status": "measured"},
+                "security": {"score": None, "sample_size": 0, "status": "insufficient_data"},
+                "performance": {"score": 92, "sample_size": 4, "status": "measured"},
+                "code_quality": {"score": None, "sample_size": 0, "status": "not_measured"},
+                "testing": {"score": None, "sample_size": 0, "status": "not_measured"},
+            },
+            "total_evaluations_analyzed": 4,
+        }
+
+        request = self.factory.get("/api/users/skill-profile/")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["overall_score"], 88)
+        self.assertEqual(response.data["total_evaluations_analyzed"], 4)
+        expected_dims = {
+            "problem_solving",
+            "debugging",
+            "security",
+            "performance",
+            "code_quality",
+            "testing",
+        }
+        self.assertEqual(set(response.data["skills"].keys()), expected_dims)
+
+    @patch("evaluations.skill_profile.SkillProfileService.get_user_profile")
+    def test_3_user_isolation_passes_authenticated_user_only(self, mock_get_profile):
+        mock_get_profile.return_value = {
+            "overall_score": None,
+            "skills": {},
+            "total_evaluations_analyzed": 0,
+        }
+
+        request = self.factory.get("/api/users/skill-profile/?user_id=2")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Service must be called with request.user (user_a), never client-supplied ID
+        mock_get_profile.assert_called_once_with(self.user_a)
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_4_user_with_no_evaluations_full_flow(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+
+        request = self.factory.get("/api/users/skill-profile/")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["overall_score"])
+        self.assertEqual(response.data["total_evaluations_analyzed"], 0)
+        self.assertEqual(response.data["skills"]["problem_solving"]["status"], "insufficient_data")
+        self.assertEqual(response.data["skills"]["code_quality"]["status"], "not_measured")
+
+    @patch("evaluations.skill_profile.Evaluation.objects.filter")
+    def test_5_completed_evaluations_reflected_in_api(self, mock_filter):
+        from challenges.models import Challenge
+        from evaluations.models import Evaluation
+        from submissions.models import Submission
+        from datetime import datetime, timezone as dt_timezone
+
+        c = Challenge(id=1, title="Two Sum", points=100)
+        sub = Submission(id=10, user=self.user_a, challenge=c, score=100)
+        sub.challenge_id = 1
+        ev = Evaluation(
+            id=20,
+            submission=sub,
+            status=Evaluation.Status.COMPLETED,
+            score=100,
+            skill_breakdown={
+                "scores": {"problem_solving": 100, "performance": 90},
+                "evidence": {"problem_solving": "functional_tests", "performance": "execution_metrics"},
+            },
+            evaluated_at=datetime(2026, 9, 2, 12, 0, tzinfo=dt_timezone.utc),
+        )
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        request = self.factory.get("/api/users/skill-profile/")
+        force_authenticate(request, user=self.user_a)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["overall_score"], 95)
+        self.assertEqual(response.data["total_evaluations_analyzed"], 1)
+        self.assertEqual(response.data["skills"]["problem_solving"]["score"], 100)
+        self.assertEqual(response.data["skills"]["problem_solving"]["status"], "measured")
+        self.assertEqual(response.data["skills"]["performance"]["score"], 90)
+        self.assertEqual(response.data["skills"]["security"]["status"], "insufficient_data")
+
+

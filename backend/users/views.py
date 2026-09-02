@@ -127,3 +127,15 @@ class DashboardView(APIView):
             "difficulty_progress": difficulty_progress,
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+class SkillProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        from evaluations.skill_profile import SkillProfileService
+
+        service = SkillProfileService()
+        profile_data = service.get_user_profile(request.user)
+        return Response(profile_data, status=status.HTTP_200_OK)
+

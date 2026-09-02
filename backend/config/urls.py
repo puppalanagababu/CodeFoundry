@@ -16,16 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from users.views import DashboardView
+from users.views import DashboardView, SkillProfileView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('users.urls')),
     path('api/dashboard/', DashboardView.as_view(), name='dashboard'),
+    path('api/users/skill-profile/', SkillProfileView.as_view(), name='user-skill-profile'),
     path('api/submissions/', include('submissions.urls')),
     path('api/challenges/', include('challenges.urls')),
     path('api/execution/', include('execution.urls')),
 ]
+
 
 
 
