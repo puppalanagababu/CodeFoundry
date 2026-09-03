@@ -201,6 +201,17 @@ class EvaluationService:
             submission.test_results = test_results
             submission.save()
 
+            # Automatic Achievement Awarding (Defensive)
+            try:
+                from .achievements import AchievementService
+                user = getattr(submission, "user", None)
+                if user:
+                    AchievementService().award_for_user(user)
+            except Exception as ach_err:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.exception("Error during automatic achievement evaluation: %s", ach_err)
+
         except Exception as e:
             evaluation.status = Evaluation.Status.FAILED
             evaluation.stderr = f"Evaluation error: {str(e)}"

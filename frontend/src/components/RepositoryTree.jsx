@@ -37,19 +37,38 @@ function TreeNode({ name, node, activeFile, onSelectFile, level = 0 }) {
     return (
       <div
         className={`tree-file ${isSelected ? 'active' : ''}`}
-        style={{ paddingLeft: `${level * 14 + 10}px` }}
+        style={{
+          paddingLeft: `${level * 14 + 14}px`,
+          paddingRight: '12px',
+          paddingTop: '6px',
+          paddingBottom: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          cursor: 'pointer',
+          fontSize: '0.84rem',
+          color: isSelected ? '#fff' : 'var(--text-secondary)',
+          background: isSelected ? 'rgba(99, 102, 241, 0.18)' : 'transparent',
+          borderLeft: isSelected ? '2px solid var(--accent-primary)' : '2px solid transparent',
+          boxShadow: isSelected ? 'inset 0 0 12px rgba(99, 102, 241, 0.12)' : 'none',
+          transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
         onClick={() => onSelectFile(node.path)}
         title={node.path}
       >
-        <span className="tree-icon">{node.path.endsWith('.py') ? '🐍' : node.path.endsWith('.md') ? '📝' : '📄'}</span>
-        <span className="tree-name">{name}</span>
+        <span style={{ fontSize: '0.9rem', opacity: isSelected ? 1 : 0.8 }}>
+          {node.path.endsWith('.py') ? '🐍' : node.path.endsWith('.md') ? '📝' : '📄'}
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isSelected ? 600 : 400 }}>
+          {name}
+        </span>
         {node.is_readonly && (
-          <span className="tree-badge readonly" title="Read-only file">
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }} title="Read-only file">
             🔒
           </span>
         )}
         {node.is_test && (
-          <span className="tree-badge test" title="Test file">
+          <span className="badge badge-SECURITY" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
             test
           </span>
         )}
@@ -61,16 +80,35 @@ function TreeNode({ name, node, activeFile, onSelectFile, level = 0 }) {
   return (
     <div className="tree-dir">
       <div
-        className="tree-dir-header"
-        style={{ paddingLeft: `${level * 14 + 8}px` }}
+        style={{
+          paddingLeft: `${level * 14 + 10}px`,
+          paddingRight: '10px',
+          paddingTop: '6px',
+          paddingBottom: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          cursor: 'pointer',
+          fontSize: '0.82rem',
+          fontWeight: 600,
+          color: 'var(--text-secondary)',
+          userSelect: 'none',
+          transition: 'color 0.15s ease',
+        }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="tree-arrow">{isOpen ? '▼' : '▶'}</span>
-        <span className="tree-icon">{isOpen ? '📂' : '📁'}</span>
-        <span className="tree-name">{name}/</span>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'inline-block', transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+          ▶
+        </span>
+        <span style={{ fontSize: '0.9rem' }}>
+          {isOpen ? '📂' : '📁'}
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+          {name}/
+        </span>
       </div>
       {isOpen && (
-        <div className="tree-dir-children">
+        <div className="tree-dir-children" style={{ animation: 'fadeIn 0.2s ease-out' }}>
           {Object.entries(node.children || {}).map(([childName, childNode]) => (
             <TreeNode
               key={childName}
@@ -99,23 +137,21 @@ export default function RepositoryTree({
   const tree = buildFileTree(files);
 
   return (
-    <div className="repository-tree-container">
-      <div className="repository-tree-header">
-        <span>Repository Files</span>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{files.length} files</span>
+    <div className="repository-tree" style={{ padding: '0.5rem 0' }}>
+      <div style={{ padding: '0.4rem 1rem 0.6rem', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>Explorer</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--accent-blue)' }}>{files.length} files</span>
       </div>
-      <div className="repository-tree-body">
-        {Object.entries(tree).map(([name, node]) => (
-          <TreeNode
-            key={name}
-            name={name}
-            node={node}
-            activeFile={activeFile}
-            onSelectFile={onSelectFile}
-            level={0}
-          />
-        ))}
-      </div>
+      {Object.entries(tree).map(([name, node]) => (
+        <TreeNode
+          key={name}
+          name={name}
+          node={node}
+          activeFile={activeFile}
+          onSelectFile={onSelectFile}
+          level={0}
+        />
+      ))}
     </div>
   );
 }

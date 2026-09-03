@@ -1,10 +1,32 @@
-import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -12,12 +34,26 @@ export default function Navbar() {
   };
 
   return (
-    <header className="navbar">
-      <Link to="/" className="navbar-brand">
+    <header className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
+      <Link to="/" className="navbar-brand" aria-label="DevForge Home">
         <span className="logo-icon">&gt;_</span>
-        <span>CodeFoundry</span>
+        <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', fontSize: '1.25rem' }}>
+          DevForge
+        </span>
       </Link>
-      <nav className="navbar-nav">
+
+      {/* Mobile Menu Toggle Button */}
+      <button
+        type="button"
+        className="mobile-nav-toggle"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle navigation menu"
+        aria-expanded={mobileMenuOpen}
+      >
+        {mobileMenuOpen ? '✕' : '☰'}
+      </button>
+
+      <nav className={`navbar-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <NavLink
           to="/"
           className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
@@ -41,6 +77,20 @@ export default function Navbar() {
               Challenges
             </NavLink>
             <NavLink
+              to="/leaderboard"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              Leaderboard
+            </NavLink>
+            {(user?.role === 'RECRUITER' || user?.role === 'ADMIN') && (
+              <NavLink
+                to="/recruiter"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Recruiter
+              </NavLink>
+            )}
+            <NavLink
               to="/submissions"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
@@ -49,42 +99,34 @@ export default function Navbar() {
           </>
         )}
 
-
-
         {!isAuthenticated ? (
-          <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: '0.5rem' }}>
             <NavLink
               to="/login"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
-              Login
+              Sign In
             </NavLink>
-            <NavLink
+            <Link
               to="/register"
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              className="btn-gency btn-gency-primary"
+              style={{ padding: '0.45rem 1.15rem', fontSize: '0.86rem' }}
             >
-              Register
-            </NavLink>
-          </>
+              <span>Get Started</span>
+              <span className="btn-arrow-icon">↗</span>
+            </Link>
+          </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <span
-              style={{
-                fontSize: '0.82rem',
-                color: 'var(--text-secondary)',
-                fontFamily: 'var(--font-mono)',
-                backgroundColor: 'var(--bg-primary)',
-                padding: '0.2rem 0.6rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
-              }}
-            >
-              {user?.username} <strong style={{ color: '#58a6ff' }}>· {user?.role}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '0.5rem' }}>
+            <span className="user-pill">
+              <span style={{ fontWeight: 600, color: '#fff' }}>{user?.username}</span>
+              <span style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>· {user?.role || 'Developer'}</span>
             </span>
             <button
               onClick={handleLogout}
               className="btn btn-secondary"
-              style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }}
+              style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
+              title="Sign out of your session"
             >
               Logout
             </button>
@@ -94,4 +136,3 @@ export default function Navbar() {
     </header>
   );
 }
-

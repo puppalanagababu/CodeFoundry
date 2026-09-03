@@ -807,7 +807,538 @@ class SkillProfileServiceTests(SimpleTestCase):
             self.assertIn("status", data)
 
 
+class LeaderboardServiceTests(SimpleTestCase):
+    def setUp(self):
+        from evaluations.leaderboard import LeaderboardService
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        self.service = LeaderboardService()
+        self.user1 = User(id=1, username="alice", is_active=True)
+        self.user2 = User(id=2, username="bob", is_active=True)
+        self.user3 = User(id=3, username="charlie", is_active=True)
+
+        self.c1 = Challenge(id=1, title="Challenge 1", points=100, is_active=True)
+        self.c2 = Challenge(id=2, title="Challenge 2", points=100, is_active=True)
+        self.c3 = Challenge(id=3, title="Challenge 3", points=50, is_active=True)
+        self.c_inactive = Challenge(id=4, title="Inactive Challenge", points=100, is_active=False)
+
+    def _mock_eval(self, challenge, score=100, status_sub=Submission.Status.PASSED, user=None, eval_id=1, evaluated_at=None, skill_breakdown=None):
+        from datetime import datetime, timezone as dt_timezone
+        user = user or self.user1
+        evaluated_at = evaluated_at or datetime(2026, 9, 1, 12, 0, tzinfo=dt_timezone.utc)
+        sub = Submission(
+            id=eval_id * 10,
+            user=user,
+            challenge=challenge,
+            score=score,
+            status=status_sub,
+        )
+        sub.challenge_id = challenge.id
+        sub.user_id = user.id
+        ev = Evaluation(
+            id=eval_id,
+            submission=sub,
+            status=Evaluation.Status.COMPLETED,
+            score=score,
+            evaluated_at=evaluated_at,
+            skill_breakdown=(
+                skill_breakdown
+                if skill_breakdown is not None
+                else {"scores": {"problem_solving": score}}
+            ),
+        )
+        return ev
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_1_empty_leaderboard_when_no_evaluations(self, mock_filter):
+        mock_filter.return_value.select_related.return_value.order_by.return_value = []
+        result = self.service.get_leaderboard()
+        self.assertEqual(result, [])
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_2_excludes_users_without_activity(self, mock_filter):
+        ev1 = self._mock_eval(self.c1, score=100, user=self.user1)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev1]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["user_id"], 1)
+        self.assertEqual(result[0]["username"], "alice")
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_3_best_attempt_per_challenge_used(self, mock_filter):
+        # Alice attempted Challenge 1 twice: first 40 pts, then 100 pts
+        ev_low = self._mock_eval(self.c1, score=40, status_sub=Submission.Status.FAILED, user=self.user1, eval_id=1)
+        ev_high = self._mock_eval(self.c1, score=100, status_sub=Submission.Status.PASSED, user=self.user1, eval_id=2)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_high, ev_low]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["total_points"], 100)
+        self.assertEqual(result[0]["challenges_completed"], 1)
+        self.assertEqual(result[0]["average_score"], 100.0)
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_4_duplicate_attempts_do_not_double_count(self, mock_filter):
+        # Alice passed Challenge 1 twice
+        ev1 = self._mock_eval(self.c1, score=100, user=self.user1, eval_id=1)
+        ev2 = self._mock_eval(self.c1, score=100, user=self.user1, eval_id=2)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["challenges_completed"], 1)
+        self.assertEqual(result[0]["total_points"], 100)
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_5_ranking_order_deterministic(self, mock_filter):
+        # Alice: 2 completed challenges (100 + 100 = 200 pts)
+        ev_a1 = self._mock_eval(self.c1, score=100, user=self.user1, eval_id=1)
+        ev_a2 = self._mock_eval(self.c2, score=100, user=self.user1, eval_id=2)
+
+        # Bob: 1 completed challenge (100 pts)
+        ev_b1 = self._mock_eval(self.c1, score=100, user=self.user2, eval_id=3)
+
+        # Charlie: 1 completed challenge (50 pts)
+        ev_c1 = self._mock_eval(self.c3, score=50, user=self.user3, eval_id=4)
+
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [
+            ev_a1, ev_a2, ev_b1, ev_c1
+        ]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 3)
+
+        # Rank 1: Alice
+        self.assertEqual(result[0]["rank"], 1)
+        self.assertEqual(result[0]["username"], "alice")
+        self.assertEqual(result[0]["total_points"], 200)
+        self.assertEqual(result[0]["challenges_completed"], 2)
+
+        # Rank 2: Bob
+        self.assertEqual(result[1]["rank"], 2)
+        self.assertEqual(result[1]["username"], "bob")
+        self.assertEqual(result[1]["total_points"], 100)
+
+        # Rank 3: Charlie
+        self.assertEqual(result[2]["rank"], 3)
+        self.assertEqual(result[2]["username"], "charlie")
+        self.assertEqual(result[2]["total_points"], 50)
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_6_tie_breaking_order(self, mock_filter):
+        # Alice and Bob both have 100 points, 1 completed challenge, avg 100.
+        # But Alice has higher overall_skill_score (100 vs 80)
+        ev_a = self._mock_eval(self.c1, score=100, user=self.user1, eval_id=1, skill_breakdown={"scores": {"problem_solving": 100, "debugging": 100, "security": 100, "performance": 100}})
+        ev_b = self._mock_eval(self.c1, score=100, user=self.user2, eval_id=2, skill_breakdown={"scores": {"problem_solving": 80, "debugging": 80, "security": 80, "performance": 80}})
+
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_a, ev_b]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(result[0]["username"], "alice")
+        self.assertEqual(result[0]["rank"], 1)
+        self.assertEqual(result[1]["username"], "bob")
+        self.assertEqual(result[1]["rank"], 2)
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_7_failed_only_user_behavior(self, mock_filter):
+        ev = self._mock_eval(self.c1, score=30, status_sub=Submission.Status.FAILED, user=self.user1)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["challenges_completed"], 0)
+        self.assertEqual(result[0]["total_points"], 30)
+        self.assertEqual(result[0]["average_score"], 30.0)
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_8_current_user_flag(self, mock_filter):
+        ev_a = self._mock_eval(self.c1, score=100, user=self.user1, eval_id=1)
+        ev_b = self._mock_eval(self.c1, score=100, user=self.user2, eval_id=2)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev_a, ev_b]
+
+        result = self.service.get_leaderboard(current_user=self.user2)
+        self.assertFalse(result[0]["is_current_user"])
+        self.assertTrue(result[1]["is_current_user"])
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_9_null_skill_score_does_not_crash(self, mock_filter):
+        ev = self._mock_eval(self.c1, score=100, user=self.user1, skill_breakdown={})
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        result = self.service.get_leaderboard()
+        self.assertEqual(len(result), 1)
+        self.assertIsNone(result[0]["overall_skill_score"])
+
+    @patch("evaluations.leaderboard.Evaluation.objects.filter")
+    def test_10_private_data_not_exposed(self, mock_filter):
+        ev = self._mock_eval(self.c1, score=100, user=self.user1)
+        mock_filter.return_value.select_related.return_value.order_by.return_value = [ev]
+
+        result = self.service.get_leaderboard()
+        row = result[0]
+        self.assertNotIn("email", row)
+        self.assertNotIn("password", row)
+        self.assertNotIn("code", row)
+        self.assertNotIn("tokens", row)
 
 
+class LeaderboardAPITests(SimpleTestCase):
+    def setUp(self):
+        from rest_framework.test import APIRequestFactory
+        from users.views import LeaderboardView
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        self.factory = APIRequestFactory()
+        self.view = LeaderboardView.as_view()
+        self.user = User(id=1, username="testdev")
+
+    def test_1_unauthenticated_request_is_rejected(self):
+        request = self.factory.get("/api/leaderboard/")
+        response = self.view(request)
+        self.assertIn(response.status_code, [401, 403])
+
+    @patch("evaluations.leaderboard.LeaderboardService.get_leaderboard")
+    def test_2_authenticated_request_returns_leaderboard_results(self, mock_get_leaderboard):
+        from rest_framework.test import force_authenticate
+        mock_get_leaderboard.return_value = [
+            {
+                "rank": 1,
+                "user_id": 1,
+                "username": "testdev",
+                "total_points": 200,
+                "challenges_completed": 2,
+                "average_score": 100.0,
+                "overall_skill_score": 95,
+                "is_current_user": True,
+            }
+        ]
+
+        request = self.factory.get("/api/leaderboard/")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("results", response.data)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["rank"], 1)
+        self.assertEqual(response.data["results"][0]["username"], "testdev")
+        self.assertTrue(response.data["results"][0]["is_current_user"])
+
+
+class AchievementServiceTests(SimpleTestCase):
+    def setUp(self):
+        from evaluations.achievements import AchievementService, SEED_ACHIEVEMENTS
+        from evaluations.models import Achievement
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        self.service = AchievementService()
+        self.user = User(id=1, username="testcoder")
+
+        # Mock achievement objects
+        self.achievements = []
+        for i, data in enumerate(SEED_ACHIEVEMENTS, start=1):
+            ach = Achievement(
+                id=i,
+                code=data["code"],
+                name=data["name"],
+                description=data["description"],
+                icon=data["icon"],
+                requirement_type=data["requirement_type"],
+                requirement_value=data["requirement_value"],
+                is_active=True,
+            )
+            self.achievements.append(ach)
+
+    def _mock_eval(self, challenge, score=100, status_sub=Submission.Status.PASSED, eval_id=1, evaluated_at=None):
+        from datetime import datetime, timezone as dt_timezone
+        from evaluations.models import Evaluation
+        from submissions.models import Submission
+
+        evaluated_at = evaluated_at or datetime(2026, 9, 1, 12, 0, tzinfo=dt_timezone.utc)
+        sub = Submission(
+            id=eval_id * 10,
+            user=self.user,
+            challenge=challenge,
+            score=score,
+            status=status_sub,
+        )
+        sub.challenge_id = challenge.id
+        sub.user_id = self.user.id
+        ev = Evaluation(
+            id=eval_id,
+            submission=sub,
+            status=Evaluation.Status.COMPLETED,
+            score=score,
+            evaluated_at=evaluated_at,
+            skill_breakdown={"scores": {"problem_solving": score}},
+        )
+        return ev
+
+    def test_1_seeded_achievements_definitions_exist(self):
+        from evaluations.achievements import SEED_ACHIEVEMENTS
+        self.assertEqual(len(SEED_ACHIEVEMENTS), 6)
+        codes = {ach["code"] for ach in SEED_ACHIEVEMENTS}
+        expected = {
+            "BUG_SLAYER",
+            "SECURITY_HUNTER",
+            "PERFORMANCE_ENGINEER",
+            "TEST_MASTER",
+            "PERFECT_RUN",
+            "DEVFORGE_VETERAN",
+        }
+        self.assertEqual(codes, expected)
+
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_2_new_user_has_no_achievements(self, mock_ach_filter, mock_eval_filter):
+        mock_ach_filter.return_value = self.achievements
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = []
+
+        awarded = self.service.award_for_user(self.user)
+        self.assertEqual(awarded, [])
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_3_bug_slayer_earned_after_3_passed_bug_fix(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="C1", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        c2 = Challenge(id=2, title="C2", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        c3 = Challenge(id=3, title="C3", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+        ev3 = self._mock_eval(c3, score=100, status_sub=Submission.Status.PASSED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("BUG_SLAYER", awarded_codes)
+
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_4_bug_slayer_not_earned_after_only_2(self, mock_ach_filter, mock_eval_filter):
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="C1", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        c2 = Challenge(id=2, title="C2", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2]
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertNotIn("BUG_SLAYER", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_5_security_hunter_rule(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="S1", challenge_type=Challenge.ChallengeType.SECURITY, points=100, is_active=True)
+        c2 = Challenge(id=2, title="S2", challenge_type=Challenge.ChallengeType.SECURITY, points=100, is_active=True)
+        c3 = Challenge(id=3, title="S3", challenge_type=Challenge.ChallengeType.SECURITY, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+        ev3 = self._mock_eval(c3, score=100, status_sub=Submission.Status.PASSED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("SECURITY_HUNTER", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_6_performance_engineer_rule(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="P1", challenge_type=Challenge.ChallengeType.PERFORMANCE, points=100, is_active=True)
+        c2 = Challenge(id=2, title="P2", challenge_type=Challenge.ChallengeType.PERFORMANCE, points=100, is_active=True)
+        c3 = Challenge(id=3, title="P3", challenge_type=Challenge.ChallengeType.PERFORMANCE, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+        ev3 = self._mock_eval(c3, score=100, status_sub=Submission.Status.PASSED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("PERFORMANCE_ENGINEER", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_7_test_master_rule(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="T1", challenge_type=Challenge.ChallengeType.TESTING, points=100, is_active=True)
+        c2 = Challenge(id=2, title="T2", challenge_type=Challenge.ChallengeType.TESTING, points=100, is_active=True)
+        c3 = Challenge(id=3, title="T3", challenge_type=Challenge.ChallengeType.TESTING, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+        ev3 = self._mock_eval(c3, score=100, status_sub=Submission.Status.PASSED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("TEST_MASTER", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_8_perfect_run_rule(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        evals = []
+        for i in range(1, 6):
+            c = Challenge(id=i, title=f"C{i}", points=100, is_active=True)
+            ev = self._mock_eval(c, score=100, eval_id=i)
+            evals.append(ev)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = evals
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("PERFECT_RUN", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_9_devforge_veteran_rule(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        from evaluations.models import UserAchievement
+        mock_ach_filter.return_value = self.achievements
+
+        evals = []
+        for i in range(1, 11):
+            c = Challenge(id=i, title=f"C{i}", points=100, is_active=True)
+            ev = self._mock_eval(c, score=80, status_sub=Submission.Status.PASSED, eval_id=i)
+            evals.append(ev)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = evals
+        mock_ua_create.side_effect = lambda user, achievement: (UserAchievement(user=user, achievement=achievement), True)
+
+        awarded = self.service.award_for_user(self.user)
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertIn("DEVFORGE_VETERAN", awarded_codes)
+
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_10_failed_challenges_do_not_count(self, mock_ach_filter, mock_eval_filter):
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="C1", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        c2 = Challenge(id=2, title="C2", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        c3 = Challenge(id=3, title="C3", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+
+        ev1 = self._mock_eval(c1, score=30, status_sub=Submission.Status.FAILED, eval_id=1)
+        ev2 = self._mock_eval(c2, score=40, status_sub=Submission.Status.FAILED, eval_id=2)
+        ev3 = self._mock_eval(c3, score=50, status_sub=Submission.Status.FAILED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+
+        awarded = self.service.award_for_user(self.user)
+        self.assertEqual(len(awarded), 0)
+
+    @patch("evaluations.achievements.UserAchievement.objects.get_or_create")
+    @patch("evaluations.achievements.Evaluation.objects.filter")
+    @patch("evaluations.achievements.Achievement.objects.filter")
+    def test_11_duplicate_attempts_do_not_double_count(self, mock_ach_filter, mock_eval_filter, mock_ua_create):
+        mock_ach_filter.return_value = self.achievements
+
+        c1 = Challenge(id=1, title="C1", challenge_type=Challenge.ChallengeType.BUG_FIX, points=100, is_active=True)
+        # 3 attempts on the same challenge (id=1)
+        ev1 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=1)
+        ev2 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=2)
+        ev3 = self._mock_eval(c1, score=100, status_sub=Submission.Status.PASSED, eval_id=3)
+
+        mock_eval_filter.return_value.select_related.return_value.order_by.return_value = [ev1, ev2, ev3]
+
+        awarded = self.service.award_for_user(self.user)
+        # Should count as 1 passed BUG_FIX, so BUG_SLAYER (requires 3) should NOT be awarded
+        awarded_codes = [ua.achievement.code for ua in awarded]
+        self.assertNotIn("BUG_SLAYER", awarded_codes)
+
+    @patch("evaluations.achievements.UserAchievement.objects.filter")
+    def test_12_get_user_achievements_serializes_safe_fields(self, mock_ua_filter):
+        from evaluations.models import UserAchievement
+        from datetime import datetime, timezone as dt_timezone
+
+        ach = self.achievements[0]
+        ua = UserAchievement(
+            user=self.user,
+            achievement=ach,
+            earned_at=datetime(2026, 9, 3, 10, 0, tzinfo=dt_timezone.utc),
+        )
+        mock_ua_filter.return_value.select_related.return_value.order_by.return_value = [ua]
+
+        results = self.service.get_user_achievements(self.user)
+        self.assertEqual(len(results), 1)
+        res = results[0]
+        self.assertEqual(res["code"], "BUG_SLAYER")
+        self.assertEqual(res["name"], "Bug Slayer")
+        self.assertEqual(res["icon"], "🐛")
+        self.assertIn("earned_at", res)
+        self.assertNotIn("email", res)
+        self.assertNotIn("password", res)
+
+
+class EvaluationAchievementIntegrationTests(SimpleTestCase):
+    @patch("evaluations.achievements.AchievementService.award_for_user")
+    @patch("evaluations.services.TestCase.objects.filter")
+    @patch("evaluations.services.Evaluation.objects.get_or_create")
+    def test_achievement_failure_does_not_break_evaluation(self, mock_get_or_create, mock_filter, mock_award):
+        from evaluations.services import EvaluationService
+        from challenges.models import TestCase
+
+        user = User(id=1, username="student")
+        challenge = Challenge(id=1, title="Test", points=100)
+        tc = TestCase(id=1, challenge=challenge, name="TC1", expected_output="5", points=100, is_active=True)
+        mock_filter.return_value.order_by.return_value = [tc]
+
+        sub = Submission(id=1, user=user, challenge=challenge, code="print(5)", language="Python")
+        sub.save = MagicMock()
+
+        ev = Evaluation(id=1, submission=sub)
+        ev.save = MagicMock()
+        mock_get_or_create.return_value = (ev, True)
+
+        # Mock execution service returning matching output
+        mock_exec = MagicMock()
+        mock_exec.execute.return_value = MagicMock(exit_code=0, stdout="5\n", stderr="", execution_time=0.1, memory_used=10.0)
+
+        mock_award.side_effect = RuntimeError("Achievement database error")
+
+        svc = EvaluationService(execution_service=mock_exec)
+        evaluation = svc.evaluate(sub)
+
+        # Evaluation must still succeed and remain COMPLETED
+        self.assertEqual(evaluation.status, Evaluation.Status.COMPLETED)
+        self.assertEqual(sub.status, Submission.Status.PASSED)
+        self.assertEqual(evaluation.score, 100)
 
 

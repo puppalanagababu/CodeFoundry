@@ -83,6 +83,17 @@ class SkillProfileService:
                         best_evaluations_by_challenge[challenge_id] = eval_obj
 
         selected_evaluations = list(best_evaluations_by_challenge.values())
+        return self.calculate_profile_from_evaluations(selected_evaluations)
+
+    def calculate_profile_from_evaluations(
+        self, selected_evaluations: List[Evaluation]
+    ) -> Dict[str, Any]:
+        """
+        Calculates and returns the aggregated skill profile for a list of evaluated challenge attempts.
+        """
+        if not selected_evaluations:
+            return self._empty_profile()
+
         total_analyzed = len(selected_evaluations)
 
         # Collect scores per dimension across deduplicated challenge attempts

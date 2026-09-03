@@ -7,6 +7,7 @@ class User(AbstractUser):
         STUDENT = "STUDENT", "Student"
         TRAINER = "TRAINER", "Trainer"
         ADMIN = "ADMIN", "Admin"
+        RECRUITER = "RECRUITER", "Recruiter"
 
     role = models.CharField(
         max_length=20,

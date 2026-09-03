@@ -139,3 +139,87 @@ class SkillProfileView(APIView):
         profile_data = service.get_user_profile(request.user)
         return Response(profile_data, status=status.HTTP_200_OK)
 
+
+class LeaderboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        from evaluations.leaderboard import LeaderboardService
+
+        service = LeaderboardService()
+        results = service.get_leaderboard(current_user=request.user)
+        return Response({"results": results}, status=status.HTTP_200_OK)
+
+
+class PublicProfileView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, username, *args, **kwargs):
+        from .profile_service import PublicProfileService
+
+        service = PublicProfileService()
+        profile = service.get_public_profile(username=username)
+        if profile is None:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(profile, status=status.HTTP_200_OK)
+
+
+class RecruiterCandidateListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        from .permissions import IsRecruiterUser
+        from .recruiter_service import RecruiterDashboardService
+
+        # Check recruiter permission
+        if not IsRecruiterUser().has_permission(request, self):
+            return Response(
+                {"detail": "You do not have permission to access the recruiter dashboard."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        search = request.query_params.get("search", "")
+        min_skill_score_raw = request.query_params.get("min_skill_score")
+        challenge_type = request.query_params.get("challenge_type")
+
+        min_skill_score = None
+        if min_skill_score_raw is not None:
+            try:
+                min_skill_score = int(min_skill_score_raw)
+            except (ValueError, TypeError):
+                min_skill_score = None
+
+        service = RecruiterDashboardService()
+        candidates = service.get_candidates(
+            search=search,
+            min_skill_score=min_skill_score,
+            challenge_type=challenge_type,
+        )
+        return Response({"results": candidates}, status=status.HTTP_200_OK)
+
+
+class RecruiterCandidateDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, username, *args, **kwargs):
+        from .permissions import IsRecruiterUser
+        from .recruiter_service import RecruiterDashboardService
+
+        # Check recruiter permission
+        if not IsRecruiterUser().has_permission(request, self):
+            return Response(
+                {"detail": "You do not have permission to access the recruiter dashboard."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        service = RecruiterDashboardService()
+        candidate = service.get_candidate_detail(username=username)
+        if candidate is None:
+            return Response(
+                {"detail": "Candidate not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(candidate, status=status.HTTP_200_OK)
