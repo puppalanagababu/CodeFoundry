@@ -831,3 +831,129 @@ class LoginThrottlingTests(SimpleTestCase):
         self.assertEqual(throttle.parse_rate("5/m"), (5, 60))
         self.assertEqual(throttle.parse_rate("100/d"), (100, 86400))
         self.assertEqual(throttle.parse_rate("20/30s"), (20, 30))
+
+
+class SecurityLoggingAndErrorHardeningTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.factory = APIRequestFactory()
+        self.login_view = LoginView.as_view()
+        self.logout_view = LogoutView.as_view()
+        self.user = User(id=1, username="test_user", email="test@example.com", role=User.Role.STUDENT)
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_1_invalid_login_logs_warning_and_returns_safe_generic_response(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        mock_validate.side_effect = AuthenticationFailed("No active account found with the given credentials")
+
+        with self.assertLogs("users.auth", level="WARNING") as cm:
+            request = self.factory.post("/api/auth/login/", {"username": "evil_hacker", "password": "SecretPassword123!"}, format="json")
+            response = self.login_view(request)
+
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(response.data["detail"], "No active account found with the given credentials")
+            self.assertTrue(any("Login authentication failed for user: evil_hacker" in log for log in cm.output))
+            # Verify password is not in log output
+            self.assertFalse(any("SecretPassword123!" in log for log in cm.output))
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_2_successful_login_logs_info_without_sensitive_tokens_or_passwords(self, mock_validate):
+        mock_validate.return_value = {
+            "access": "secret.access.jwt",
+            "refresh": "secret.refresh.jwt",
+            "user": {"id": 1, "username": "legit_user", "email": "legit@example.com", "role": "STUDENT"},
+        }
+
+        with self.assertLogs("users.auth", level="INFO") as cm:
+            request = self.factory.post("/api/auth/login/", {"username": "legit_user", "password": "SuperSecretPassword123!"}, format="json")
+            response = self.login_view(request)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertTrue(any("Login successful for user: legit_user" in log for log in cm.output))
+            # Ensure no credentials or tokens are logged
+            self.assertFalse(any("SuperSecretPassword123!" in log for log in cm.output))
+            self.assertFalse(any("secret.access.jwt" in log for log in cm.output))
+            self.assertFalse(any("secret.refresh.jwt" in log for log in cm.output))
+
+    @patch("users.views.RefreshToken")
+    def test_3_logout_logs_events_safely_without_token(self, mock_refresh_cls):
+        mock_token = MagicMock()
+        mock_refresh_cls.return_value = mock_token
+
+        with self.assertLogs("users.auth", level="INFO") as cm:
+            request = self.factory.post("/api/auth/logout/", {"refresh": "my.super.secret.refresh.jwt"}, format="json")
+            response = self.logout_view(request)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertTrue(any("Logout completed successfully" in log for log in cm.output))
+            self.assertFalse(any("my.super.secret.refresh.jwt" in log for log in cm.output))
+
+    @patch("users.views.RefreshToken")
+    def test_4_logout_invalid_token_logs_warning_without_token(self, mock_refresh_cls):
+        from rest_framework_simplejwt.exceptions import TokenError
+        mock_refresh_cls.side_effect = TokenError("Token is invalid or expired")
+
+        with self.assertLogs("users.auth", level="WARNING") as cm:
+            request = self.factory.post("/api/auth/logout/", {"refresh": "invalid.raw.jwt.token"}, format="json")
+            response = self.logout_view(request)
+
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data["detail"], "Invalid or expired refresh token.")
+            self.assertTrue(any("Logout failed: invalid or expired refresh token" in log for log in cm.output))
+            self.assertFalse(any("invalid.raw.jwt.token" in log for log in cm.output))
+
+    def test_5_custom_exception_handler_returns_generic_500_response(self):
+        from config.exceptions import custom_exception_handler
+
+        class DummyException(Exception):
+            pass
+
+        exc = DummyException("Sensitive internal database connection error: postgresql://user:secretpass@db:5432/codefoundry")
+        context = {
+            "request": self.factory.get("/api/dashboard/"),
+            "view": CurrentUserView(),
+        }
+
+        with self.assertLogs("config.exceptions", level="ERROR") as cm:
+            response = custom_exception_handler(exc, context)
+
+            self.assertIsNotNone(response)
+            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            self.assertEqual(response.data, {"detail": "An unexpected error occurred."})
+            # Verify internal DB message is in server logs
+            self.assertTrue(any("Sensitive internal database connection error" in log for log in cm.output))
+            # Verify client response does NOT contain sensitive details
+            self.assertNotIn("postgresql://", str(response.data))
+            self.assertNotIn("secretpass", str(response.data))
+
+    def test_6_fallback_server_error_500_returns_generic_json(self):
+        from config.exceptions import server_error_500
+        request = self.factory.get("/api/unknown/")
+        response = server_error_500(request)
+
+        self.assertEqual(response.status_code, 500)
+        import json
+        data = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(data, {"detail": "An unexpected error occurred."})
+
+    def test_7_no_response_leaks_secrets_tracebacks_or_paths(self):
+        from django.conf import settings
+        from config.exceptions import custom_exception_handler
+
+        exc = RuntimeError(f"Crash at /var/www/codefoundry/settings.py: SECRET_KEY={settings.SECRET_KEY}")
+        context = {
+            "request": self.factory.post("/api/auth/login/"),
+            "view": LoginView(),
+        }
+
+        response = custom_exception_handler(exc, context)
+        response_str = str(response.data)
+
+        self.assertNotIn(settings.SECRET_KEY, response_str)
+        self.assertNotIn("/var/www/codefoundry", response_str)
+        self.assertNotIn("Traceback", response_str)
+        self.assertNotIn("RuntimeError", response_str)
+        self.assertEqual(response.data, {"detail": "An unexpected error occurred."})

@@ -18,7 +18,7 @@ class LoginRateThrottle(SimpleRateThrottle):
             username = request.data.get("username", "")
 
         if username:
-            clean_user = str(username).strip().lower()
+            clean_user = str(username).replace("\r", "").replace("\n", "").replace("\t", "").strip().lower()[:150]
             ident = f"{ident}_{clean_user}"
 
         return self.cache_format % {

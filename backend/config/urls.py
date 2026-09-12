@@ -40,4 +40,4 @@ urlpatterns = [
     path('api/execution/', include('execution.urls')),
 ]
 
-
+handler500 = 'config.exceptions.server_error_500'

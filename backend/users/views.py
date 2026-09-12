@@ -1,5 +1,8 @@
+import logging
+from django.conf import settings
 from django.db.models import Avg
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +17,23 @@ from .serializers import (
     UserSerializer,
 )
 from .throttles import LoginRateThrottle
+
+logger = logging.getLogger("users.auth")
+
+
+def get_client_ip(request):
+    if not request:
+        return "unknown"
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "unknown")
+
+
+def sanitize_log_value(value):
+    if not value:
+        return ""
+    return str(value).replace("\r", "").replace("\n", "").replace("\t", "").strip()[:150]
 
 
 class RegisterView(APIView):
@@ -37,6 +57,25 @@ class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_classes = [LoginRateThrottle]
 
+    def post(self, request, *args, **kwargs):
+        username = ""
+        if hasattr(request, "data") and isinstance(request.data, dict):
+            username = request.data.get("username", "")
+        clean_user = sanitize_log_value(username)
+        ip = get_client_ip(request)
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            if response.status_code == status.HTTP_200_OK:
+                logger.info("Login successful for user: %s (IP: %s)", clean_user, ip)
+            return response
+        except (AuthenticationFailed, InvalidToken):
+            logger.warning("Login authentication failed for user: %s (IP: %s)", clean_user, ip)
+            raise
+        except Exception:
+            logger.warning("Login authentication failed for user: %s (IP: %s)", clean_user, ip)
+            raise
+
 
 class LogoutView(APIView):
     """
@@ -46,8 +85,10 @@ class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        refresh_token = request.data.get("refresh")
+        ip = get_client_ip(request)
+        refresh_token = request.data.get("refresh") if isinstance(request.data, dict) else None
         if not refresh_token:
+            logger.warning("Logout failed: missing refresh token (IP: %s)", ip)
             return Response(
                 {"detail": "Refresh token is required."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -56,20 +97,24 @@ class LogoutView(APIView):
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
+            logger.info("Logout completed successfully (IP: %s)", ip)
             return Response(
                 {"message": "Logged out successfully."},
                 status=status.HTTP_200_OK,
             )
         except (TokenError, InvalidToken):
+            logger.warning("Logout failed: invalid or expired refresh token (IP: %s)", ip)
             return Response(
                 {"detail": "Invalid or expired refresh token."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except Exception:
+        except Exception as exc:
+            logger.exception("Unexpected error during logout (IP: %s)", ip)
             return Response(
-                {"detail": "An error occurred during logout."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "An unexpected error occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR if not getattr(settings, 'DEBUG', False) else status.HTTP_400_BAD_REQUEST,
             )
+
 
 
 class CurrentUserView(APIView):
