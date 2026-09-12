@@ -13,6 +13,7 @@ from .serializers import (
     UserRegisterSerializer,
     UserSerializer,
 )
+from .throttles import LoginRateThrottle
 
 
 class RegisterView(APIView):
@@ -34,6 +35,7 @@ class RegisterView(APIView):
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 class LogoutView(APIView):

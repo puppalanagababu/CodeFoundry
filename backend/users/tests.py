@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
@@ -7,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from submissions.models import Submission
 from .serializers import UserRegisterSerializer, UserSerializer
+from .throttles import LoginRateThrottle
 from .views import CurrentUserView, LoginView, LogoutView, RegisterView
 
 User = get_user_model()
@@ -743,3 +745,89 @@ class LogoutAPITests(SimpleTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get("message"), "Logged out successfully.")
+
+
+class LoginThrottlingTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.factory = APIRequestFactory()
+        self.login_view = LoginView.as_view()
+        self.current_user_view = CurrentUserView.as_view()
+        self.user = User(id=1, username="test_user", email="test@example.com", role=User.Role.STUDENT)
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_1_valid_login_succeeds_and_returns_tokens(self, mock_validate):
+        mock_validate.return_value = {
+            "access": "access.jwt.token",
+            "refresh": "refresh.jwt.token",
+            "user": {"id": 1, "username": "test_user", "email": "test@example.com", "role": "STUDENT"},
+        }
+        request = self.factory.post("/api/auth/login/", {"username": "test_user", "password": "CorrectPassword123!"}, format="json")
+        response = self.login_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        self.assertIn("user", response.data)
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_2_invalid_login_returns_generic_error(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        mock_validate.side_effect = AuthenticationFailed("No active account found with the given credentials")
+
+        request = self.factory.post("/api/auth/login/", {"username": "test_user", "password": "WrongPassword123!"}, format="json")
+        response = self.login_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data["detail"], "No active account found with the given credentials")
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_3_repeated_failed_login_attempts_trigger_throttling_429(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        mock_validate.side_effect = AuthenticationFailed("No active account found with the given credentials")
+
+        # Rate is 5/15m -> 5 attempts allowed, 6th is throttled
+        for i in range(5):
+            request = self.factory.post("/api/auth/login/", {"username": "brute_target", "password": f"wrong_{i}"}, format="json")
+            response = self.login_view(request)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, f"Attempt {i+1} should be 401")
+
+        # 6th attempt should be throttled
+        throttled_request = self.factory.post("/api/auth/login/", {"username": "brute_target", "password": "wrong_6"}, format="json")
+        throttled_response = self.login_view(throttled_request)
+
+        self.assertEqual(throttled_response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn("Request was throttled", throttled_response.data["detail"])
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_4_login_throttling_does_not_affect_unrelated_api_endpoints(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        mock_validate.side_effect = AuthenticationFailed("No active account found with the given credentials")
+
+        # Exhaust login attempts for an IP/user
+        for _ in range(5):
+            req = self.factory.post("/api/auth/login/", {"username": "target_user", "password": "wrong"}, format="json")
+            self.login_view(req)
+
+        # Login is throttled now
+        login_req = self.factory.post("/api/auth/login/", {"username": "target_user", "password": "wrong"}, format="json")
+        login_res = self.login_view(login_req)
+        self.assertEqual(login_res.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+        # But unrelated authenticated endpoints (like /api/auth/me/) continue working normally
+        me_req = self.factory.get("/api/auth/me/")
+        force_authenticate(me_req, user=self.user)
+        me_res = self.current_user_view(me_req)
+        self.assertEqual(me_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(me_res.data["username"], "test_user")
+
+    def test_5_throttle_parse_rate_custom_formats(self):
+        throttle = LoginRateThrottle()
+        self.assertEqual(throttle.parse_rate("5/15m"), (5, 900))
+        self.assertEqual(throttle.parse_rate("10/h"), (10, 3600))
+        self.assertEqual(throttle.parse_rate("5/m"), (5, 60))
+        self.assertEqual(throttle.parse_rate("100/d"), (100, 86400))
+        self.assertEqual(throttle.parse_rate("20/30s"), (20, 30))

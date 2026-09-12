@@ -179,6 +179,19 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+# Cache Configuration (Redis in production, LocMemCache for debug/testing)
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': os.getenv(
+            'CACHE_BACKEND',
+            'django.core.cache.backends.redis.RedisCache' if not DEBUG else 'django.core.cache.backends.locmem.LocMemCache'
+        ),
+        'LOCATION': REDIS_URL if not DEBUG else 'codefoundry-locmem-cache',
+    }
+}
+
 # Django REST Framework & JWT Configuration
 from datetime import timedelta
 
@@ -187,6 +200,9 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '5/15m',
+    },
 }
 
 SIMPLE_JWT = {
