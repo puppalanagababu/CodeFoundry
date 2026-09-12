@@ -254,18 +254,56 @@ Open `http://localhost:5173` in your browser.
 
 ## 12. Automated Testing
 
-DevForge includes a comprehensive backend test suite covering models, API serialization, Docker sandbox execution, Celery dispatch, evaluation grading, and user isolation.
+DevForge includes a comprehensive backend test suite covering models, authentication, security logging, rate limiting, password reset, Docker sandbox execution, Celery dispatch, evaluation grading, and user isolation.
 
 To run the full test suite:
 ```bash
 python backend/manage.py test
 ```
 
-**Test Suite Coverage:**
-```text
-Ran 139 tests in 9.970s
-OK (139/139 passing, 100%)
+---
+
+## 13. Production Deployment Guide
+
+Follow these steps for a secure production deployment:
+
+### 1. Environment Configuration
+- Create a production `.env` file based on `.env.example`.
+- Ensure `DEBUG=False` and set a cryptographically secure `SECRET_KEY` ($\ge 50$ characters).
+- Configure `ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS` to your production domain(s).
+
+### 2. Infrastructure (PostgreSQL & Redis)
+- Provision a dedicated PostgreSQL database and set `DATABASE_URL` (or `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`).
+- Provision Redis for caching and Celery task queues (`REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`). Ensure Redis is secured and not publicly accessible.
+
+### 3. Database Migrations & Static Assets
+```bash
+python backend/manage.py migrate
+python backend/manage.py collectstatic --noinput
 ```
+
+### 4. Background Workers & Docker Execution
+- Start Celery worker: `celery -A config worker --loglevel=info --concurrency=4`
+- Ensure Docker Engine is running on the host/worker with `python:3.11-slim` pre-pulled (`docker pull python:3.11-slim`).
+
+### 5. Backend WSGI/ASGI Server
+- Run behind Gunicorn/Uvicorn with a reverse proxy (Nginx/Caddy/Cloudflare):
+  ```bash
+  gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
+  ```
+
+### 6. Frontend Production Build
+- Set `VITE_API_BASE_URL=https://api.yourdomain.com/api` and build:
+  ```bash
+  cd frontend
+  npm install
+  npm run build
+  ```
+- Serve `frontend/dist` via Nginx, Caddy, Vercel, or Cloudflare Pages.
+
+### 7. HTTPS & Security Headers
+- Ensure TLS/SSL is active (`SECURE_SSL_REDIRECT=True`, `SESSION_COOKIE_SECURE=True`, `CSRF_COOKIE_SECURE=True`).
+
 
 ---
 
