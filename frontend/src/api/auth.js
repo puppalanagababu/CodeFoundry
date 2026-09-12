@@ -30,3 +30,11 @@ export async function refreshToken(refresh) {
 export async function getCurrentUser() {
   return apiClient.get('auth/me/');
 }
+
+/**
+ * Logs out the user by blacklisting their refresh token on the server.
+ * @param {string} refresh - The refresh token
+ */
+export async function logoutUser(refresh) {
+  return apiClient.post('auth/logout/', { refresh });
+}

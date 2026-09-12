@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, loginUser, registerUser } from '../api/auth';
+import { getCurrentUser, loginUser, registerUser, logoutUser } from '../api/auth';
 
 const AuthContext = createContext(null);
 
@@ -57,7 +57,15 @@ export function AuthProvider({ children }) {
     return registerUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        await logoutUser(refreshToken);
+      } catch {
+        // Silently handle failure so user is still guaranteed to log out locally
+      }
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');

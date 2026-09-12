@@ -91,7 +91,11 @@ async function request(endpoint, options = {}, isRetry = false) {
             if (refreshRes.ok) {
               const refreshData = await refreshRes.json();
               const newToken = refreshData.access;
+              const newRefreshToken = refreshData.refresh;
               localStorage.setItem('token', newToken);
+              if (newRefreshToken) {
+                localStorage.setItem('refreshToken', newRefreshToken);
+              }
               processQueue(null, newToken);
               isRefreshing = false;
 

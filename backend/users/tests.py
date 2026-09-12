@@ -1,12 +1,13 @@
 from unittest.mock import MagicMock, patch
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, force_authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from submissions.models import Submission
 from .serializers import UserRegisterSerializer, UserSerializer
-from .views import CurrentUserView, LoginView, RegisterView
+from .views import CurrentUserView, LoginView, LogoutView, RegisterView
 
 User = get_user_model()
 
@@ -650,3 +651,95 @@ class RecruiterDashboardAPITests(SimpleTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Candidate not found.")
 
+
+class RefreshTokenRotationAndBlacklistTests(SimpleTestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.refresh_view = TokenRefreshView.as_view()
+
+    @patch("rest_framework_simplejwt.serializers.TokenRefreshSerializer.validate")
+    def test_1_refresh_token_rotation_returns_new_access_and_refresh_tokens(self, mock_validate):
+        mock_validate.return_value = {
+            "access": "new.access.token",
+            "refresh": "new.rotated.refresh.token",
+        }
+
+        request = self.factory.post("/api/auth/refresh/", {"refresh": "initial.refresh.token"}, format="json")
+        response = self.refresh_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+        self.assertEqual(response.data["access"], "new.access.token")
+        self.assertEqual(response.data["refresh"], "new.rotated.refresh.token")
+
+    @patch("rest_framework_simplejwt.serializers.TokenRefreshSerializer.validate")
+    def test_2_old_refresh_token_rejection(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import InvalidToken
+        mock_validate.side_effect = InvalidToken("Token is blacklisted")
+
+        request = self.factory.post("/api/auth/refresh/", {"refresh": "old.blacklisted.token"}, format="json")
+        response = self.refresh_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class LogoutAPITests(SimpleTestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.logout_view = LogoutView.as_view()
+
+    @patch("users.views.RefreshToken")
+    def test_1_logout_successfully_blacklists_refresh_token(self, mock_refresh_cls):
+        mock_token_instance = MagicMock()
+        mock_refresh_cls.return_value = mock_token_instance
+
+        request = self.factory.post("/api/auth/logout/", {"refresh": "dummy.refresh.jwt"}, format="json")
+        response = self.logout_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("message"), "Logged out successfully.")
+        mock_refresh_cls.assert_called_once_with("dummy.refresh.jwt")
+        mock_token_instance.blacklist.assert_called_once()
+
+    def test_2_logout_missing_refresh_token_rejected_safely(self):
+        request = self.factory.post("/api/auth/logout/", {}, format="json")
+        response = self.logout_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get("detail"), "Refresh token is required.")
+
+    @patch("users.views.RefreshToken")
+    def test_3_logout_invalid_refresh_token_rejected_safely(self, mock_refresh_cls):
+        from rest_framework_simplejwt.exceptions import TokenError
+        mock_refresh_cls.side_effect = TokenError("Token is invalid or expired")
+
+        request = self.factory.post("/api/auth/logout/", {"refresh": "invalid.jwt.token"}, format="json")
+        response = self.logout_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get("detail"), "Invalid or expired refresh token.")
+
+    @patch("users.views.RefreshToken")
+    def test_4_logout_already_blacklisted_token_handled_safely(self, mock_refresh_cls):
+        from rest_framework_simplejwt.exceptions import TokenError
+        mock_token_instance = MagicMock()
+        mock_token_instance.blacklist.side_effect = TokenError("Token is blacklisted")
+        mock_refresh_cls.return_value = mock_token_instance
+
+        request = self.factory.post("/api/auth/logout/", {"refresh": "already.blacklisted.jwt"}, format="json")
+        response = self.logout_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get("detail"), "Invalid or expired refresh token.")
+
+    @patch("users.views.RefreshToken")
+    def test_5_logout_unauthenticated_request_works_with_valid_refresh_token(self, mock_refresh_cls):
+        mock_token_instance = MagicMock()
+        mock_refresh_cls.return_value = mock_token_instance
+
+        request = self.factory.post("/api/auth/logout/", {"refresh": "valid.refresh.jwt"}, format="json")
+        response = self.logout_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("message"), "Logged out successfully.")
