@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getChallenges, getChallengeProgress } from '../api/challenges';
 import Loading from '../components/Loading';
-import AnimatedCounter from '../components/motion/AnimatedCounter';
-import AnimatedProgress from '../components/motion/AnimatedProgress';
-import ScratchIntroOverlay from '../components/motion/ScratchIntroOverlay';
 
 const DIFFICULTIES = [
   { label: 'All Difficulties', value: '' },
@@ -39,33 +36,6 @@ export default function Challenges() {
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
-  // Scratch Me Entrance Experience State (Session-aware)
-  const [showIntro, setShowIntro] = useState(() => {
-    try {
-      return !sessionStorage.getItem('devforge_challenges_intro_seen');
-    } catch {
-      return true;
-    }
-  });
-
-  const handleIntroComplete = () => {
-    try {
-      sessionStorage.setItem('devforge_challenges_intro_seen', 'true');
-    } catch {
-      // Ignore
-    }
-    setShowIntro(false);
-  };
-
-  const handleReplayIntro = () => {
-    try {
-      sessionStorage.removeItem('devforge_challenges_intro_seen');
-    } catch {
-      // Ignore
-    }
-    setShowIntro(true);
-  };
-
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -98,8 +68,8 @@ export default function Challenges() {
         if (progressData && progressData.summary) {
           setProgressSummary(progressData.summary);
           const map = {};
-          (progressData.challenges || []).forEach((item) => {
-            map[item.challenge_id] = item;
+          (progressData.challenges || []).forEach((p) => {
+            map[p.challenge_id] = p;
           });
           setProgressMap(map);
         }
@@ -108,7 +78,7 @@ export default function Challenges() {
       })
       .catch((err) => {
         if (!isMounted) return;
-        setError(err.message || 'Failed to load challenges.');
+        setError(err.message || 'Failed to load challenge library.');
         setLoading(false);
       });
 
@@ -117,122 +87,94 @@ export default function Challenges() {
     };
   }, [search, difficulty, challengeType, page]);
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
-
-  const handleDifficultyChange = (e) => {
-    setDifficulty(e.target.value);
-    setPage(1);
-  };
-
-  const handleTypeChange = (e) => {
-    setChallengeType(e.target.value);
-    setPage(1);
-  };
-
   const totalPages = Math.ceil(count / pageSize) || 1;
 
-  return (
-    <div className="page-container animate-fade-in-up" style={{ maxWidth: '1200px' }}>
-      {/* Interactive "Scratch Me" Overlay Entrance */}
-      {showIntro && <ScratchIntroOverlay onComplete={handleIntroComplete} />}
+  const handleClearFilters = () => {
+    setSearch('');
+    setDifficulty('');
+    setChallengeType('');
+    setPage(1);
+  };
 
-      {/* Header Framed in Gency Style */}
+  return (
+    <div className="page-container animate-fade-in-up" style={{ maxWidth: '1240px' }}>
+      {/* Header Banner */}
       <div
-        className="gency-frame animate-fade-in-up"
+        className="card animate-fade-in-up"
         style={{
-          padding: '2rem 2.5rem',
-          marginBottom: '2rem',
-          background: 'linear-gradient(180deg, rgba(24, 34, 54, 0.75) 0%, rgba(14, 20, 32, 0.9) 100%)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
+          padding: '2.5rem',
+          marginBottom: '2.5rem',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+          borderRadius: '24px',
+          border: '1px solid #e2e8f0',
         }}
       >
-        <div>
-          <h1 className="page-title" style={{ margin: 0, fontSize: '2rem' }}>Engineering Mission Catalog</h1>
-          <p className="page-description" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
-            Choose an engineering scenario to practice debugging, API architecture, security hardening, or performance tuning.
-          </p>
-        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+              <span className="badge badge-API" style={{ fontSize: '0.75rem' }}>
+                Engineering Sandbox
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Production Scenarios
+              </span>
+            </div>
+            <h1 className="page-title" style={{ margin: 0, fontSize: '2.2rem' }}>
+              Engineering Challenges
+            </h1>
+            <p className="page-description" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
+              Solve production bugs, optimize slow endpoints, and secure vulnerable services in real multi-file codebases.
+            </p>
+          </div>
 
-        <div>
-          <button
-            type="button"
-            onClick={handleReplayIntro}
-            className="btn btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            title="Replay Scratch Discovery Experience"
-          >
-            <span>✨</span>
-            <span>Replay Intro</span>
-          </button>
+          {progressSummary && (
+            <div style={{ display: 'flex', gap: '1.5rem', background: '#ffffff', padding: '1rem 1.5rem', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                  Passed
+                </div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#10b981' }}>
+                  {progressSummary.passed}
+                </div>
+              </div>
+              <div style={{ width: '1px', backgroundColor: '#e2e8f0' }} />
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                  Attempted
+                </div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#2563eb' }}>
+                  {progressSummary.attempted}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Progress Overview Banner */}
-      {progressSummary && progressSummary.total_challenges > 0 && (
-        <div className="gency-frame animate-fade-in-up stagger-1" style={{ padding: '1.25rem 1.75rem', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff', fontFamily: 'var(--font-display)' }}>
-                Your Engineering Progress
-              </span>
-              <span className="status-pill status-passed">
-                <span className="status-dot" />
-                <span>
-                  <AnimatedCounter value={progressSummary.completed_challenges} duration={700} /> / {progressSummary.total_challenges} Solved
-                </span>
-              </span>
-            </div>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Overall Completion: <strong style={{ color: '#fff' }}><AnimatedCounter value={progressSummary.completion_percentage} suffix="%" duration={900} /></strong>
-            </span>
-          </div>
-
-          <AnimatedProgress
-            value={progressSummary.completion_percentage}
-            max={100}
-            height={8}
-            color="var(--accent-primary)"
-          />
-        </div>
-      )}
-
-      {/* Filter & Search Bar */}
-      <div
-        className="gency-frame animate-fade-in-up stagger-2"
-        style={{
-          padding: '1.25rem 1.5rem',
-          marginBottom: '2.25rem',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ flex: '1 1 280px', minWidth: '220px' }}>
+      {/* Filter Toolbar */}
+      <div className="recruiter-filter-toolbar" style={{ marginBottom: '2.5rem' }}>
+        <div className="recruiter-search-box">
+          <span className="search-icon">🔍</span>
           <input
             type="text"
-            className="input-control"
-            placeholder="🔍 Search challenges by title, keyword, or concept..."
+            className="recruiter-input"
+            placeholder="Search challenges by title, keywords..."
             value={search}
-            onChange={handleSearchChange}
-            style={{ borderRadius: 'var(--radius-full)', padding: '0.6rem 1.25rem' }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="recruiter-filter-selects">
           <select
-            className="select-control"
+            className="recruiter-select"
             value={difficulty}
-            onChange={handleDifficultyChange}
-            style={{ width: 'auto', minWidth: '155px', borderRadius: 'var(--radius-full)', padding: '0.6rem 1.25rem' }}
+            onChange={(e) => {
+              setDifficulty(e.target.value);
+              setPage(1);
+            }}
           >
             {DIFFICULTIES.map((d) => (
               <option key={d.value} value={d.value}>
@@ -242,10 +184,12 @@ export default function Challenges() {
           </select>
 
           <select
-            className="select-control"
+            className="recruiter-select"
             value={challengeType}
-            onChange={handleTypeChange}
-            style={{ width: 'auto', minWidth: '160px', borderRadius: 'var(--radius-full)', padding: '0.6rem 1.25rem' }}
+            onChange={(e) => {
+              setChallengeType(e.target.value);
+              setPage(1);
+            }}
           >
             {CHALLENGE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -258,141 +202,142 @@ export default function Challenges() {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => {
-                setSearch('');
-                setDifficulty('');
-                setChallengeType('');
-                setPage(1);
-              }}
-              style={{ borderRadius: 'var(--radius-full)', padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+              onClick={handleClearFilters}
+              style={{ padding: '0.65rem 1.1rem', fontSize: '0.85rem' }}
             >
-              Clear Filters
+              ↻ Clear
             </button>
           )}
         </div>
       </div>
 
-      {/* Challenges Grid / Status */}
+      {/* Challenges Grid */}
       {loading ? (
         <div style={{ padding: '4rem 0' }}>
-          <Loading message="Fetching engineering challenges..." />
+          <Loading message="Loading challenge catalog..." />
         </div>
       ) : error ? (
-        <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', borderRadius: 'var(--radius-md)', padding: '1.25rem', textAlign: 'center' }}>
-          <p>{error}</p>
+        <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', margin: '2rem 0' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <h2 style={{ fontSize: '1.3rem', color: '#ef4444', marginBottom: '0.5rem' }}>Failed to Load Challenges</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>{error}</p>
+          <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
+            Reset Filters
+          </button>
         </div>
       ) : challenges.length === 0 ? (
-        <div className="gency-frame animate-scale-in" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔍</div>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', color: '#fff', marginBottom: '0.5rem' }}>
-            No challenges match your criteria
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-            Try clearing filters or searching with different engineering keywords.
+        <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
+          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🔍</span>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>No Challenges Found</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
+            No engineering challenges match your search criteria. Try modifying your search or clearing filters.
           </p>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              setSearch('');
-              setDifficulty('');
-              setChallengeType('');
-            }}
-          >
-            Reset All Filters
+          <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
+            Clear Filters
           </button>
         </div>
       ) : (
-        <>
-          <div className="challenges-grid">
-            {challenges.map((c, idx) => {
-              const prog = progressMap[c.id];
-              const isCompleted = prog?.is_completed || prog?.status === 'PASSED';
-              const hasAttempted = prog && prog.attempts_count > 0;
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.75rem' }}>
+          {challenges.map((ch, idx) => {
+            const prog = progressMap[ch.id];
+            const isPassed = prog?.status === 'PASSED';
+            const isAttempted = prog?.status === 'ATTEMPTED';
 
-              return (
-                <Link
-                  key={c.id}
-                  to={`/challenges/${c.id}`}
-                  className={`challenge-card gency-frame animate-fade-in-up stagger-${(idx % 8) + 1}`}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <div className="challenge-card-header">
-                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span className={`badge badge-${c.difficulty}`}>{c.difficulty}</span>
-                      <span className={`badge badge-${c.challenge_type}`}>
-                        {c.challenge_type?.replace('_', ' ')}
-                      </span>
-                    </div>
-
-                    {isCompleted ? (
-                      <span className="status-pill status-passed" title="Challenge Passed">
-                        <span className="status-dot" />
-                        <span>Solved</span>
-                      </span>
-                    ) : hasAttempted ? (
-                      <span className="status-pill status-pending" title="In Progress">
-                        <span className="status-dot" />
-                        <span>Attempted</span>
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <h3 className="challenge-title" style={{ marginBottom: '0.45rem' }}>
-                      {c.title}
-                    </h3>
-                    <p className="challenge-description">
-                      {c.description}
-                    </p>
-                  </div>
-
-                  <div className="challenge-card-footer">
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <span className="badge badge-lang">{c.programming_language}</span>
-                      {c.repository_structure && (
-                        <span className="badge badge-type" style={{ fontSize: '0.68rem' }}>
-                          Multi-File
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, color: '#fff', fontFamily: 'var(--font-mono)' }}>
-                      <span>{c.points} pts</span>
-                      <span className="btn-arrow-icon" style={{ color: 'var(--accent-blue)', fontSize: '0.9rem' }}>↗</span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '2.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
+            return (
+              <div
+                key={ch.id}
+                className={`card animate-fade-in-up stagger-${(idx % 6) + 1}`}
+                style={{
+                  padding: '1.75rem',
+                  borderRadius: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '1.25rem',
+                  border: isPassed ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                }}
               >
-                &larr; Previous
-              </button>
-              <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                Page <strong style={{ color: '#fff' }}>{page}</strong> of <strong style={{ color: '#fff' }}>{totalPages}</strong>
-              </span>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
-              >
-                Next &rarr;
-              </button>
-            </div>
-          )}
-        </>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                    <span className={`badge badge-${ch.challenge_type || 'API'}`}>
+                      {ch.challenge_type ? ch.challenge_type.replace('_', ' ') : 'Challenge'}
+                    </span>
+                    <span className={`badge badge-${ch.difficulty || 'BEGINNER'}`}>
+                      {ch.difficulty}
+                    </span>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.6rem', lineHeight: 1.3 }}>
+                    <Link to={`/challenges/${ch.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {ch.title}
+                    </Link>
+                  </h3>
+
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {ch.short_description || ch.description}
+                  </p>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', marginBottom: '1rem', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                    <span>💻 {ch.language || 'Python'}</span>
+                    <span>🏆 {ch.points || 100} pts</span>
+                    {isPassed ? (
+                      <span style={{ color: '#059669', fontWeight: 700 }}>✓ Solved</span>
+                    ) : isAttempted ? (
+                      <span style={{ color: '#d97706', fontWeight: 700 }}>● Attempted</span>
+                    ) : (
+                      <span>Unattempted</span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <Link
+                      to={`/challenges/${ch.id}`}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+                    >
+                      Briefing
+                    </Link>
+                    <Link
+                      to={`/workspace/${ch.id}`}
+                      className="btn-saas btn-saas-primary"
+                      style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+                    >
+                      <span>Solve</span>
+                      <span className="btn-arrow-icon">→</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '3.5rem' }}>
+          <button
+            className="btn btn-secondary"
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          >
+            ← Previous
+          </button>
+          <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            className="btn btn-secondary"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          >
+            Next →
+          </button>
+        </div>
       )}
     </div>
   );

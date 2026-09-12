@@ -64,6 +64,14 @@ export default function App() {
               }
             />
             <Route
+              path="/recruiter/compare"
+              element={
+                <ProtectedRoute>
+                  <RecruiterDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/challenges/:id"
               element={
                 <ProtectedRoute>

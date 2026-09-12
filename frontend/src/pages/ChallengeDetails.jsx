@@ -98,7 +98,7 @@ const INCIDENT_TYPE_CONFIG = {
     headline: 'SOMETHING IS EXPOSED.',
     lead: 'Sensitive endpoints or parameter validation mechanisms have critical security flaws.',
     icon: '🛡️',
-    color: '#a855f7',
+    color: '#8b5cf6',
     diagnostics: [
       'Scanning authorization guards and middleware...',
       'Auditing input sanitization and parameter handling...',
@@ -242,7 +242,7 @@ export default function ChallengeDetails() {
     let isMounted = true;
     setLoading(true);
     setError(null);
-    setRevealState('idle'); // Always start in idle state so INVESTIGATE button is visible
+    setRevealState('idle');
 
     Promise.all([
       getChallenge(id),
@@ -269,7 +269,6 @@ export default function ChallengeDetails() {
   const handleStartInvestigation = () => {
     clearAllTimers();
 
-    // Check if user prefers reduced motion
     const prefersReducedMotion =
       window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -288,11 +287,8 @@ export default function ChallengeDetails() {
       const t = setTimeout(() => {
         setDiagnosticStep(index + 1);
         if (index === stepTimings.length - 1) {
-          // Trigger the Boom Burst transition
           const burstTimer = setTimeout(() => {
             setRevealState('burst');
-
-            // After burst plays (~850ms), reveal final challenge
             const revealTimer = setTimeout(() => {
               setRevealState('revealed');
             }, 850);
@@ -312,7 +308,7 @@ export default function ChallengeDetails() {
 
   if (loading) {
     return (
-      <div className="page-container">
+      <div className="page-container" style={{ padding: '4rem 1.5rem' }}>
         <Loading message="Loading challenge briefing & requirements..." />
       </div>
     );
@@ -321,7 +317,7 @@ export default function ChallengeDetails() {
   if (error || !challenge) {
     return (
       <div className="page-container">
-        <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
           <p style={{ marginBottom: '1rem', fontSize: '1.05rem' }}>{error || 'Challenge not found.'}</p>
           <Link to="/challenges" className="btn btn-secondary">
             &larr; Back to Challenges
@@ -343,41 +339,53 @@ export default function ChallengeDetails() {
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1100px' }}>
       <Link
         to="/challenges"
-        style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}
+        style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, textDecoration: 'none' }}
       >
-        &larr; Back to Mission Catalog
+        &larr; Back to Challenges
       </Link>
 
-      {/* ========================================================================= */}
-      {/* 1. INITIAL STATE: INCIDENT ALERT (Interactive Problem Discovery)         */}
-      {/* ========================================================================= */}
+      {/* 1. INITIAL STATE: INCIDENT ALERT (Interactive Problem Discovery) */}
       {revealState === 'idle' && (
         <div
-          className={`incident-hero-card type-${challenge.challenge_type} animate-scale-in`}
-          style={{ textAlign: 'center', marginBottom: '2.5rem' }}
+          className="card animate-scale-in"
+          style={{
+            textAlign: 'center',
+            marginBottom: '2.5rem',
+            padding: '3.5rem 2rem',
+            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(59, 130, 246, 0.04) 100%)',
+            border: '1px solid #e2e8f0',
+          }}
         >
           <div
-            className="incident-tag"
             style={{
-              background: `${incidentConfig.color}18`,
-              border: `1px solid ${incidentConfig.color}40`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: `${incidentConfig.color}15`,
+              border: `1px solid ${incidentConfig.color}35`,
               color: incidentConfig.color,
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              padding: '0.35rem 0.95rem',
+              borderRadius: 'var(--radius-full)',
+              marginBottom: '1.25rem',
             }}
           >
-            <span className="pulsing-radar-dot" style={{ backgroundColor: incidentConfig.color }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: incidentConfig.color }} />
             <span>{incidentConfig.badge}</span>
           </div>
 
           <h1
             className="hero-title animate-fade-in-up stagger-1"
-            style={{ fontSize: '2.75rem', marginBottom: '0.85rem', letterSpacing: '-0.03em' }}
+            style={{ fontSize: '2.6rem', marginBottom: '0.85rem', letterSpacing: '-0.03em' }}
           >
             {incidentConfig.headline}
           </h1>
 
           <p
             className="hero-subtitle animate-fade-in-up stagger-2"
-            style={{ margin: '0 auto 2rem', maxWidth: '620px', fontSize: '1.1rem' }}
+            style={{ margin: '0 auto 2rem', maxWidth: '620px', fontSize: '1.05rem' }}
           >
             {incidentConfig.lead}
           </p>
@@ -390,7 +398,7 @@ export default function ChallengeDetails() {
               justifyContent: 'center',
               gap: '0.75rem',
               flexWrap: 'wrap',
-              marginBottom: '2.25rem',
+              marginBottom: '2.5rem',
             }}
           >
             <span className={`badge badge-${challenge.difficulty}`} style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
@@ -399,10 +407,10 @@ export default function ChallengeDetails() {
             <span className={`badge badge-${challenge.challenge_type}`} style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
               {challenge.challenge_type?.replace('_', ' ')}
             </span>
-            <span className="badge badge-lang" style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
+            <span className="badge badge-API" style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
               {challenge.points} PTS
             </span>
-            <span className="badge badge-lang" style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
+            <span className="badge badge-BEGINNER" style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}>
               {challenge.programming_language}
             </span>
           </div>
@@ -414,17 +422,16 @@ export default function ChallengeDetails() {
             <button
               type="button"
               onClick={handleStartInvestigation}
-              className="btn-gency btn-gency-primary"
+              className="btn-saas btn-saas-primary"
               style={{
-                padding: '0.9rem 2.6rem',
-                fontSize: '1.08rem',
-                boxShadow: `0 0 28px ${incidentConfig.color}45`,
+                padding: '0.95rem 2.8rem',
+                fontSize: '1.05rem',
               }}
               aria-label="Investigate engineering incident"
             >
               <span style={{ fontSize: '1.15rem' }}>{incidentConfig.icon}</span>
-              <span>⚡ INVESTIGATE INCIDENT</span>
-              <span className="btn-arrow-icon">↗</span>
+              <span>INVESTIGATE INCIDENT</span>
+              <span className="btn-arrow-icon">→</span>
             </button>
 
             <button
@@ -434,7 +441,7 @@ export default function ChallengeDetails() {
                 background: 'transparent',
                 border: 'none',
                 color: 'var(--text-muted)',
-                fontSize: '0.82rem',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 textDecoration: 'underline',
                 padding: '0.35rem',
@@ -446,37 +453,54 @@ export default function ChallengeDetails() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 2. INVESTIGATION STATE: TERMINAL DIAGNOSTIC SCANNER                       */}
-      {/* ========================================================================= */}
+      {/* 2. INVESTIGATION STATE: DIAGNOSTIC SCANNER */}
       {revealState === 'investigating' && (
         <div
-          className={`incident-hero-card type-${challenge.challenge_type} animate-fade-in-up`}
-          style={{ textAlign: 'center', marginBottom: '2.5rem' }}
+          className="card animate-fade-in-up"
+          style={{ textAlign: 'center', marginBottom: '2.5rem', padding: '3rem 2rem', borderRadius: '24px' }}
         >
           <div
-            className="incident-tag"
             style={{
-              background: 'rgba(99, 102, 241, 0.15)',
-              border: '1px solid rgba(99, 102, 241, 0.4)',
-              color: '#a5b4fc',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'rgba(99, 102, 241, 0.1)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              color: 'var(--accent-primary)',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              padding: '0.35rem 0.95rem',
+              borderRadius: 'var(--radius-full)',
+              marginBottom: '1rem',
             }}
           >
             <span className="spinner-icon" style={{ width: 10, height: 10, borderWidth: 1.5 }} />
             <span>RUNNING SYSTEM DIAGNOSTIC</span>
           </div>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', color: '#fff', marginBottom: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             Investigating Codebase Telemetry...
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', marginBottom: '1.75rem' }}>
             Inspecting sandbox environment, source files, and unit test assertions.
           </p>
 
-          <div className="diagnostic-terminal-box">
-            <div className="diagnostic-scan-bar" />
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '0.5rem', marginBottom: '0.75rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              <span>$ devforge-cli diagnose --sandbox container-01</span>
+          <div
+            style={{
+              maxWidth: '680px',
+              margin: '0 auto',
+              background: '#0f172a',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              textAlign: 'left',
+              color: '#f8fafc',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.85rem',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #334155', paddingBottom: '0.6rem', marginBottom: '0.85rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+              <span>$ codefoundry diagnose --sandbox container-01</span>
               <button
                 type="button"
                 onClick={handleQuickReveal}
@@ -486,7 +510,7 @@ export default function ChallengeDetails() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.84rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <div style={{ color: '#94a3b8' }}>
                 [0.00s] Initializing diagnostic telemetry in isolated Docker sandbox...
               </div>
@@ -515,87 +539,51 @@ export default function ChallengeDetails() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 2.5 SIGNATURE "BOOM" ENGINEERING SIGNAL BURST                            */}
-      {/* ========================================================================= */}
+      {/* 2.5 BURST STATE */}
       {revealState === 'burst' && (
         <div
-          className={`incident-hero-card type-${challenge.challenge_type}`}
+          className="card"
           style={{
             textAlign: 'center',
             marginBottom: '2.5rem',
-            minHeight: '380px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
+            padding: '4rem 2rem',
+            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
           }}
         >
-          <div className="burst-overlay-wrapper">
-            <div className="burst-flash-layer" />
-            <div
-              className="burst-shockwave-ring"
-              style={{ borderColor: incidentConfig.color, boxShadow: `0 0 30px ${incidentConfig.color}` }}
-            />
-
-            {/* Deterministic Floating Signal Cards Burst */}
-            {incidentConfig.signals.slice(0, 10).map((signal, index) => {
-              const traj = BURST_TRAJECTORIES[index] || BURST_TRAJECTORIES[0];
-              return (
-                <div
-                  key={index}
-                  className="burst-signal-card"
-                  style={{
-                    '--dx': traj.dx,
-                    '--dy': traj.dy,
-                    '--rot': traj.rot,
-                    '--scale': traj.scale,
-                    animationDelay: traj.delay,
-                    borderColor: `${incidentConfig.color}60`,
-                    boxShadow: `0 8px 24px -4px rgba(0,0,0,0.8), 0 0 16px ${incidentConfig.color}40`,
-                  }}
-                >
-                  <span style={{ color: incidentConfig.color }}>{incidentConfig.icon}</span>
-                  <span>{signal}</span>
-                </div>
-              );
-            })}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              color: '#059669',
+              fontSize: '0.92rem',
+              fontWeight: 800,
+              padding: '0.5rem 1.4rem',
+              borderRadius: 'var(--radius-full)',
+            }}
+          >
+            <span>⚡ ISSUE DETECTED &amp; ISOLATED</span>
           </div>
-
-          <div style={{ position: 'relative', zIndex: 10 }}>
-            <div
-              className="incident-tag animate-scale-in"
-              style={{
-                background: `${incidentConfig.color}25`,
-                border: `1px solid ${incidentConfig.color}`,
-                color: '#fff',
-                fontSize: '0.92rem',
-                padding: '0.5rem 1.4rem',
-                boxShadow: `0 0 24px ${incidentConfig.color}`,
-              }}
-            >
-              <span>⚡ ISSUE DETECTED &amp; ISOLATED</span>
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: '#fff', marginTop: '1rem' }}>
-              Decompiling Target Environment...
-            </h2>
-          </div>
+          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '1rem' }}>
+            Decompiling Target Environment...
+          </h2>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 3. REVEALED STATE: SIGNATURE HERO BRIEFING & ENTER CODEBASE              */}
-      {/* ========================================================================= */}
+      {/* 3. REVEALED STATE: HERO BRIEFING & ENTER CODEBASE */}
       {revealState === 'revealed' && (
         <div
-          className={`incident-hero-card type-${challenge.challenge_type} animate-fade-in-up`}
-          style={{ padding: '2.5rem', marginBottom: '2rem' }}
+          className="card animate-fade-in-up"
+          style={{ padding: '2.5rem', marginBottom: '2rem', borderRadius: '24px', border: '1px solid #e2e8f0' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}>
             <div style={{ flex: '1 1 500px' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                <span className="badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.35)' }}>
-                  ⚠ ISSUE DETECTED &amp; ISOLATED
+                <span className="badge" style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                  ⚠ ISSUE DETECTED
                 </span>
                 <span className={`badge badge-${challenge.difficulty}`}>
                   {challenge.difficulty}
@@ -614,7 +602,7 @@ export default function ChallengeDetails() {
                     <span>Attempted ({bestScore}/{challenge.points} pts)</span>
                   </span>
                 ) : (
-                  <span className="badge badge-lang" style={{ borderRadius: 'var(--radius-full)' }}>New Mission</span>
+                  <span className="badge badge-API">New Mission</span>
                 )}
               </div>
 
@@ -626,11 +614,10 @@ export default function ChallengeDetails() {
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <Link
                 to={`/workspace/${challenge.id}`}
-                className="btn-gency btn-gency-primary"
+                className="btn-saas btn-saas-primary"
                 style={{
                   padding: '0.85rem 2.25rem',
                   fontSize: '1rem',
-                  boxShadow: '0 0 24px rgba(99, 102, 241, 0.45)',
                 }}
               >
                 <span>ENTER CODEBASE</span>
@@ -639,68 +626,67 @@ export default function ChallengeDetails() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.25rem' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>Language</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{challenge.programming_language}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem', fontWeight: 600 }}>Language</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{challenge.programming_language}</span>
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>Points</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{challenge.points} pts</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem', fontWeight: 600 }}>Points</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{challenge.points} pts</span>
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>Time Limit</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{challenge.time_limit}s</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem', fontWeight: 600 }}>Time Limit</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{challenge.time_limit}s</span>
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem' }}>Memory Limit</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{challenge.memory_limit} MB</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.2rem', fontWeight: 600 }}>Memory Limit</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{challenge.memory_limit} MB</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Challenge Information & Briefing (Authoritative backend data) */}
+      {/* Challenge Information & Briefing */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         {/* Description & Requirements */}
-        <div className="gency-frame animate-fade-in-up stagger-1" style={{ padding: '2rem' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: '#fff', marginBottom: '1rem' }}>
+        <div className="card animate-fade-in-up stagger-1" style={{ padding: '2.25rem', borderRadius: '24px' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>
             Mission Briefing &amp; Requirements
           </h2>
-          <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.65' }}>
+          <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.96rem', lineHeight: '1.65' }}>
             {challenge.description}
           </div>
         </div>
 
         {/* Multi-file Repository Structure if present */}
         {challenge.repository_structure && challenge.repository_structure.files && (
-          <div className="gency-frame animate-fade-in-up stagger-2" style={{ padding: '2rem' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: '#fff', marginBottom: '0.75rem' }}>
+          <div className="card animate-fade-in-up stagger-2" style={{ padding: '2.25rem', borderRadius: '24px' }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
               Repository File Architecture
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
               This challenge includes a multi-file repository structure with isolated services, helper utilities, and test suites.
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
               {challenge.repository_structure.files.map((file) => (
                 <div
                   key={file.path}
-                  className="gency-stat-tile"
-                  style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.6rem' }}
+                  style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.6rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}
                 >
                   <span style={{ fontSize: '1rem' }}>{file.path.endsWith('.py') ? '🐍' : '📄'}</span>
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#fff' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                       {file.path}
                     </span>
                   </div>
                   {file.is_readonly && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }} title="Read-only file">
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }} title="Read-only file">
                       🔒
                     </span>
                   )}
                   {file.is_test && (
-                    <span className="badge badge-SECURITY" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
+                    <span className="badge badge-SECURITY" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
                       test
                     </span>
                   )}
@@ -712,12 +698,12 @@ export default function ChallengeDetails() {
 
         {/* Previous Evaluation Attempts */}
         {hasAttempts && (
-          <div className="gency-frame animate-fade-in-up stagger-3" style={{ padding: '2rem' }}>
+          <div className="card animate-fade-in-up stagger-3" style={{ padding: '2.25rem', borderRadius: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: '#fff', margin: 0 }}>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                 Your Recent Submissions for this Mission
               </h2>
-              <Link to="/submissions" style={{ fontSize: '0.88rem', color: 'var(--accent-blue)', fontWeight: 600 }}>
+              <Link to="/submissions" style={{ fontSize: '0.88rem', color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
                 View All Submissions &rarr;
               </Link>
             </div>
@@ -726,15 +712,14 @@ export default function ChallengeDetails() {
               {attemptsData.results.map((item) => (
                 <div
                   key={item.id}
-                  className="gency-stat-tile"
-                  style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.25rem' }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span className={`status-pill ${item.status === 'PASSED' ? 'status-passed' : item.status === 'FAILED' ? 'status-failed' : 'status-pending'}`}>
                       <span className="status-dot" />
                       <span>{item.status}</span>
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#fff', fontWeight: 600 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 700 }}>
                       Score: {item.score ?? 0}/100
                     </span>
                   </div>

@@ -10,7 +10,7 @@ import AnimatedCounter from '../components/motion/AnimatedCounter';
 import AnimatedProgress from '../components/motion/AnimatedProgress';
 
 const MAX_POLL_ATTEMPTS = 60;
-const ACTIVE_SUBMISSION_STORAGE_KEY = 'devforge_active_submission_id';
+const ACTIVE_SUBMISSION_STORAGE_KEY = 'codefoundry_active_submission_id';
 
 const SKILL_DIMENSION_NAMES = {
   problem_solving: 'Problem Solving',
@@ -50,7 +50,6 @@ export default function Workspace() {
 
   const pollingTimerRef = useRef(null);
 
-  // Unified polling function
   const startPolling = (subId) => {
     if (pollingTimerRef.current) {
       clearInterval(pollingTimerRef.current);
@@ -91,7 +90,6 @@ export default function Workspace() {
     }, 1000);
   };
 
-  // Clean up polling timer on unmount
   useEffect(() => {
     return () => {
       if (pollingTimerRef.current) {
@@ -110,7 +108,6 @@ export default function Workspace() {
         if (!isMounted) return;
         setChallenge(data);
 
-        // Check for repository multi-file structure
         const repoFiles = data.repository?.files;
         if (repoFiles && repoFiles.length > 0) {
           const initialMap = {};
@@ -119,7 +116,6 @@ export default function Workspace() {
           });
           setFilesState(initialMap);
 
-          // Select default file: prioritize entrypoint, then editable app python file, then first non-test file, then first file
           const defaultFile =
             repoFiles.find((f) => data.entrypoint && f.path === data.entrypoint) ||
             repoFiles.find((f) => !f.is_readonly && !f.is_test && f.path.endsWith('.py')) ||
@@ -130,20 +126,17 @@ export default function Workspace() {
           setActiveFilePath(defaultPath);
           setCode(initialMap[defaultPath] || '');
         } else {
-          // Backward-compatible single-file challenge
           setFilesState({});
           setActiveFilePath('');
           setCode(data.starter_code || '');
         }
 
-        // Check for active submission in sessionStorage to resume after refresh
         const savedSubId = sessionStorage.getItem(ACTIVE_SUBMISSION_STORAGE_KEY);
         if (savedSubId) {
           try {
             const subData = await getSubmission(savedSubId);
             if (!isMounted) return;
 
-            // Ensure submission belongs to the current challenge
             if (subData && Number(subData.challenge) === Number(id)) {
               const evalData = subData.evaluation;
               const isTerminal =
@@ -164,7 +157,6 @@ export default function Workspace() {
                 startPolling(Number(savedSubId));
               }
             } else {
-              // Stale submission from another challenge; clear it
               sessionStorage.removeItem(ACTIVE_SUBMISSION_STORAGE_KEY);
             }
           } catch {
@@ -211,7 +203,6 @@ export default function Workspace() {
         ...prev,
         [activeFilePath]: newVal,
       }));
-      // If editing the main Python file or active file, update code state as well
       setCode(newVal);
     } else {
       setCode(newVal);
@@ -249,10 +240,8 @@ export default function Workspace() {
     setExecutionError(null);
   };
 
-  // Helper to obtain the primary execution code
   const getPrimaryCode = () => {
     if (isRepoChallenge) {
-      // Find main runnable code (e.g. entrypoint, or app/calculator.py or current active python file)
       if (challenge.entrypoint && filesState[challenge.entrypoint] !== undefined) {
         return filesState[challenge.entrypoint];
       }
@@ -270,7 +259,6 @@ export default function Workspace() {
   const handleRunCode = async () => {
     if (isRunning) return;
 
-    // Filter out test files from being sent to execution
     const filteredFiles = {};
     if (isRepoChallenge) {
       Object.entries(filesState).forEach(([path, content]) => {
@@ -362,7 +350,7 @@ export default function Workspace() {
 
   if (loading) {
     return (
-      <div className="page-container">
+      <div className="page-container" style={{ padding: '4rem 1.5rem' }}>
         <Loading message="Loading workspace environment..." />
       </div>
     );
@@ -371,7 +359,7 @@ export default function Workspace() {
   if (error || !challenge) {
     return (
       <div className="page-container">
-        <div className="error-box" style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
           <p>{error || 'Challenge not found.'}</p>
           <div style={{ marginTop: '1rem' }}>
             <Link to="/challenges" className="btn btn-secondary">
@@ -386,180 +374,58 @@ export default function Workspace() {
   const evaluation = submissionResult?.evaluation;
 
   return (
-    <div className="workspace-container">
-      {/* Left Panel: Challenge Details */}
-      <aside className="workspace-panel-left">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link to={`/challenges/${challenge.id}`} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-            <span>&larr;</span> Overview
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', background: '#ffffff', overflow: 'hidden' }}>
+      {/* Top Workspace Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#ffffff', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <Link to={`/challenges/${challenge.id}`} style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <span>←</span> Overview
           </Link>
-          <span className={`badge badge-${challenge.difficulty}`}>
+          <span style={{ color: '#cbd5e1' }}>|</span>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+            {challenge.title}
+          </h2>
+          <span className={`badge badge-${challenge.difficulty}`} style={{ fontSize: '0.72rem' }}>
             {challenge.difficulty}
+          </span>
+          <span className={`badge badge-${challenge.challenge_type}`} style={{ fontSize: '0.72rem' }}>
+            {challenge.challenge_type?.replace('_', ' ')}
           </span>
         </div>
 
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem', color: '#fff', letterSpacing: '-0.02em' }}>
-            {challenge.title}
-          </h2>
-          <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
-            <span className="badge badge-type">{challenge.challenge_type.replace('_', ' ')}</span>
-            <span className="badge badge-lang">{challenge.programming_language}</span>
-            <span className="badge badge-lang">{challenge.points} pts</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '0.65rem 0' }}>
-          <span>Timeout: <strong style={{ color: 'var(--text-secondary)' }}>{challenge.time_limit}s</strong></span>
-          <span>Memory: <strong style={{ color: 'var(--text-secondary)' }}>{challenge.memory_limit} MB</strong></span>
-        </div>
-
-        <div>
-          <h3 style={{ fontSize: '0.92rem', fontWeight: '600', marginBottom: '0.5rem', color: '#fff' }}>
-            Description &amp; Requirements
-          </h3>
-          <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.6' }}>
-            {challenge.description}
-          </div>
-        </div>
-      </aside>
-
-      {/* Right Panel: Editor Shell, Inputs & Panels (SAFE: Monaco Editor inside receives NO CSS transforms) */}
-      <main className="workspace-panel-right">
-        <div className="editor-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-            <span style={{ color: '#fff', fontWeight: 600 }}>{isRepoChallenge ? activeFilePath || 'repository' : 'solution.py'}</span>
-            {isCurrentFileReadOnly && (
-              <span className="badge" style={{ fontSize: '0.65rem', backgroundColor: 'rgba(255, 255, 255, 0.08)', color: 'var(--text-muted)' }}>
-                READ-ONLY
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              type="button"
-              onClick={handleResetCode}
-              className="btn btn-secondary"
-              style={{
-                fontSize: '0.75rem',
-                padding: '0.25rem 0.65rem',
-                height: 'auto',
-                color: 'var(--text-muted)',
-                borderRadius: 'var(--radius-full)',
-              }}
-              title="Reset all files to original starter code"
-            >
-              Reset Code
-            </button>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{challenge.programming_language}</span>
-          </div>
-        </div>
-
-        {/* Code Editor Area: Multi-file layout or Single-file */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-          {isRepoChallenge ? (
-            <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-              <div style={{ width: '220px', minWidth: '180px', borderRight: '1px solid var(--border-color)', backgroundColor: '#0c111d', overflowY: 'auto' }}>
-                <RepositoryTree
-                  files={repoFiles}
-                  activeFile={activeFilePath}
-                  onSelectFile={handleFileSelect}
-                />
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-                {activeFileObj?.is_test && !currentEditorContent ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      minHeight: '350px',
-                      color: 'var(--text-muted)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.88rem',
-                      textAlign: 'center',
-                      padding: '2rem',
-                      backgroundColor: '#0d1117',
-                    }}
-                  >
-                    🔒 Test suite implementation is protected and executed securely on the server.
-                  </div>
-                ) : (
-                  <CodeEditor
-                    value={currentEditorContent}
-                    onChange={handleEditorContentChange}
-                    language={challenge.programming_language}
-                    filePath={activeFilePath}
-                    readOnly={isCurrentFileReadOnly}
-                    theme="vs-dark"
-                  />
-                )}
-              </div>
-            </div>
-          ) : (
-            <CodeEditor
-              value={code}
-              onChange={setCode}
-              language={challenge.programming_language}
-              filePath="solution.py"
-              theme="vs-dark"
-            />
-          )}
-        </div>
-
-        {/* Stdin Area */}
-        <div style={{ borderTop: '1px solid var(--border-color)', padding: '0.5rem 1rem', backgroundColor: '#090d16' }}>
-          <label htmlFor="workspace-stdin" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '0.25rem' }}>
-            Standard Input (stdin)
-          </label>
-          <textarea
-            id="workspace-stdin"
-            value={stdin}
-            onChange={(e) => setStdin(e.target.value)}
-            placeholder="Enter standard input values (optional)..."
-            spellCheck="false"
-            style={{
-              width: '100%',
-              height: '42px',
-              backgroundColor: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.82rem',
-              padding: '0.4rem 0.6rem',
-              resize: 'none',
-              outline: 'none',
-            }}
-          />
-        </div>
-
-        {/* Action Buttons Toolbar */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 1.25rem', backgroundColor: '#0e1422', borderTop: '1px solid var(--border-color)' }}>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button
+            type="button"
+            onClick={handleResetCode}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
+            title="Reset code to starter version"
+          >
+            ↺ Reset
+          </button>
           <button
             className="btn btn-secondary"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting || isEvaluating || !getPrimaryCode().trim()}
-            style={{ padding: '0.45rem 1.15rem', fontSize: '0.85rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 1.1rem' }}
           >
             {isRunning ? (
               <>
                 <span className="spinner-icon" />
-                <span>Running in Sandbox...</span>
+                <span>Running...</span>
               </>
             ) : (
-              <span>▶ Run Code</span>
+              <span>▶ Run Tests</span>
             )}
           </button>
           <button
-            className="btn-gency btn-gency-primary"
+            className="btn-saas btn-saas-primary"
             onClick={handleSubmitSolution}
             disabled={isSubmitting || isEvaluating || isRunning || !getPrimaryCode().trim()}
             style={{
-              padding: '0.5rem 1.4rem',
-              fontSize: '0.88rem',
-              boxShadow: isEvaluating ? '0 0 20px rgba(99, 102, 241, 0.6)' : 'none',
+              padding: '0.45rem 1.35rem',
+              fontSize: '0.85rem',
             }}
           >
             {isSubmitting ? (
@@ -570,368 +436,281 @@ export default function Workspace() {
             ) : isEvaluating ? (
               <>
                 <span className="spinner-icon" />
-                <span>Evaluating Sandbox...</span>
+                <span>Evaluating...</span>
               </>
             ) : (
               <>
                 <span>Submit Solution</span>
-                <span className="btn-arrow-icon">↗</span>
+                <span className="btn-arrow-icon">→</span>
               </>
             )}
           </button>
         </div>
+      </div>
 
-        {/* Bottom Panel Tabs */}
-        <div className="workspace-tabs-bar">
-          <button
-            className={`workspace-tab-btn ${activeTab === 'execution' ? 'active' : ''}`}
-            onClick={() => setActiveTab('execution')}
-          >
-            Terminal Output
-          </button>
-          <button
-            className={`workspace-tab-btn ${activeTab === 'submission' ? 'active' : ''}`}
-            onClick={() => setActiveTab('submission')}
-          >
-            Submission Result
-            {isEvaluating && <span style={{ color: '#fbbf24', fontSize: '0.75rem', marginLeft: '0.35rem' }}>(Evaluating...)</span>}
-            {submissionResult && (
-              <span className={`badge badge-${submissionResult.status}`} style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', marginLeft: '0.35rem' }}>
-                {submissionResult.status}
-              </span>
-            )}
-          </button>
+      {/* Main Workspace Body */}
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', flex: 1, overflow: 'hidden' }}>
+        {/* Left Sidebar: Mission Info & Files */}
+        <div style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          {/* Challenge Meta */}
+          <div style={{ padding: '1.25rem', borderBottom: '1px solid #e2e8f0' }}>
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              Mission Briefing
+            </h3>
+            <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.55 }}>
+              {challenge.description}
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.85rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <span>Limit: <strong>{challenge.time_limit}s</strong></span>
+              <span>•</span>
+              <span>Memory: <strong>{challenge.memory_limit}MB</strong></span>
+              <span>•</span>
+              <span>Points: <strong>{challenge.points}</strong></span>
+            </div>
+          </div>
+
+          {/* Repository File Tree */}
+          {isRepoChallenge && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
+                Repository Files
+              </div>
+              <RepositoryTree
+                files={repoFiles}
+                activeFile={activeFilePath}
+                onSelectFile={handleFileSelect}
+              />
+            </div>
+          )}
+
+          {/* Stdin Area */}
+          <div style={{ padding: '1rem', borderTop: '1px solid #e2e8f0', background: '#f1f5f9' }}>
+            <label htmlFor="workspace-stdin" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.3rem' }}>
+              Standard Input (stdin)
+            </label>
+            <textarea
+              id="workspace-stdin"
+              value={stdin}
+              onChange={(e) => setStdin(e.target.value)}
+              placeholder="Optional standard input..."
+              spellCheck="false"
+              style={{
+                width: '100%',
+                height: '50px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.82rem',
+                padding: '0.4rem 0.6rem',
+                resize: 'none',
+                outline: 'none',
+              }}
+            />
+          </div>
         </div>
 
-        {/* Tab 1: Terminal / Output Panel */}
-        {activeTab === 'execution' && (
-          <div className="workspace-bottom-pane">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.4rem' }}>
-              <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.82rem' }}>Execution Console</span>
-              {isRunning && <span style={{ color: 'var(--accent-blue)', fontSize: '0.78rem' }}>Executing container...</span>}
-              {executionResult && (
-                <span className={`status-pill ${executionResult.status === 'SUCCESS' ? 'status-passed' : 'status-failed'}`}>
-                  <span className="status-dot" />
-                  <span>STATUS: {executionResult.status}</span>
+        {/* Right Area: Stable Monaco Editor & Bottom Result Panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          {/* Editor Header Tab Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.5rem 1rem', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.84rem', color: 'var(--text-primary)' }}>
+                {isRepoChallenge ? activeFilePath || 'repository' : 'solution.py'}
+              </span>
+              {isCurrentFileReadOnly && (
+                <span className="badge" style={{ fontSize: '0.65rem', background: '#e2e8f0', color: 'var(--text-secondary)' }}>
+                  🔒 READ-ONLY
                 </span>
               )}
             </div>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              {challenge.programming_language}
+            </span>
+          </div>
 
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {isRunning && (
-                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span className="spinner-icon" />
-                  <span>Executing code in hardened Docker container sandbox...</span>
-                </div>
-              )}
+          {/* Stable Code Editor Wrapper (NO CSS transforms, transitions or scale applied) */}
+          <div style={{ flex: 1, minHeight: '280px', position: 'relative' }}>
+            {activeFileObj?.is_test && !currentEditorContent ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.88rem',
+                  textAlign: 'center',
+                  padding: '2rem',
+                  background: '#ffffff',
+                }}
+              >
+                🔒 Test suite implementation is protected and executed securely on the evaluation worker.
+              </div>
+            ) : (
+              <CodeEditor
+                value={currentEditorContent}
+                onChange={handleEditorContentChange}
+                language={challenge.programming_language}
+                filePath={activeFilePath}
+                readOnly={isCurrentFileReadOnly}
+                theme="vs-dark"
+              />
+            )}
+          </div>
 
-              {executionError && (
-                <div style={{ color: '#f87171', whiteSpace: 'pre-wrap' }}>
-                  {executionError}
-                </div>
-              )}
-
-              {!isRunning && !executionError && !executionResult && (
-                <div style={{ color: 'var(--text-muted)' }}>
-                  Click &quot;Run Code&quot; to test your code in Docker. Standard output and errors will appear here.
-                </div>
-              )}
-
-              {!isRunning && executionResult && (
-                <>
-                  {executionResult.stdout && (
-                    <div style={{ color: '#e2e8f0', whiteSpace: 'pre-wrap', marginBottom: '0.5rem' }}>
-                      {executionResult.stdout}
-                    </div>
-                  )}
-                  {executionResult.stderr && (
-                    <div style={{ color: '#f87171', whiteSpace: 'pre-wrap', marginBottom: '0.5rem' }}>
-                      {executionResult.stderr}
-                    </div>
-                  )}
-                  {!executionResult.stdout && !executionResult.stderr && (
-                    <div style={{ color: 'var(--text-muted)' }}>
-                      (Program exited cleanly with no output)
-                    </div>
-                  )}
-                </>
-              )}
+          {/* Bottom Results Panel */}
+          <div style={{ height: '260px', borderTop: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', flexDirection: 'column' }}>
+            {/* Panel Tabs */}
+            <div style={{ display: 'flex', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '0 0.5rem' }}>
+              <button
+                onClick={() => setActiveTab('execution')}
+                style={{
+                  padding: '0.55rem 1rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderBottom: activeTab === 'execution' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                  background: 'transparent',
+                  color: activeTab === 'execution' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                Execution Output
+              </button>
+              <button
+                onClick={() => setActiveTab('submission')}
+                style={{
+                  padding: '0.55rem 1rem',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderBottom: activeTab === 'submission' ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                  background: 'transparent',
+                  color: activeTab === 'submission' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                <span>Submission Evaluation</span>
+                {isEvaluating && <span style={{ color: '#d97706', fontSize: '0.72rem' }}>(Grading...)</span>}
+                {submissionResult && (
+                  <span className={`badge ${submissionResult.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`} style={{ fontSize: '0.65rem' }}>
+                    {submissionResult.status}
+                  </span>
+                )}
+              </button>
             </div>
 
-            {executionResult && (
-              <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.4rem', marginTop: 'auto' }}>
-                <span>Exit Code: <strong style={{ color: '#fff' }}>{executionResult.exit_code}</strong></span>
-                <span>Execution Time: <strong style={{ color: '#fff' }}>{executionResult.execution_time.toFixed(3)}s</strong></span>
+            {/* Tab 1: Terminal Output */}
+            {activeTab === 'execution' && (
+              <div style={{ flex: 1, padding: '0.85rem 1.25rem', overflowY: 'auto', background: '#0f172a', color: '#f8fafc', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}>
+                {isRunning && (
+                  <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="spinner-icon" />
+                    <span>Executing code in Docker sandbox...</span>
+                  </div>
+                )}
+                {executionError && <div style={{ color: '#f87171' }}>{executionError}</div>}
+                {!isRunning && !executionError && !executionResult && (
+                  <div style={{ color: '#64748b' }}>
+                    Click &quot;Run Tests&quot; to execute your solution in the sandbox environment.
+                  </div>
+                )}
+                {!isRunning && executionResult && (
+                  <div>
+                    {executionResult.stdout && <div style={{ whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{executionResult.stdout}</div>}
+                    {executionResult.stderr && <div style={{ whiteSpace: 'pre-wrap', color: '#f87171' }}>{executionResult.stderr}</div>}
+                    <div style={{ borderTop: '1px solid #334155', marginTop: '0.5rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Status: {executionResult.status} • Time: {executionResult.execution_time?.toFixed(3)}s • Exit Code: {executionResult.exit_code}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Submission Result */}
+            {activeTab === 'submission' && (
+              <div style={{ flex: 1, padding: '1rem 1.25rem', overflowY: 'auto', background: '#ffffff' }}>
+                {isSubmitting && <div>Queueing submission...</div>}
+                {isEvaluating && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)' }}>
+                    <span className="spinner-icon" />
+                    <span>Evaluating in Docker sandbox... (Submission #{submissionId})</span>
+                  </div>
+                )}
+                {submissionError && <div style={{ color: '#dc2626' }}>{submissionError}</div>}
+                {!isSubmitting && !isEvaluating && !submissionResult && !submissionError && (
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    Click &quot;Submit Solution&quot; to grade your solution against all challenge test cases.
+                  </div>
+                )}
+                {!isSubmitting && !isEvaluating && submissionResult && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Summary Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</div>
+                        <span className={`badge ${submissionResult.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`}>
+                          {submissionResult.status}
+                        </span>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Score</div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                          <AnimatedCounter value={submissionResult.score || 0} duration={800} /> / {challenge.points} pts
+                        </div>
+                      </div>
+                      {evaluation && (
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tests</div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: evaluation.tests_passed === evaluation.tests_total ? '#059669' : '#dc2626' }}>
+                            {evaluation.tests_passed}/{evaluation.tests_total}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Test Results Breakdown */}
+                    {evaluation?.test_results && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                          Test Results Breakdown
+                        </div>
+                        {evaluation.test_results.map((tc, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '8px',
+                              border: `1px solid ${tc.passed ? '#a7f3d0' : '#fecaca'}`,
+                              background: tc.passed ? '#f0fdf4' : '#fef2f2',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: tc.passed ? '#065f46' : '#991b1b' }}>
+                              {tc.name || `Test Case #${idx + 1}`} {tc.is_hidden && '(Hidden)'}
+                            </span>
+                            <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.7rem' }}>
+                              {tc.passed ? 'Passed ✓' : 'Failed ✕'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-
-        {/* Tab 2: Submission Result Panel */}
-        {activeTab === 'submission' && (
-          <div className="workspace-bottom-pane" style={{ height: '280px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.4rem' }}>
-              <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.82rem' }}>Evaluation &amp; Grading</span>
-              {isSubmitting && <span style={{ color: 'var(--accent-blue)', fontSize: '0.78rem' }}>Submitting...</span>}
-              {isEvaluating && <span style={{ color: '#fbbf24', fontSize: '0.78rem' }}>Evaluating Solution (Celery Sandbox)...</span>}
-              {submissionResult && (
-                <span className={`status-pill ${submissionResult.status === 'PASSED' ? 'status-passed' : 'status-failed'}`}>
-                  <span className="status-dot" />
-                  <span>STATUS: {submissionResult.status}</span>
-                </span>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {isSubmitting && (
-                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span className="spinner-icon" />
-                  <span>Queueing solution for evaluation...</span>
-                </div>
-              )}
-
-              {isEvaluating && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', color: 'var(--text-secondary)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span className="spinner-icon" />
-                    <span>Submission #{submissionId} is queued in Redis and executing Docker evaluation tests...</span>
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Polling evaluation worker status every second...
-                  </div>
-                </div>
-              )}
-
-              {submissionError && (
-                <div style={{ color: '#f87171', whiteSpace: 'pre-wrap' }}>
-                  {submissionError}
-                </div>
-              )}
-
-              {!isSubmitting && !isEvaluating && !submissionError && !submissionResult && (
-                <div style={{ color: 'var(--text-muted)' }}>
-                  Click &quot;Submit Solution&quot; to grade your solution against all challenge test cases.
-                </div>
-              )}
-
-              {!isSubmitting && !isEvaluating && submissionResult && (
-                <>
-                  {/* Summary Card */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', backgroundColor: 'var(--bg-tertiary)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Final Status</div>
-                      <span className={`badge badge-${submissionResult.status}`} style={{ marginTop: '0.2rem' }}>
-                        {submissionResult.status}
-                      </span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Score Awarded</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
-                        <AnimatedCounter value={submissionResult.score || 0} duration={800} /> / {challenge.points} pts
-                      </div>
-                    </div>
-                    {evaluation && (
-                      <>
-                        <div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tests Passed</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: evaluation.tests_passed === evaluation.tests_total ? '#34d399' : '#f87171' }}>
-                            <AnimatedCounter value={evaluation.tests_passed || 0} duration={600} /> / {evaluation.tests_total}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Execution Time</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
-                            {evaluation.execution_time ? `${evaluation.execution_time.toFixed(3)}s` : '0.000s'}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Skill Breakdown */}
-                  {evaluation && (
-                    <div
-                      style={{
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0.85rem 1rem',
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: '600',
-                          color: 'var(--text-muted)',
-                          textTransform: 'uppercase',
-                          marginBottom: '0.6rem',
-                        }}
-                      >
-                        Skill Breakdown
-                      </div>
-                      {(() => {
-                        const breakdownScores = evaluation.skill_breakdown?.scores;
-                        const validSkills = Object.entries(SKILL_DIMENSION_NAMES)
-                          .filter(([key]) => typeof breakdownScores?.[key] === 'number')
-                          .map(([key, label]) => ({
-                            key,
-                            label,
-                            score: breakdownScores[key],
-                          }));
-
-                        if (validSkills.length === 0) {
-                          return (
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>
-                              Skill breakdown is not available for this evaluation.
-                            </p>
-                          );
-                        }
-
-                        return (
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                              gap: '0.75rem',
-                            }}
-                          >
-                            {validSkills.map((skill) => (
-                              <div
-                                key={skill.key}
-                                style={{
-                                  backgroundColor: 'var(--bg-tertiary)',
-                                  padding: '0.65rem 0.85rem',
-                                  borderRadius: 'var(--radius-sm)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '0.4rem',
-                                }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
-                                  <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
-                                    {skill.label}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontWeight: '700',
-                                      color:
-                                        skill.score >= 80
-                                          ? '#34d399'
-                                          : skill.score >= 50
-                                          ? '#fbbf24'
-                                          : '#f87171',
-                                    }}
-                                  >
-                                    <AnimatedCounter value={skill.score} duration={600} />%
-                                  </span>
-                                </div>
-                                <AnimatedProgress
-                                  value={skill.score}
-                                  max={100}
-                                  height={5}
-                                  color={
-                                    skill.score >= 80
-                                      ? '#34d399'
-                                      : skill.score >= 50
-                                      ? '#fbbf24'
-                                      : '#f87171'
-                                  }
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Link
-                      to="/submissions"
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.8rem', padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)' }}
-                    >
-                      View Submission Archives &rarr;
-                    </Link>
-                  </div>
-
-                  {/* Test Cases List */}
-                  {evaluation && evaluation.test_results && evaluation.test_results.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                        Test Results Breakdown
-                      </div>
-
-                      {evaluation.test_results.map((tc, index) => (
-                        <div
-                          key={tc.test_case_id || index}
-                          style={{
-                            backgroundColor: 'var(--bg-tertiary)',
-                            border: `1px solid ${tc.passed ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                            borderRadius: 'var(--radius-sm)',
-                            padding: '0.75rem 1rem',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.85rem' }}>
-                              {tc.name || `Test Case #${index + 1}`}
-                              {tc.is_hidden && (
-                                <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
-                                  (Hidden Test)
-                                </span>
-                              )}
-                            </span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                {tc.points} / {tc.max_points} pts
-                              </span>
-                              <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.68rem', padding: '0.1rem 0.5rem' }}>
-                                <span className="status-dot" />
-                                {tc.passed ? 'Passed' : 'Failed'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {!tc.is_hidden && (
-                            <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                              {tc.input_data && (
-                                <div>
-                                  <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>Input:</span>
-                                  <span>{tc.input_data}</span>
-                                </div>
-                              )}
-                              <div>
-                                <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>Expected:</span>
-                                <span style={{ color: '#34d399' }}>{tc.expected_output}</span>
-                              </div>
-                              <div>
-                                <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>Actual:</span>
-                                <span style={{ color: tc.passed ? '#34d399' : '#f87171' }}>{tc.actual_output || '(no output)'}</span>
-                              </div>
-                              {tc.stderr && (
-                                <div style={{ color: '#f87171' }}>
-                                  <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>Stderr:</span>
-                                  <span>{tc.stderr}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {tc.is_hidden && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.3rem' }}>
-                              Hidden test case — inputs and outputs are concealed for grading integrity.
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

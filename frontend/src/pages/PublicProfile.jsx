@@ -15,12 +15,12 @@ const SKILL_DIMENSIONS = [
 ];
 
 const BADGE_VARIANTS = {
-  BUG_SLAYER: { glow: 'rgba(245, 158, 11, 0.25)', border: 'rgba(245, 158, 11, 0.4)', text: '#fbbf24', bg: 'rgba(245, 158, 11, 0.08)' },
-  SECURITY_HUNTER: { glow: 'rgba(139, 92, 246, 0.25)', border: 'rgba(139, 92, 246, 0.4)', text: '#c084fc', bg: 'rgba(139, 92, 246, 0.08)' },
-  PERFORMANCE_ENGINEER: { glow: 'rgba(16, 185, 129, 0.25)', border: 'rgba(16, 185, 129, 0.4)', text: '#34d399', bg: 'rgba(16, 185, 129, 0.08)' },
-  TEST_MASTER: { glow: 'rgba(6, 182, 212, 0.25)', border: 'rgba(6, 182, 212, 0.4)', text: '#38bdf8', bg: 'rgba(6, 182, 212, 0.08)' },
-  PERFECT_RUN: { glow: 'rgba(251, 191, 36, 0.3)', border: 'rgba(251, 191, 36, 0.45)', text: '#fde047', bg: 'rgba(251, 191, 36, 0.08)' },
-  DEVFORGE_VETERAN: { glow: 'rgba(99, 102, 241, 0.3)', border: 'rgba(99, 102, 241, 0.45)', text: '#818cf8', bg: 'rgba(99, 102, 241, 0.08)' },
+  BUG_SLAYER: { border: '#fde68a', text: '#d97706', bg: '#fffbeb' },
+  SECURITY_HUNTER: { border: '#ddd6fe', text: '#7c3aed', bg: '#f5f3ff' },
+  PERFORMANCE_ENGINEER: { border: '#a7f3d0', text: '#059669', bg: '#ecfdf5' },
+  TEST_MASTER: { border: '#a5f3fc', text: '#0891b2', bg: '#ecfeff' },
+  PERFECT_RUN: { border: '#fef08a', text: '#ca8a04', bg: '#fefce8' },
+  DEVFORGE_VETERAN: { border: '#c7d2fe', text: '#4f46e5', bg: '#eef2ff' },
 };
 
 function formatEarnedDate(dateString) {
@@ -69,42 +69,33 @@ export default function PublicProfile() {
     fetchProfile();
   }, [username]);
 
-  // Loading State
   if (loading) {
     return (
-      <div className="container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '4rem 1.5rem' }}>
+      <div className="page-container" style={{ padding: '4rem 1.5rem' }}>
         <Loading message={`Loading verified profile for @${username}...`} />
       </div>
     );
   }
 
-  // 404 Not Found State
   if (isNotFound) {
     return (
-      <div className="container" style={{ maxWidth: '680px', margin: '4rem auto', padding: '0 1.5rem', textAlign: 'center' }}>
-        <div
-          className="card"
-          style={{
-            padding: '3.5rem 2rem',
-            background: 'linear-gradient(180deg, rgba(22, 32, 52, 0.7) 0%, rgba(10, 15, 26, 0.9) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-          }}
-        >
-          <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1.25rem' }}>🔍</span>
-          <span className="badge badge-SECURITY" style={{ marginBottom: '1rem', display: 'inline-block' }}>
+      <div className="page-container" style={{ maxWidth: '640px', padding: '4rem 1.5rem', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '3.5rem 2rem', borderRadius: '24px' }}>
+          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🔍</span>
+          <span className="badge badge-SECURITY" style={{ marginBottom: '1rem' }}>
             404 NOT FOUND
           </span>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: '#fff', margin: '0.25rem 0 0.75rem' }}>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 800, margin: '0.25rem 0 0.75rem' }}>
             Profile Not Found
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', maxWidth: '440px', margin: '0 auto 2rem', lineHeight: 1.6 }}>
-            The developer profile for <strong style={{ color: '#fff' }}>@{username}</strong> doesn't exist or has no active engineering activity.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.96rem', margin: '0 auto 2rem', lineHeight: 1.6 }}>
+            The developer profile for <strong>@{username}</strong> doesn&apos;t exist or has no active engineering activity.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <Link to="/leaderboard" className="btn btn-primary" style={{ padding: '0.6rem 1.4rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+            <Link to="/leaderboard" className="btn btn-secondary">
               ← Back to Leaderboard
             </Link>
-            <Link to="/challenges" className="btn btn-secondary" style={{ padding: '0.6rem 1.4rem' }}>
+            <Link to="/challenges" className="btn-saas btn-saas-primary">
               Explore Challenges
             </Link>
           </div>
@@ -113,24 +104,16 @@ export default function PublicProfile() {
     );
   }
 
-  // Generic Error State
   if (error || !profile) {
     return (
-      <div className="container" style={{ maxWidth: '600px', margin: '4rem auto', padding: '0 1.5rem', textAlign: 'center' }}>
-        <div
-          className="card"
-          style={{
-            padding: '3rem 2rem',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            background: 'rgba(239, 68, 68, 0.05)',
-          }}
-        >
-          <span style={{ fontSize: '2.75rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
-          <h2 style={{ fontSize: '1.4rem', color: '#f87171', marginBottom: '0.5rem' }}>Profile Unavailable</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.75rem' }}>
-            We could not retrieve this public profile right now. Please check your connection.
+      <div className="page-container" style={{ maxWidth: '600px', padding: '4rem 1.5rem', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '3rem 2rem', border: '1px solid #fecaca', background: '#fef2f2', borderRadius: '24px' }}>
+          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <h2 style={{ fontSize: '1.35rem', color: '#dc2626', marginBottom: '0.5rem' }}>Profile Unavailable</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
+            {error}
           </p>
-          <button type="button" className="btn btn-primary" onClick={fetchProfile} style={{ padding: '0.6rem 1.5rem' }}>
+          <button type="button" className="btn btn-primary" onClick={fetchProfile}>
             ↻ Try Again
           </button>
         </div>
@@ -151,110 +134,114 @@ export default function PublicProfile() {
   } = profile;
 
   return (
-    <div className="public-profile-page container" style={{ maxWidth: '1140px', margin: '0 auto', padding: '2rem 1.5rem 5rem' }}>
+    <div className="page-container animate-fade-in-up" style={{ maxWidth: '1140px' }}>
       {/* Profile Hero Header */}
-      <div className="profile-hero-card">
-        <div className="profile-hero-content">
-          <div className="profile-avatar-large">
+      <div
+        className="card animate-fade-in-up"
+        style={{
+          padding: '2.5rem',
+          borderRadius: '24px',
+          marginBottom: '2.25rem',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div className="candidate-avatar-large" style={{ width: 64, height: 64, fontSize: '1.5rem' }}>
             {profile.username.substring(0, 2).toUpperCase()}
           </div>
-          <div className="profile-hero-text">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-              <span className="badge badge-SECURITY" style={{ fontSize: '0.75rem', padding: '0.2rem 0.65rem' }}>
-                ⚡ PUBLIC ENGINEERING RECORD
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem' }}>
+              <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem' }}>
+                ⚡ VERIFIED PROFILE
               </span>
-              <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 600 }}>
-                ● VERIFIED DEVFORGE EVALUATIONS
+              <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700 }}>
+                ● CODEFOUNDRY EVALUATIONS
               </span>
             </div>
-            <h1 className="profile-username-title">
+            <h1 style={{ fontSize: '2.1rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)' }}>
               @{profile.username}
             </h1>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: 0, fontWeight: 500 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', margin: '0.2rem 0 0' }}>
               Software Engineering Readiness Profile · Evaluated Production Challenges
             </p>
           </div>
         </div>
 
-        {/* Overall Score Highlight Badge */}
-        <div className="profile-hero-score-badge">
-          <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-            ENGINEERING READINESS
+        {/* Overall Score Highlight Card */}
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '1.25rem 1.75rem',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <span style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+            READINESS SCORE
           </span>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', margin: '0.25rem 0' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.6rem', fontWeight: 900, color: overall_skill_score !== null ? '#38bdf8' : 'var(--text-muted)', lineHeight: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.3rem', margin: '0.2rem 0' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 900, color: overall_skill_score !== null ? '#2563eb' : 'var(--text-muted)', lineHeight: 1 }}>
               {overall_skill_score !== null ? overall_skill_score : '—'}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-              / 100
-            </span>
+            <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', fontWeight: 700 }}>/ 100</span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: '#a5b4fc', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.74rem', color: '#6366f1', fontWeight: 600 }}>
             {overall_skill_score !== null ? 'Deterministic Composite' : 'Awaiting Evaluations'}
           </span>
         </div>
       </div>
 
       {/* Metrics Grid */}
-      <div className="profile-metrics-grid">
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">TOTAL POINTS</span>
-          <div className="profile-metric-value" style={{ color: '#38bdf8' }}>
+      <div className="gency-stats-grid" style={{ marginTop: 0, marginBottom: '2.5rem' }}>
+        <div className="gency-stat-tile">
+          <span className="gency-stat-label">Total Points</span>
+          <span className="gency-stat-number" style={{ color: '#2563eb' }}>
             <AnimatedCounter value={total_points} />
-            <small style={{ fontSize: '0.75rem', marginLeft: '0.25rem', color: 'var(--text-muted)' }}>PTS</small>
-          </div>
-          <span className="profile-metric-sub">Evaluated challenge total</span>
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Evaluated challenge total</span>
         </div>
 
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">SOLVED CHALLENGES</span>
-          <div className="profile-metric-value" style={{ color: '#10b981' }}>
+        <div className="gency-stat-tile">
+          <span className="gency-stat-label">Solved</span>
+          <span className="gency-stat-number" style={{ color: '#10b981' }}>
             <AnimatedCounter value={challenges_completed} />
-          </div>
-          <span className="profile-metric-sub">Distinct scenarios passed</span>
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Distinct scenarios passed</span>
         </div>
 
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">ATTEMPTED</span>
-          <div className="profile-metric-value" style={{ color: '#fbbf24' }}>
+        <div className="gency-stat-tile">
+          <span className="gency-stat-label">Attempted</span>
+          <span className="gency-stat-number" style={{ color: '#f59e0b' }}>
             <AnimatedCounter value={challenges_attempted} />
-          </div>
-          <span className="profile-metric-sub">Active scenarios explored</span>
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Active scenarios explored</span>
         </div>
 
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">COMPLETION RATE</span>
-          <div className="profile-metric-value" style={{ color: '#a855f7' }}>
+        <div className="gency-stat-tile">
+          <span className="gency-stat-label">Completion Rate</span>
+          <span className="gency-stat-number" style={{ color: '#8b5cf6' }}>
             {completion_percentage}%
-          </div>
-          <span className="profile-metric-sub">Solved / Attempted ratio</span>
-        </div>
-
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">AVERAGE SCORE</span>
-          <div className="profile-metric-value" style={{ color: '#06b6d4' }}>
-            {average_score !== null ? `${average_score}` : '—'}
-          </div>
-          <span className="profile-metric-sub">Across best attempts</span>
-        </div>
-
-        <div className="profile-metric-tile">
-          <span className="profile-metric-label">READINESS INDEX</span>
-          <div className="profile-metric-value" style={{ color: '#f43f5e' }}>
-            {overall_skill_score !== null ? `${overall_skill_score}%` : '—'}
-          </div>
-          <span className="profile-metric-sub">Measured capability</span>
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Solved / Attempted ratio</span>
         </div>
       </div>
 
-      {/* Main Two-Column Layout: Skill Breakdown + Activity/Achievements */}
-      <div className="profile-main-layout">
+      {/* Main Two-Column Layout: Skill Dimensions + Achievements/Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem' }}>
         {/* Left Column: 6 Engineering Skill Dimensions */}
-        <div className="profile-skills-card">
-          <div className="profile-card-header">
+        <div className="card" style={{ padding: '2rem', borderRadius: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span style={{ fontSize: '1.2rem' }}>🎯</span>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
                 Engineering Skill Dimensions
               </h2>
             </div>
@@ -263,48 +250,27 @@ export default function PublicProfile() {
             </span>
           </div>
 
-          <div className="profile-skills-list">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {SKILL_DIMENSIONS.map((dim) => {
               const skillData = skill_breakdown[dim.key] || { score: null, status: 'not_measured', sample_size: 0 };
               const isMeasured = skillData.status === 'measured' && skillData.score !== null;
 
               return (
-                <div key={dim.key} className="profile-skill-item">
-                  <div className="profile-skill-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span style={{ fontSize: '1.25rem' }}>{dim.icon}</span>
-                      <div>
-                        <strong style={{ color: '#fff', fontSize: '0.92rem', display: 'block' }}>
-                          {dim.name}
-                        </strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          {isMeasured
-                            ? `Measured across ${skillData.sample_size} scenario${skillData.sample_size !== 1 ? 's' : ''}`
-                            : 'No evaluated evidence yet'}
-                        </span>
-                      </div>
+                <div key={dim.key} style={{ padding: '1rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>{dim.icon}</span>
+                      <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>{dim.name}</strong>
                     </div>
-
-                    <div style={{ textAlign: 'right' }}>
-                      {isMeasured ? (
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.05rem', fontWeight: 800, color: dim.color }}>
-                          {skillData.score} <small style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>/ 100</small>
-                        </span>
-                      ) : (
-                        <span className="badge badge-insufficient" style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem' }}>
-                          NOT MEASURED
-                        </span>
-                      )}
-                    </div>
+                    {isMeasured ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: dim.color }}>
+                        {skillData.score}/100
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Not Measured</span>
+                    )}
                   </div>
-
-                  {isMeasured ? (
-                    <div style={{ marginTop: '0.6rem' }}>
-                      <AnimatedProgress value={skillData.score} max={100} color={dim.color} />
-                    </div>
-                  ) : (
-                    <div className="unmeasured-progress-bar" />
-                  )}
+                  <AnimatedProgress value={isMeasured ? skillData.score : 0} color={dim.color} height={6} />
                 </div>
               );
             })}
@@ -312,147 +278,112 @@ export default function PublicProfile() {
         </div>
 
         {/* Right Column: Achievements & Recent Activity */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* Real Achievements / Badges Section */}
-          <div className="profile-achievements-card">
-            <div className="profile-card-header">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Achievements */}
+          <div className="card" style={{ padding: '2rem', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span style={{ fontSize: '1.2rem' }}>🏆</span>
-                <div>
-                  <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                    Achievements
-                  </h2>
-                </div>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Achievements</h2>
               </div>
-              <span className="badge badge-SECURITY" style={{ fontSize: '0.72rem', padding: '0.18rem 0.6rem' }}>
-                {achievements.length} EARNED
-              </span>
+              <span className="badge badge-SECURITY">{achievements.length} EARNED</span>
             </div>
 
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: '0 0 1.25rem', lineHeight: 1.45 }}>
-                Verified milestones earned through evaluated engineering challenges.
-              </p>
+            {achievements.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: '#f8fafc', borderRadius: '14px' }}>
+                No engineering badges earned yet. Complete evaluated challenges to unlock milestones.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                {achievements.map((ach) => {
+                  const variant = BADGE_VARIANTS[ach.code] || {
+                    border: '#e2e8f0',
+                    text: '#2563eb',
+                    bg: '#eff6ff',
+                  };
 
-              {achievements.length === 0 ? (
-                <div className="profile-achievements-empty">
-                  <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.6rem' }}>🎖️</span>
-                  <strong style={{ color: '#fff', fontSize: '0.98rem', display: 'block', marginBottom: '0.35rem' }}>
-                    No engineering badges earned yet.
-                  </strong>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', margin: 0, lineHeight: 1.5 }}>
-                    Complete evaluated challenges to unlock verified DevForge achievements.
-                  </p>
-                </div>
-              ) : (
-                <div className="profile-achievements-grid">
-                  {achievements.map((ach) => {
-                    const variant = BADGE_VARIANTS[ach.code] || {
-                      glow: 'rgba(56, 189, 248, 0.25)',
-                      border: 'rgba(56, 189, 248, 0.4)',
-                      text: '#38bdf8',
-                      bg: 'rgba(56, 189, 248, 0.08)',
-                    };
-
-                    return (
-                      <div
-                        key={ach.code || ach.name}
-                        className="profile-achievement-card"
-                        style={{
-                          borderColor: variant.border,
-                          boxShadow: `0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px ${variant.glow}`,
-                        }}
-                      >
-                        <div
-                          className="profile-achievement-icon-wrapper"
-                          style={{ background: variant.bg, borderColor: variant.border }}
-                        >
-                          <span className="profile-achievement-icon" role="img" aria-label={ach.name}>
-                            {ach.icon || '🏆'}
-                          </span>
-                        </div>
-                        <div className="profile-achievement-details">
-                          <strong className="profile-achievement-name">
-                            {ach.name}
-                          </strong>
-                          <p className="profile-achievement-desc">
-                            {ach.description}
-                          </p>
-                          <div className="profile-achievement-earned" style={{ color: variant.text }}>
-                            <span>✓ EARNED · {formatEarnedDate(ach.earned_at)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                  return (
+                    <div
+                      key={ach.code || ach.name}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        background: variant.bg,
+                        border: `1px solid ${variant.border}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.4rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.5rem' }}>{ach.icon || '🏆'}</span>
+                      <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>{ach.name}</strong>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                        {ach.description}
+                      </p>
+                      <span style={{ fontSize: '0.7rem', color: variant.text, fontWeight: 700, marginTop: 'auto' }}>
+                        ✓ {formatEarnedDate(ach.earned_at)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Recent Activity Timeline */}
-          <div className="profile-activity-card">
-            <div className="profile-card-header">
+          {/* Recent Activity */}
+          <div className="card" style={{ padding: '2rem', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span style={{ fontSize: '1.2rem' }}>⚡</span>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                  Recent Evaluated Activity
-                </h2>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Recent Activity</h2>
               </div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                Latest {recent_activity.length}
-              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Latest {recent_activity.length}</span>
             </div>
 
-            <div className="profile-activity-body">
-              {recent_activity.length === 0 ? (
-                <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>📂</span>
-                  Complete a challenge to start building your engineering history.
-                </div>
-              ) : (
-                <div className="profile-activity-list">
-                  {recent_activity.map((act, index) => (
-                    <div key={index} className="profile-activity-item">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                        <span className={`badge badge-${act.challenge_type}`} style={{ fontSize: '0.68rem', padding: '0.15rem 0.5rem' }}>
-                          {act.challenge_type.replace('_', ' ')}
-                        </span>
-                        <span className={`status-badge status-${act.status}`} style={{ fontSize: '0.72rem', padding: '0.15rem 0.55rem' }}>
-                          {act.status}
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <Link
-                          to={`/challenges/${act.challenge_id}`}
-                          className="activity-challenge-title"
-                        >
-                          {act.challenge_title}
-                        </Link>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.9rem', color: '#38bdf8', flexShrink: 0 }}>
-                          {act.score} pts
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.35rem', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                        <span>Difficulty: <strong style={{ color: '#cbd5e1' }}>{act.difficulty}</strong></span>
-                        <span>·</span>
-                        <span>
-                          {act.evaluated_at
-                            ? new Date(act.evaluated_at).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })
-                            : 'Recently'}
-                        </span>
+            {recent_activity.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: '#f8fafc', borderRadius: '14px' }}>
+                No recent activity recorded yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {recent_activity.map((act, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '0.85rem 1.1rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <Link
+                        to={`/challenges/${act.challenge_id}`}
+                        style={{ fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none', fontSize: '0.92rem' }}
+                      >
+                        {act.challenge_title}
+                      </Link>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        <span>{act.difficulty}</span>
+                        <span>•</span>
+                        <span>{act.challenge_type?.replace('_', ' ')}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span className={`badge ${act.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`} style={{ fontSize: '0.7rem' }}>
+                        {act.status}
+                      </span>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.88rem', color: '#2563eb', marginTop: '0.2rem' }}>
+                        {act.score} pts
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

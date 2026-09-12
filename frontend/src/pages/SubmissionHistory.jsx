@@ -69,8 +69,18 @@ export default function SubmissionHistory() {
 
   return (
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1100px' }}>
-      <div className="gency-frame animate-fade-in-up" style={{ padding: '2rem 2.5rem', marginBottom: '2rem', background: 'linear-gradient(180deg, rgba(24, 34, 54, 0.75) 0%, rgba(14, 20, 32, 0.9) 100%)' }}>
-        <h1 className="page-title" style={{ margin: 0, fontSize: '2rem' }}>Submission Archives</h1>
+      {/* Header Banner */}
+      <div
+        className="card animate-fade-in-up"
+        style={{
+          padding: '2.5rem',
+          marginBottom: '2rem',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+          borderRadius: '24px',
+          border: '1px solid #e2e8f0',
+        }}
+      >
+        <h1 className="page-title" style={{ margin: 0, fontSize: '2.2rem' }}>Submission Archives</h1>
         <p className="page-description" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
           Audit and review your automated Docker sandbox evaluation logs, test metrics, and scoring history.
         </p>
@@ -78,19 +88,20 @@ export default function SubmissionHistory() {
 
       {/* Filter Bar */}
       <div
-        className="gency-frame animate-fade-in-up stagger-1"
+        className="card animate-fade-in-up stagger-1"
         style={{
-          padding: '1.1rem 1.5rem',
+          padding: '1.25rem 1.75rem',
           marginBottom: '2rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '1rem',
+          borderRadius: '20px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <label style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Filter by Status:</label>
+          <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Filter by Status:</label>
           <select
             className="select-control"
             value={statusFilter}
@@ -108,30 +119,32 @@ export default function SubmissionHistory() {
           </select>
         </div>
 
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          <strong style={{ color: '#fff' }}>{count}</strong> {count === 1 ? 'submission' : 'submissions'} recorded
+        <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+          <strong style={{ color: 'var(--text-primary)' }}>{count}</strong> {count === 1 ? 'submission' : 'submissions'} recorded
         </div>
       </div>
 
       {/* Content Area */}
       {loading ? (
-        <Loading message="Loading submission archive..." />
+        <div style={{ padding: '4rem 0' }}>
+          <Loading message="Loading submission archive..." />
+        </div>
       ) : error ? (
-        <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
           <p>{error}</p>
         </div>
       ) : submissions.length === 0 ? (
-        <div className="gency-frame animate-scale-in" style={{ padding: '3.5rem 2rem', textAlign: 'center' }}>
+        <div className="card animate-scale-in" style={{ padding: '3.5rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.25rem' }}>
             No submissions recorded under the selected filter criteria.
           </p>
-          <Link to="/challenges" className="btn-gency btn-gency-primary">
-            <span>Browse Mission Catalog</span>
-            <span className="btn-arrow-icon">↗</span>
+          <Link to="/challenges" className="btn-saas btn-saas-primary">
+            <span>Browse Challenges</span>
+            <span className="btn-arrow-icon">→</span>
           </Link>
         </div>
       ) : (
-        <div className="gency-frame animate-fade-in-up stagger-2" style={{ overflow: 'hidden' }}>
+        <div className="card animate-fade-in-up stagger-2" style={{ overflow: 'hidden', borderRadius: '24px', padding: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {submissions.map((sub, idx) => (
               <div
@@ -145,19 +158,18 @@ export default function SubmissionHistory() {
                   borderBottom: idx < submissions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                   flexWrap: 'wrap',
                   gap: '1rem',
-                  background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)',
-                  transition: 'background var(--transition-fast)',
+                  background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
                     <Link
                       to={`/challenges/${sub.challenge_id || sub.challenge?.id || sub.challenge}`}
-                      style={{ fontWeight: 600, color: '#fff', fontSize: '1.05rem', fontFamily: 'var(--font-display)' }}
+                      style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.05rem', textDecoration: 'none' }}
                     >
                       {sub.challenge_title || sub.challenge?.title || `Challenge #${sub.challenge}`}
                     </Link>
-                    <span className="badge badge-lang" style={{ borderRadius: 'var(--radius-full)' }}>{sub.language || 'Python'}</span>
+                    <span className="badge badge-API">{sub.language || 'Python'}</span>
                   </div>
 
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
@@ -171,16 +183,16 @@ export default function SubmissionHistory() {
                     <span>{sub.status}</span>
                   </span>
 
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '1.1rem', color: sub.score >= 80 ? '#10b981' : '#f59e0b', minWidth: '70px', textAlign: 'right' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '1.1rem', color: sub.score >= 80 ? '#059669' : '#d97706', minWidth: '70px', textAlign: 'right' }}>
                     <AnimatedCounter value={sub.score || 0} duration={600} />/100
                   </span>
 
                   <Link
                     to={`/workspace/${sub.challenge_id || sub.challenge?.id || sub.challenge}`}
                     className="btn btn-secondary"
-                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
+                    style={{ padding: '0.45rem 1rem', fontSize: '0.84rem' }}
                   >
-                    Open in Workspace
+                    Open Workspace →
                   </Link>
                 </div>
               </div>
@@ -201,7 +213,7 @@ export default function SubmissionHistory() {
               }}
             >
               <button
-                className="btn-gency btn-gency-secondary"
+                className="btn btn-secondary"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
                 style={{ padding: '0.45rem 1.1rem', fontSize: '0.85rem' }}
@@ -209,10 +221,10 @@ export default function SubmissionHistory() {
                 &larr; Previous
               </button>
               <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                Page <strong style={{ color: '#fff' }}>{page}</strong> of <strong style={{ color: '#fff' }}>{totalPages}</strong>
+                Page <strong>{page}</strong> of <strong>{totalPages}</strong>
               </span>
               <button
-                className="btn-gency btn-gency-secondary"
+                className="btn btn-secondary"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
                 style={{ padding: '0.45rem 1.1rem', fontSize: '0.85rem' }}

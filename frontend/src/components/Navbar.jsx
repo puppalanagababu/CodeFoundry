@@ -9,21 +9,17 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Handle scroll effect
+  const isRecruiterOrAdmin = user?.role === 'RECRUITER' || user?.role === 'ADMIN' || user?.is_staff;
+
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 20);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -35,14 +31,14 @@ export default function Navbar() {
 
   return (
     <header className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
-      <Link to="/" className="navbar-brand" aria-label="DevForge Home">
+      <Link to="/" className="navbar-brand" aria-label="CodeFoundry Home">
         <span className="logo-icon">&gt;_</span>
-        <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em', fontSize: '1.25rem' }}>
-          DevForge
+        <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.025em', fontSize: '1.28rem', fontWeight: 800 }}>
+          CodeFoundry
         </span>
       </Link>
 
-      {/* Mobile Menu Toggle Button */}
+      {/* Mobile Menu Toggle */}
       <button
         type="button"
         className="mobile-nav-toggle"
@@ -62,6 +58,20 @@ export default function Navbar() {
           Home
         </NavLink>
 
+        <NavLink
+          to="/challenges"
+          className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+        >
+          Challenges
+        </NavLink>
+
+        <NavLink
+          to="/leaderboard"
+          className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+        >
+          Leaderboard
+        </NavLink>
+
         {isAuthenticated && (
           <>
             <NavLink
@@ -71,61 +81,54 @@ export default function Navbar() {
               Dashboard
             </NavLink>
             <NavLink
-              to="/challenges"
+              to="/submissions"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
-              Challenges
+              Submissions
             </NavLink>
-            <NavLink
-              to="/leaderboard"
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              Leaderboard
-            </NavLink>
-            {(user?.role === 'RECRUITER' || user?.role === 'ADMIN') && (
+            {isRecruiterOrAdmin && (
               <NavLink
                 to="/recruiter"
                 className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
               >
-                Recruiter
+                Recruiter Hub
               </NavLink>
             )}
-            <NavLink
-              to="/submissions"
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              My Submissions
-            </NavLink>
           </>
         )}
 
         {!isAuthenticated ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginLeft: '0.5rem' }}>
             <NavLink
               to="/login"
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              className="nav-link"
+              style={{ fontWeight: 600 }}
             >
               Sign In
             </NavLink>
             <Link
               to="/register"
-              className="btn-gency btn-gency-primary"
-              style={{ padding: '0.45rem 1.15rem', fontSize: '0.86rem' }}
+              className="btn-saas btn-saas-primary"
+              style={{ padding: '0.55rem 1.25rem', fontSize: '0.88rem' }}
             >
               <span>Get Started</span>
-              <span className="btn-arrow-icon">↗</span>
+              <span className="btn-arrow-icon">→</span>
             </Link>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '0.5rem' }}>
-            <span className="user-pill">
-              <span style={{ fontWeight: 600, color: '#fff' }}>{user?.username}</span>
-              <span style={{ color: 'var(--accent-blue)', fontWeight: 700 }}>· {user?.role || 'Developer'}</span>
-            </span>
+            <Link
+              to={`/profile/${encodeURIComponent(user?.username || '')}`}
+              className="user-pill"
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.username}</span>
+              <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>· {user?.role || 'Developer'}</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="btn btn-secondary"
-              style={{ padding: '0.4rem 0.9rem', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
+              style={{ padding: '0.4rem 0.95rem', fontSize: '0.82rem' }}
               title="Sign out of your session"
             >
               Logout
