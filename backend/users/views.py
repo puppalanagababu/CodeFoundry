@@ -9,15 +9,19 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.contrib.auth import get_user_model
 from challenges.models import Challenge
 from submissions.models import Submission
 from .serializers import (
     CustomTokenObtainPairSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     UserRegisterSerializer,
     UserSerializer,
 )
-from .throttles import LoginRateThrottle
+from .throttles import LoginRateThrottle, PasswordResetRateThrottle
 
+User = get_user_model()
 logger = logging.getLogger("users.auth")
 
 
@@ -115,6 +119,93 @@ class LogoutView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR if not getattr(settings, 'DEBUG', False) else status.HTTP_400_BAD_REQUEST,
             )
 
+
+class PasswordResetRequestView(APIView):
+    """
+    Initiates password reset by sending an email with a secure single-use token.
+    Account enumeration protected: always returns generic 200 response.
+    """
+    permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.tokens import default_token_generator
+        from django.core.mail import send_mail
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        User = get_user_model()
+        ip = get_client_ip(request)
+        serializer = PasswordResetRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            email = serializer.validated_data["email"].strip()
+            users = User.objects.filter(email__iexact=email, is_active=True)
+            for user in users:
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                reset_url = f"/reset-password?uid={uid}&token={token}"
+                send_mail(
+                    subject="CodeFoundry — Password Reset Request",
+                    message=(
+                        f"Hello {user.username},\n\n"
+                        f"A password reset was requested for your CodeFoundry account.\n"
+                        f"Use the following link to reset your password:\n"
+                        f"{reset_url}\n\n"
+                        f"This link will expire in 30 minutes and can only be used once.\n"
+                        f"If you did not request this, you can safely ignore this email."
+                    ),
+                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@codefoundry.dev"),
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
+            logger.info("Password reset requested (IP: %s)", ip)
+
+        return Response(
+            {"detail": "If an account exists for this email, password reset instructions have been sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Confirms password reset using secure token and sets the new password.
+    Single-use guarantee via default_token_generator.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        ip = get_client_ip(request)
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            logger.warning("Password reset failed: invalid or expired token (IP: %s)", ip)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = serializer.validated_data["user"]
+        new_password = serializer.validated_data["new_password"]
+
+        user.set_password(new_password)
+        user.save()
+
+        # Invalidate existing sessions by blacklisting all outstanding refresh tokens for the user
+        try:
+            from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+            outstanding_tokens = OutstandingToken.objects.filter(user=user)
+            for token in outstanding_tokens:
+                BlacklistedToken.objects.get_or_create(token=token)
+        except Exception:
+            logger.warning("Could not blacklist outstanding tokens for user ID: %s", user.id)
+
+        logger.info("Password reset completed successfully for user ID: %s (IP: %s)", user.id, ip)
+        return Response(
+            {"message": "Password has been reset successfully."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class CurrentUserView(APIView):

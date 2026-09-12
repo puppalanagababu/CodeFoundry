@@ -8,8 +8,15 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from submissions.models import Submission
 from .serializers import UserRegisterSerializer, UserSerializer
-from .throttles import LoginRateThrottle
-from .views import CurrentUserView, LoginView, LogoutView, RegisterView
+from .throttles import LoginRateThrottle, PasswordResetRateThrottle
+from .views import (
+    CurrentUserView,
+    LoginView,
+    LogoutView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
+    RegisterView,
+)
 
 User = get_user_model()
 
@@ -957,3 +964,400 @@ class SecurityLoggingAndErrorHardeningTests(SimpleTestCase):
         self.assertNotIn("Traceback", response_str)
         self.assertNotIn("RuntimeError", response_str)
         self.assertEqual(response.data, {"detail": "An unexpected error occurred."})
+
+
+class PasswordResetSecurityTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.factory = APIRequestFactory()
+        self.request_view = PasswordResetRequestView.as_view()
+        self.confirm_view = PasswordResetConfirmView.as_view()
+        self.login_view = LoginView.as_view()
+
+        self.user = User(id=42, username="alice", email="alice@example.com", is_active=True, role=User.Role.STUDENT)
+        self.user.set_password("OldPassword123!")
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch("django.core.mail.send_mail")
+    @patch("users.views.User.objects.filter")
+    def test_1_request_for_existing_email_returns_generic_response_and_sends_email(self, mock_filter, mock_send_mail):
+        mock_filter.return_value = [self.user]
+
+        request = self.factory.post("/api/auth/password-reset/", {"email": "alice@example.com"}, format="json")
+        response = self.request_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["detail"],
+            "If an account exists for this email, password reset instructions have been sent.",
+        )
+        mock_send_mail.assert_called_once()
+        args, kwargs = mock_send_mail.call_args
+        self.assertEqual(kwargs.get("recipient_list"), ["alice@example.com"])
+        self.assertIn("CodeFoundry — Password Reset Request", kwargs.get("subject", ""))
+        self.assertIn("uid=", kwargs.get("message", ""))
+        self.assertIn("token=", kwargs.get("message", ""))
+
+    @patch("django.core.mail.send_mail")
+    @patch("users.views.User.objects.filter")
+    def test_2_request_for_non_existing_email_returns_exact_same_generic_response(self, mock_filter, mock_send_mail):
+        mock_filter.return_value = []
+
+        request = self.factory.post("/api/auth/password-reset/", {"email": "nonexistent@example.com"}, format="json")
+        response = self.request_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data["detail"],
+            "If an account exists for this email, password reset instructions have been sent.",
+        )
+        mock_send_mail.assert_not_called()
+
+    @patch("users.views.User.objects.filter")
+    def test_3_no_account_enumeration_information_exposed(self, mock_filter):
+        mock_filter.return_value = [self.user]
+        res1 = self.request_view(self.factory.post("/api/auth/password-reset/", {"email": "alice@example.com"}, format="json"))
+
+        mock_filter.return_value = []
+        res2 = self.request_view(self.factory.post("/api/auth/password-reset/", {"email": "ghost@example.com"}, format="json"))
+
+        # Both status codes and response bodies must match exactly
+        self.assertEqual(res1.status_code, res2.status_code)
+        self.assertEqual(res1.data, res2.data)
+        self.assertNotIn("alice", str(res1.data))
+        self.assertNotIn("email not found", str(res1.data).lower())
+        self.assertNotIn("user not found", str(res1.data).lower())
+
+    @patch("django.contrib.auth.models.AbstractBaseUser.save")
+    @patch("users.serializers.User.objects.get")
+    def test_4_valid_reset_token_allows_password_change(self, mock_get_user, mock_save):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": token,
+                "new_password": "BrandNewSecurePassword123!",
+                "new_password2": "BrandNewSecurePassword123!",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Password has been reset successfully.")
+        self.assertTrue(self.user.check_password("BrandNewSecurePassword123!"))
+        self.assertFalse(self.user.check_password("OldPassword123!"))
+
+    @patch("users.serializers.User.objects.get")
+    def test_5_expired_or_invalid_token_is_rejected(self, mock_get_user):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": "invalid-or-expired-token-xyz",
+                "new_password": "NewSecurePassword123!",
+                "new_password2": "NewSecurePassword123!",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"][0], "Invalid or expired password reset token.")
+
+    @patch("django.contrib.auth.models.AbstractBaseUser.save")
+    @patch("users.serializers.User.objects.get")
+    def test_6_used_reset_token_cannot_be_reused(self, mock_get_user, mock_save):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # 1st attempt: Successful password reset
+        req1 = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": token,
+                "new_password": "FirstNewPassword123!",
+                "new_password2": "FirstNewPassword123!",
+            },
+            format="json",
+        )
+        res1 = self.confirm_view(req1)
+        self.assertEqual(res1.status_code, status.HTTP_200_OK)
+
+        # 2nd attempt with the same token: Must be rejected
+        req2 = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": token,
+                "new_password": "SecondNewPassword123!",
+                "new_password2": "SecondNewPassword123!",
+            },
+            format="json",
+        )
+        res2 = self.confirm_view(req2)
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res2.data["detail"][0], "Invalid or expired password reset token.")
+
+    def test_7_password_confirmation_mismatch_rejected(self):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": "dummy-token",
+                "new_password": "PasswordOne123!",
+                "new_password2": "DifferentPassword456!",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Passwords do not match.", str(response.data))
+
+    @patch("users.serializers.User.objects.get")
+    def test_8_weak_password_rejected_by_validators(self, mock_get_user):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # Password shorter than 6 characters
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": token,
+                "new_password": "123",
+                "new_password2": "123",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("django.core.mail.send_mail")
+    @patch("users.views.User.objects.filter")
+    def test_9_password_reset_requests_are_throttled_429(self, mock_filter, mock_send_mail):
+        mock_filter.return_value = [self.user]
+
+        # 5 allowed attempts
+        for i in range(5):
+            req = self.factory.post("/api/auth/password-reset/", {"email": "alice@example.com"}, format="json")
+            res = self.request_view(req)
+            self.assertEqual(res.status_code, status.HTTP_200_OK, f"Attempt {i+1} should succeed")
+
+        # 6th attempt is throttled
+        throttled_req = self.factory.post("/api/auth/password-reset/", {"email": "alice@example.com"}, format="json")
+        throttled_res = self.request_view(throttled_req)
+
+        self.assertEqual(throttled_res.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    @patch("django.core.mail.send_mail")
+    @patch("users.views.User.objects.filter")
+    def test_10_reset_logs_contain_no_passwords_tokens_or_secrets(self, mock_filter, mock_send_mail):
+        mock_filter.return_value = [self.user]
+
+        with self.assertLogs("users.auth", level="INFO") as cm:
+            req = self.factory.post("/api/auth/password-reset/", {"email": "alice@example.com"}, format="json")
+            res = self.request_view(req)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+            self.assertTrue(any("Password reset requested" in log for log in cm.output))
+            # Verify no tokens or sensitive email content in logs
+            for log in cm.output:
+                self.assertNotIn("token=", log)
+                self.assertNotIn("uid=", log)
+                self.assertNotIn("SecretPassword", log)
+
+    @patch("django.contrib.auth.models.AbstractBaseUser.save")
+    @patch("users.serializers.User.objects.get")
+    def test_11_login_with_new_password_succeeds_and_old_password_fails(self, mock_get_user, mock_save):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # Confirm password reset
+        req_confirm = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": token,
+                "new_password": "FreshNewPassword123!",
+                "new_password2": "FreshNewPassword123!",
+            },
+            format="json",
+        )
+        res_confirm = self.confirm_view(req_confirm)
+        self.assertEqual(res_confirm.status_code, status.HTTP_200_OK)
+
+        # Validating check_password logic
+        self.assertTrue(self.user.check_password("FreshNewPassword123!"))
+        self.assertFalse(self.user.check_password("OldPassword123!"))
+
+
+class PasswordResetSessionInvalidationTests(SimpleTestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.confirm_view = PasswordResetConfirmView.as_view()
+        self.refresh_view = TokenRefreshView.as_view()
+
+        self.user = User(
+            id=42,
+            username="sessionuser",
+            email="sessionuser@example.com",
+            role="STUDENT",
+        )
+        self.user.set_password("OldPassword123!")
+
+    @patch("users.views.logger")
+    @patch("rest_framework_simplejwt.token_blacklist.models.BlacklistedToken.objects.get_or_create")
+    @patch("rest_framework_simplejwt.token_blacklist.models.OutstandingToken.objects.filter")
+    @patch("django.contrib.auth.models.AbstractBaseUser.save")
+    @patch("django.contrib.auth.tokens.default_token_generator.check_token", return_value=True)
+    @patch("users.serializers.User.objects.get")
+    def test_1_password_reset_blacklists_all_user_outstanding_refresh_tokens(
+        self, mock_get_user, mock_check_token, mock_save, mock_outstanding_filter, mock_blacklist_create, mock_logger
+    ):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+
+        mock_token_1 = MagicMock(token="pre.reset.refresh.token.1")
+        mock_token_2 = MagicMock(token="pre.reset.refresh.token.2")
+        mock_outstanding_filter.return_value = [mock_token_1, mock_token_2]
+
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": "valid-reset-token",
+                "new_password": "NewSecurePassword123!",
+                "new_password2": "NewSecurePassword123!",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Password has been reset successfully.")
+
+        # Assert OutstandingToken was filtered for the specific user
+        mock_outstanding_filter.assert_called_once_with(user=self.user)
+
+        # Assert all outstanding tokens were blacklisted
+        self.assertEqual(mock_blacklist_create.call_count, 2)
+        mock_blacklist_create.assert_any_call(token=mock_token_1)
+        mock_blacklist_create.assert_any_call(token=mock_token_2)
+
+        # Assert password was updated
+        self.assertTrue(self.user.check_password("NewSecurePassword123!"))
+        self.assertFalse(self.user.check_password("OldPassword123!"))
+
+    @patch("rest_framework_simplejwt.serializers.TokenRefreshSerializer.validate")
+    def test_2_pre_reset_refresh_token_is_rejected_on_refresh_attempt(self, mock_validate):
+        from rest_framework_simplejwt.exceptions import InvalidToken
+        mock_validate.side_effect = InvalidToken("Token is blacklisted")
+
+        request = self.factory.post(
+            "/api/auth/token/refresh/",
+            {"refresh": "pre.reset.blacklisted.jwt"},
+            format="json",
+        )
+        response = self.refresh_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn("token_not_valid", str(response.data))
+
+    @patch("users.serializers.CustomTokenObtainPairSerializer.validate")
+    def test_3_login_with_new_password_after_reset_yields_fresh_usable_tokens(self, mock_login_validate):
+        from users.views import LoginView
+        login_view = LoginView.as_view()
+
+        mock_login_validate.return_value = {
+            "access": "new.post_reset.access.jwt",
+            "refresh": "new.post_reset.refresh.jwt",
+            "user": {
+                "id": self.user.id,
+                "username": self.user.username,
+                "email": self.user.email,
+                "role": self.user.role,
+            },
+        }
+
+        request = self.factory.post(
+            "/api/auth/login/",
+            {"username": "sessionuser", "password": "NewSecurePassword123!"},
+            format="json",
+        )
+        response = login_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["access"], "new.post_reset.access.jwt")
+        self.assertEqual(response.data["refresh"], "new.post_reset.refresh.jwt")
+
+    @patch("rest_framework_simplejwt.token_blacklist.models.OutstandingToken.objects.filter")
+    @patch("django.contrib.auth.models.AbstractBaseUser.save")
+    @patch("django.contrib.auth.tokens.default_token_generator.check_token", return_value=True)
+    @patch("users.serializers.User.objects.get")
+    def test_4_blacklist_exception_handled_safely(
+        self, mock_get_user, mock_check_token, mock_save, mock_outstanding_filter
+    ):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        mock_get_user.return_value = self.user
+        mock_outstanding_filter.side_effect = Exception("Database connection timeout")
+
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        request = self.factory.post(
+            "/api/auth/password-reset/confirm/",
+            {
+                "uid": uid,
+                "token": "valid-reset-token",
+                "new_password": "NewSecurePassword123!",
+                "new_password2": "NewSecurePassword123!",
+            },
+            format="json",
+        )
+        response = self.confirm_view(request)
+
+        # Reset still succeeds safely even if blacklist backend encounters an exception
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Password has been reset successfully.")

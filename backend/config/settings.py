@@ -202,9 +202,18 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_THROTTLE_RATES': {
         'login': '5/15m',
+        'password_reset': '5/15m',
     },
     'EXCEPTION_HANDLER': 'config.exceptions.custom_exception_handler',
 }
+
+PASSWORD_RESET_TIMEOUT = 1800  # 30 minutes in seconds
+
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
+)
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@codefoundry.dev')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
