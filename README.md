@@ -101,13 +101,17 @@ DevForge categorizes real-world engineering tasks into distinct challenge types:
 
 ## 7. Technology Stack
 
-### Backend
-- **Python 3.11+**
-- **Django 5.2** & **Django REST Framework (DRF)**
+### Backend (Primary Architecture)
+- **FastAPI** (High-performance asynchronous Python REST API framework)
+- **SQLAlchemy** (Robust SQL toolkit & Object-Relational Mapper)
+- **Pydantic v2** (Strict data validation & serialization schemas)
 - **PostgreSQL 16+** (Relational storage & persistence)
-- **Celery** (Distributed task queue)
-- **Redis 7+** (Message broker & task cache)
-- **SimpleJWT** (Authentication & token rotation)
+- **Celery** (Distributed asynchronous evaluation task queue)
+- **Redis 7+** (Message broker, result backend, and token blacklist)
+- **PyJWT & Passlib** (Stateless authentication, PBKDF2 compatibility, token rotation)
+
+### Legacy Backend (Rollback Only)
+- **Django 5.2** & **Django REST Framework (DRF)** *(Retained exclusively for emergency rollback)*
 
 ### Frontend
 - **React 18** & **Vite**
@@ -117,8 +121,8 @@ DevForge categorizes real-world engineering tasks into distinct challenge types:
 
 ### Sandbox & Infrastructure
 - **Docker Engine** (`python:3.11-slim` runtime)
+- **Uvicorn** (Production ASGI server)
 - **Nginx** (Reverse proxy & static SPA serving)
-- **Gunicorn** (WSGI application server)
 
 ---
 
@@ -167,7 +171,7 @@ DevForge evaluates performance across six core software engineering dimensions:
                                            │
                                            ▼
                       +------------------------------------------+
-                      |         Gunicorn / Django API            |
+                      |         FastAPI ASGI App (Uvicorn)       |
                       |  (Auth, Challenges, Submissions, Eval)   |
                       +--------------------+---------------------+
                                            │
@@ -215,30 +219,30 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install Python dependencies
-pip install -r backend/requirements.txt
+pip install -r requirements.txt
 
 # Configure environment variables
 cp .env.example .env
 # Edit .env with your local PostgreSQL credentials
 
-# Run database migrations
-python backend/manage.py migrate
-
-# Seed challenge catalog & test suites
-python backend/manage.py seed_challenges
-
 # Pull the Docker execution runtime image
 docker pull python:3.11-slim
 ```
 
-### 3. Run Backend Services
+### 3. Run Primary Backend Services (FastAPI)
 ```bash
-# Terminal 1: Django API server
-python backend/manage.py runserver 127.0.0.1:8000
+# Terminal 1: FastAPI API server
+cd backend
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 # Terminal 2: Celery evaluation worker
 cd backend
-celery -A config worker --loglevel=info
+celery -A app.celery_app.celery_app worker --loglevel=info -P solo
+```
+
+*(Optional) Legacy Django Fallback Server:*
+```bash
+python backend/manage.py runserver 127.0.0.1:8000
 ```
 
 ### 4. Frontend Setup
@@ -247,6 +251,7 @@ celery -A config worker --loglevel=info
 cd frontend
 npm install
 npm run dev
+```
 ```
 Open `http://localhost:5173` in your browser.
 

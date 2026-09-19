@@ -7,6 +7,14 @@ celery
 redis
 django-cors-headers
 djangorestframework-simplejwt
-
-
-
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+sqlalchemy
+alembic
+passlib
+pyjwt
+httpx
+pytest
+pytest-asyncio
