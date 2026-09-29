@@ -64,7 +64,7 @@ Challenge Progress Updated
 | **4** | Select **Fix the Broken Calculator**. | Challenge details page with README requirements, difficulty tag, and repository file tree. | *"Let's open 'Fix the Broken Calculator'. You can see the full engineering requirements and repository structure. Test files are marked readonly to protect grading integrity."* |
 | **5** | Click **Open in Workspace**. | Multi-tab Monaco editor loaded with `app/calculator.py`, `app/main.py`, and test files. | *"This is the interactive Monaco workspace. Notice how we can switch between modules, inspect helper classes, and review existing tests just like a real IDE."* |
 | **6** | Click **Run Code**. | Output terminal displays test execution output via Docker runner. | *"When I click 'Run Code', DevForge spins up an isolated Docker container with strict CPU and memory limits to execute our code and stream the output back in real time."* |
-| **7** | Click **Submit Solution** (with starter code). | Status badge turns yellow (`PENDING`), UI begins polling every 2s. | *"When we click 'Submit Solution', Django creates a submission and asynchronously dispatches a background task to Celery via Redis. The UI remains completely responsive."* |
+| **7** | Click **Submit Solution** (with starter code). | Status badge turns yellow (`PENDING`), UI begins polling every 2s. | *"When we click 'Submit Solution', FastAPI creates a submission record and asynchronously dispatches a background task to Celery via Redis. The UI remains completely responsive."* |
 | **8** | Wait for evaluation (2–3 seconds). | Status badge updates to red (`FAILED`), Score: `80/100`, detailed breakdown of passing and failing test cases. | *"The Celery worker mounted our code into a network-disabled Docker container and evaluated it against hidden test suites. The submission failed the precedence test case `2 + 3 * 4`."* |
 | **9** | Edit `app/calculator.py` with the precedence fix. | Replace sequential evaluation with operator precedence stack logic. | *"Now let's apply the fix by implementing standard operator precedence handling in `app/calculator.py`."* |
 | **10** | Click **Submit Solution** again. | Submits new revision, enters `PENDING`, polls Celery task. | *"Let's submit the corrected solution."* |
@@ -76,7 +76,7 @@ Challenge Progress Updated
 ## 5. Key Technical Architecture Points
 
 - **Frontend (React 18 + Vite + Monaco)**: Single-page application using `@monaco-editor/react` for repository file editing, custom responsive CSS design tokens, and token-based state recovery via `sessionStorage`.
-- **Backend API (Django 5.2 + DRF)**: RESTful endpoints for JWT authentication (`SimpleJWT`), repository file trees, challenge metadata, and submission lifecycle management.
+- **Backend API (FastAPI + SQLAlchemy)**: High-performance asynchronous RESTful endpoints with OpenAPI schema documentation, JWT authentication (OAuth2 / PyJWT), repository file trees, challenge metadata, and submission lifecycle management.
 - **Task Queue (Celery + Redis)**: Non-blocking asynchronous task execution via `evaluate_submission.delay(submission_id)`, preventing HTTP request timeouts during long evaluations.
 - **Relational Storage (PostgreSQL 16+)**: ACID-compliant persistence for users, submissions, structured `Evaluation` records, and raw test run JSON results.
 - **Sandbox Execution (Docker Engine)**: Ephemeral container execution using `python:3.11-slim`, mounting repository workspaces into isolated directories with strict capability drops.
@@ -95,20 +95,20 @@ When asked about security and sandbox isolation, highlight these actual implemen
 5. **Resource Limits**: Hard ceilings on memory (`128MB`), CPU (`1.0 CPU`), and process count (`pids_limit=64`) prevent fork bombs and memory exhaustion.
 6. **Execution Timeouts (`timeout=5.0s`)**: Runaway infinite loops or $O(N^2)$ algorithms are automatically killed with exit code `124`.
 7. **Server-Authoritative Test Protection**: Hidden test cases and expected outputs reside exclusively in the server database and are never sent to the client browser.
-8. **Multi-Tenant User Isolation**: Ownership filters in DRF ensure users can only query, run, or inspect their own submissions (attempting to access another user's submission returns `404 Not Found`).
+8. **Multi-Tenant User Isolation**: Ownership filters in API routers ensure users can only query, run, or inspect their own submissions (attempting to access another user's submission returns `404 Not Found`).
 
 ---
 
 ## 7. Top 15 Interview Questions & Answers
 
-### Q1: Why did you choose Django and Django REST Framework for the backend?
-> *"Django provides a battle-tested ORM, rock-solid security defaults, built-in migration management, and seamless integration with Celery. DRF gave us clean serialization and declarative view permissions with minimal boilerplate."*
+### Q1: Why did you choose FastAPI and SQLAlchemy for the backend?
+> *"FastAPI provides high-performance asynchronous request handling, automatic OpenAPI/Swagger documentation, and native Pydantic data validation with strict type safety. SQLAlchemy gives us an expressive, robust ORM with Alembic managing database migrations."*
 
 ### Q2: Why React and Vite for the frontend?
 > *"React's component lifecycle made managing multi-tab editor state and real-time polling loops straightforward. Vite provided instant hot module reloading and sub-second production builds without Webpack overhead."*
 
 ### Q3: Why did you use Celery and Redis instead of evaluating submissions synchronously?
-> *"Running code in Docker containers takes between 500ms and 5 seconds. If evaluated synchronously in the HTTP request thread, concurrent submissions would quickly exhaust WSGI worker pools and trigger gateway timeouts. Celery queues tasks in Redis, keeping the API responsive."*
+> *"Running code in Docker containers takes between 500ms and 5 seconds. If evaluated synchronously in the HTTP request thread, concurrent submissions would quickly exhaust WSGI/ASGI worker pools and trigger gateway timeouts. Celery queues tasks in Redis, keeping the API responsive."*
 
 ### Q4: Why Docker for execution instead of Python's `subprocess` or `exec`?
 > *"Executing untrusted code on the host via `subprocess` or `exec` is dangerous. Docker provides process isolation, cgroup resource limits (CPU/memory/PIDs), filesystem sandboxing, and network isolation that cannot be bypassed from user space."*
@@ -117,7 +117,7 @@ When asked about security and sandbox isolation, highlight these actual implemen
 > *"In DevForge, test cases are marked as visible or hidden in the database. When loading the workspace, hidden tests are excluded from the API payload. During evaluation, tests are mounted server-side and executed inside the container, with only pass/fail booleans returned to the client."*
 
 ### Q6: How is user submission isolation enforced?
-> *"At the API level, all submission queries filter by `request.user`. If User B attempts to access `/api/submissions/<id>/` belonging to User A, Django REST Framework raises a `404 Not Found` rather than leaking existence or metadata."*
+> *"At the API level, all submission queries filter by the authenticated user ID. If User B attempts to access `/api/submissions/<id>/` belonging to User A, FastAPI returns a `404 Not Found` rather than leaking existence or metadata."*
 
 ### Q7: How does the deterministic skill scoring work?
 > *"Each challenge maps to a primary skill (e.g. Debugging, Security, Performance). When evaluated, `SkillScoringService` weights functional pass rates against challenge difficulty and execution metrics, computing deterministic scores from 0 to 100 without subjective grading."*
@@ -160,7 +160,7 @@ When asked about security and sandbox isolation, highlight these actual implemen
 > 
 > *On the frontend, we use React and Vite with the Monaco Editor to provide a full multi-file IDE experience in the browser, featuring syntax highlighting, multi-tab navigation, and session recovery across browser refreshes.*
 > 
-> *The backend is powered by Django REST Framework and PostgreSQL for robust data modeling, JWT authentication, and challenge metadata management.*
+> *The backend is powered by FastAPI and PostgreSQL (via SQLAlchemy) for high-performance API endpoints, JWT authentication, and challenge metadata management.*
 > 
 > *The core execution engine is completely asynchronous. When a developer submits a solution, the API records the submission as `PENDING` and pushes a task to Redis. A Celery worker picks up the job, validates file paths to prevent directory traversal, writes the repository to an ephemeral workspace, and mounts it into an unprivileged Docker container running `python:3.11-slim`.*
 > 
@@ -177,10 +177,9 @@ Before beginning a live demonstration, ensure all local services are active:
 - [ ] **Docker Engine**: Running (`docker info` succeeds, `python:3.11-slim` pulled).
 - [ ] **PostgreSQL**: Running on `127.0.0.1:5432` (`codefoundry` database active).
 - [ ] **Redis Server**: Running on `127.0.0.1:6379` (`redis-cli ping` returns `PONG`).
-- [ ] **Database Migrations**: Up to date (`python backend/manage.py migrate`).
-- [ ] **Challenge Data**: Seeded (`python backend/manage.py seed_challenges` synchronized 42 test cases).
-- [ ] **Django Backend**: Running in Terminal 1 (`python backend/manage.py runserver 127.0.0.1:8000`).
-- [ ] **Celery Worker**: Running in Terminal 2 (`cd backend && celery -A config worker --loglevel=info`).
+- [ ] **Database Migrations**: Up to date (`cd backend && python -m alembic upgrade head`).
+- [ ] **FastAPI Backend**: Running in Terminal 1 (`cd backend && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`).
+- [ ] **Celery Worker**: Running in Terminal 2 (`cd backend && celery -A app.celery_app.celery_app worker -l info -P solo`).
 - [ ] **React Frontend**: Running in Terminal 3 (`cd frontend && npm run dev` on `http://localhost:5173`).
 - [ ] **Test User Account**: Created and login credentials verified.
 - [ ] **Browser**: Clean browser window open at `http://localhost:5173`.

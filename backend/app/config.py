@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = "django-insecure-dev-fallback-key-only-for-local-testing"
+    SECRET_KEY: str = "codefoundry-dev-fallback-key-only-for-local-testing"
     DEBUG: bool = False
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
     CORS_ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
@@ -26,7 +26,6 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://127.0.0.1:6379/0"
 
     # Email
-    EMAIL_BACKEND: str = "django.core.mail.backends.smtp.EmailBackend"
     DEFAULT_FROM_EMAIL: str = "noreply@codefoundry.dev"
 
     model_config = SettingsConfigDict(

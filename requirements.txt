@@ -1,12 +1,8 @@
-django==5.2.17
-djangorestframework==3.18.0
 psycopg2-binary==2.9.12
 python-dotenv==1.2.3
 docker
 celery
 redis
-django-cors-headers
-djangorestframework-simplejwt
 fastapi
 uvicorn[standard]
 pydantic

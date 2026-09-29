@@ -9,7 +9,7 @@ export default function Home() {
 
   const techStack = [
     { name: 'React', category: 'Frontend Architecture', icon: '⚛️' },
-    { name: 'Django', category: 'Backend Framework', icon: '🎯' },
+    { name: 'FastAPI', category: 'High-Performance Backend', icon: '⚡' },
     { name: 'PostgreSQL', category: 'Relational Database', icon: '🐘' },
     { name: 'Redis', category: 'In-Memory Cache & Queue', icon: '⚡' },
     { name: 'Celery', category: 'Async Task Pipeline', icon: '🌿' },

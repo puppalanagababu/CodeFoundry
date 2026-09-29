@@ -54,7 +54,7 @@ Inspects Multi-File Workspace (Monaco Editor)
 Edits Source Code & Clicks "Run Code" / "Submit Solution"
        │
        ▼
-Django REST API receives POST /api/submissions/ (Status: PENDING)
+FastAPI REST API receives POST /api/submissions/ (Status: PENDING)
        │
        ▼
 Dispatches Task to Redis Queue (evaluate_submission.delay)
@@ -101,17 +101,15 @@ DevForge categorizes real-world engineering tasks into distinct challenge types:
 
 ## 7. Technology Stack
 
-### Backend (Primary Architecture)
+### Backend
 - **FastAPI** (High-performance asynchronous Python REST API framework)
 - **SQLAlchemy** (Robust SQL toolkit & Object-Relational Mapper)
 - **Pydantic v2** (Strict data validation & serialization schemas)
 - **PostgreSQL 16+** (Relational storage & persistence)
+- **Alembic** (Database schema migrations authority)
 - **Celery** (Distributed asynchronous evaluation task queue)
 - **Redis 7+** (Message broker, result backend, and token blacklist)
 - **PyJWT & Passlib** (Stateless authentication, PBKDF2 compatibility, token rotation)
-
-### Legacy Backend (Rollback Only)
-- **Django 5.2** & **Django REST Framework (DRF)** *(Retained exclusively for emergency rollback)*
 
 ### Frontend
 - **React 18** & **Vite**
@@ -225,11 +223,16 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your local PostgreSQL credentials
 
+# Apply database migrations
+cd backend
+python -m alembic upgrade head
+cd ..
+
 # Pull the Docker execution runtime image
 docker pull python:3.11-slim
 ```
 
-### 3. Run Primary Backend Services (FastAPI)
+### 3. Run Backend Services (FastAPI)
 ```bash
 # Terminal 1: FastAPI API server
 cd backend
@@ -238,11 +241,6 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 # Terminal 2: Celery evaluation worker
 cd backend
 celery -A app.celery_app.celery_app worker --loglevel=info -P solo
-```
-
-*(Optional) Legacy Django Fallback Server:*
-```bash
-python backend/manage.py runserver 127.0.0.1:8000
 ```
 
 ### 4. Frontend Setup
@@ -263,7 +261,8 @@ DevForge includes a comprehensive backend test suite covering models, authentica
 
 To run the full test suite:
 ```bash
-python backend/manage.py test
+cd backend
+python -m pytest tests/
 ```
 
 ---
@@ -281,20 +280,21 @@ Follow these steps for a secure production deployment:
 - Provision a dedicated PostgreSQL database and set `DATABASE_URL` (or `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`).
 - Provision Redis for caching and Celery task queues (`REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`). Ensure Redis is secured and not publicly accessible.
 
-### 3. Database Migrations & Static Assets
+### 3. Database Migrations
 ```bash
-python backend/manage.py migrate
-python backend/manage.py collectstatic --noinput
+cd backend
+python -m alembic upgrade head
 ```
 
 ### 4. Background Workers & Docker Execution
-- Start Celery worker: `celery -A config worker --loglevel=info --concurrency=4`
+- Start Celery worker: `cd backend && celery -A app.celery_app.celery_app worker -l info --concurrency=4`
 - Ensure Docker Engine is running on the host/worker with `python:3.11-slim` pre-pulled (`docker pull python:3.11-slim`).
 
-### 5. Backend WSGI/ASGI Server
-- Run behind Gunicorn/Uvicorn with a reverse proxy (Nginx/Caddy/Cloudflare):
+### 5. Backend ASGI Server
+- Run behind Uvicorn with a reverse proxy (Nginx/Caddy/Cloudflare):
   ```bash
-  gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
+  cd backend
+  uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers
   ```
 
 ### 6. Frontend Production Build
@@ -312,7 +312,7 @@ python backend/manage.py collectstatic --noinput
 
 ---
 
-## 13. Project Roadmap
+## 14. Project Roadmap
 
 The following enhancements are planned for future iterations:
 
@@ -324,13 +324,13 @@ The following enhancements are planned for future iterations:
 
 ---
 
-## 14. Author
+## 15. Author
 
 - **GitHub**: [@puppalanagababu](https://github.com/puppalanagababu)
 - **Repository**: [https://github.com/puppalanagababu/DevForge](https://github.com/puppalanagababu/DevForge)
 
 ---
 
-## 15. License
+## 16. License
 
 License: Not yet specified.

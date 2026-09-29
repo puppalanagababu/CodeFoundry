@@ -128,16 +128,10 @@ The Docker execution sandbox enforces strict hardware and access limits during e
 
 ---
 
-## 6. Django Rollback Instructions
+## 6. Django Retirement & Migration Note
 
-Django remains completely functional in the codebase as a fallback:
-1. Stop the FastAPI Uvicorn process and FastAPI Celery worker.
-2. Start the Django application server:
-   ```bash
-   python manage.py runserver 0.0.0.0:8000
-   ```
-3. Start the Django Celery worker:
-   ```bash
-   celery -A config worker -l info -P solo  # (or -c 4 on Linux)
-   ```
-4. If frontend API URL requires adjustment, update `VITE_API_BASE_URL` in `frontend/.env` and re-run `npm run build`.
+The legacy Django backend has been permanently retired from CodeFoundry:
+- **FastAPI** is now the sole backend runtime powering all REST API endpoints.
+- Django rollback is no longer supported; legacy Django runtime code and configurations have been removed.
+- Historical Django migration files are preserved strictly for audit and database lineage evidence under `backend/legacy_django_migrations/`.
+- Future schema migrations are managed exclusively by **Alembic** (`backend/alembic/`).
