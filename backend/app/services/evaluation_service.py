@@ -7,7 +7,7 @@ from app.models.evaluation import Evaluation, EvaluationStatus
 from app.models.submission import Submission, SubmissionStatus
 from app.services.achievement_service import AchievementService
 from app.services.skill_scoring import SkillScoringService
-from execution.services import ExecutionService
+from app.execution.services import ExecutionService
 
 logger = logging.getLogger("app.services.evaluation")
 

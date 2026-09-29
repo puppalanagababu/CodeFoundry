@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.execution import CodeExecutionRequest, CodeExecutionResponse
-from execution.services import ExecutionService
+from app.execution.services import ExecutionService
 
 logger = logging.getLogger("app.execution")
 router = APIRouter(prefix="/api/execution", tags=["Execution"])

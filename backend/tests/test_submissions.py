@@ -13,7 +13,7 @@ from app.models.user import User, UserRole
 from app.services.achievement_service import AchievementService
 from app.services.evaluation_service import EvaluationService, normalize_output
 from app.services.skill_scoring import SkillScoringService
-from execution.runner import ExecutionResult
+from app.execution.runner import ExecutionResult
 
 
 # Setup fixtures

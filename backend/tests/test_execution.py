@@ -5,13 +5,14 @@ from app.database import SessionLocal
 from app.main import app
 from app.models.user import User, UserRole
 from app.services.auth_service import create_access_token, hash_password
-from execution.runner import (
+from app.execution.runner import (
     CodeRunner,
     DockerCodeRunner,
     ExecutionResult,
     _validate_safe_relative_path,
 )
-from execution.services import ExecutionService
+
+from app.execution.services import ExecutionService
 
 
 @pytest.fixture
