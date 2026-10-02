@@ -1,4 +1,4 @@
-# DevForge — Software Engineering Readiness & Simulation Platform
+# CodeFoundry — Software Engineering Readiness & Simulation Platform
 
 > **"Practice Software Engineering. Not Just Coding."**
 
