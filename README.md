@@ -1,4 +1,4 @@
-# DevForge — Software Engineering Readiness & Simulation Platform
+# Codefoundry — Software Engineering Readiness & Simulation Platform
 
 > **"Practice Software Engineering. Not Just Coding."**
 
@@ -6,7 +6,7 @@
 
 ## 1. Project Overview
 
-**DevForge** is a production-grade software engineering simulation platform designed to evaluate real-world engineering competency. Unlike traditional competitive-programming platforms that focus purely on algorithmic puzzle-solving in single files, DevForge immerses developers in realistic multi-file codebases.
+**Codefoundry** is a production-grade software engineering simulation platform designed to evaluate real-world engineering competency. Unlike traditional competitive-programming platforms that focus purely on algorithmic puzzle-solving in single files, Codefoundry immerses developers in realistic multi-file codebases.
 
 Engineers investigate real repositories, diagnose structural defects, patch API endpoints, remediate security vulnerabilities, optimize algorithmic bottlenecks, run tests, and submit production-ready solutions through an automated evaluation and skill-scoring pipeline.
 
@@ -16,7 +16,7 @@ Engineers investigate real repositories, diagnose structural defects, patch API 
 
 There is a significant gap between algorithmic interview preparation and daily software engineering reality:
 
-| Traditional Coding Platforms | Real-World Software Engineering | DevForge Approach |
+| Traditional Coding Platforms | Real-World Software Engineering | Codefoundry Approach |
 | :--- | :--- | :--- |
 | Single-file isolated functions | Multi-file modular architectures | Multi-file repository workspace |
 | Standard array/string algorithms | Real APIs, auth, serialization, and DB models | Practical architectural scenarios |
@@ -79,7 +79,7 @@ Results persisted in PostgreSQL & Polled by Frontend via GET /api/submissions/<i
 
 ## 5. Challenge Types
 
-DevForge categorizes real-world engineering tasks into distinct challenge types:
+Codefoundry categorizes real-world engineering tasks into distinct challenge types:
 
 - `BUG_FIX`: Root-cause diagnosis and regression fixing in existing legacy modules.
 - `API`: Implementation and correction of RESTful endpoints, serializers, query parameters, and response structures.
@@ -140,7 +140,7 @@ The sandbox execution environment enforces strict multi-layered isolation:
 
 ## 9. Skill Measurement System
 
-DevForge evaluates performance across six core software engineering dimensions:
+Codefoundry evaluates performance across six core software engineering dimensions:
 
 1. **Problem Solving**: Verified functional correctness against baseline and hidden test suites.
 2. **Debugging**: Precision of fixes in bug-fix scenarios, penalizing collateral regressions.
@@ -257,7 +257,7 @@ Open `http://localhost:5173` in your browser.
 
 ## 12. Automated Testing
 
-DevForge includes a comprehensive backend test suite covering models, authentication, security logging, rate limiting, password reset, Docker sandbox execution, Celery dispatch, evaluation grading, and user isolation.
+Codefoundry includes a comprehensive backend test suite covering models, authentication, security logging, rate limiting, password reset, Docker sandbox execution, Celery dispatch, evaluation grading, and user isolation.
 
 To run the full test suite:
 ```bash
