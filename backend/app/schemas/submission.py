@@ -23,7 +23,19 @@ class SubmissionCreateRequest(BaseModel):
         if files and isinstance(files, dict):
             sanitized_files = {}
             for path, content in files.items():
-                if path.startswith("tests/") or path.endswith("_test.py") or "test_" in path:
+                norm_p = str(path).strip().replace("\\", "/")
+                while norm_p.startswith("./"):
+                    norm_p = norm_p[2:]
+                norm_p = norm_p.lstrip("/")
+                if (
+                    norm_p.startswith("tests/")
+                    or norm_p.startswith("test/")
+                    or norm_p.endswith("_test.py")
+                    or "test_" in norm_p
+                    or path.startswith("tests/")
+                    or path.endswith("_test.py")
+                    or "test_" in path
+                ):
                     # Ignore/strip client-submitted test files (server files are authoritative)
                     continue
                 sanitized_files[path] = content

@@ -15,12 +15,13 @@ def evaluate_submission(self, submission_id: int) -> Dict[str, Any]:
     Executes test cases in Docker sandbox, calculates scores, skill breakdowns,
     and awards achievements. Runs independently of Django.
     """
-    logger.info("Received evaluate_submission task for submission ID: %s", submission_id)
+    task_id = getattr(getattr(self, "request", None), "id", "sync")
+    logger.info("Celery task started: task_id=%s, submission_id=%s", task_id, submission_id)
 
     with get_db_context() as db:
         submission = db.query(Submission).filter(Submission.id == submission_id).first()
         if not submission:
-            logger.error("Submission with ID %s does not exist.", submission_id)
+            logger.error("Celery task error: Submission with ID %s does not exist (task_id=%s)", submission_id, task_id)
             return {
                 "error": f"Submission with ID {submission_id} not found.",
                 "submission_id": submission_id,
@@ -31,8 +32,13 @@ def evaluate_submission(self, submission_id: int) -> Dict[str, Any]:
             evaluation = evaluation_service.evaluate(db, submission)
 
             logger.info(
-                "Evaluation completed for submission %s: status=%s, score=%s",
+                "Celery task completed: task_id=%s, submission_id=%s, evaluation_id=%s, challenge_id=%s, user_id=%s, submission_status=%s, evaluation_status=%s, score=%s",
+                task_id,
                 submission.id,
+                evaluation.id,
+                submission.challenge_id,
+                submission.user_id,
+                submission.status,
                 evaluation.status,
                 evaluation.score,
             )
@@ -44,7 +50,13 @@ def evaluate_submission(self, submission_id: int) -> Dict[str, Any]:
                 "score": submission.score,
             }
         except Exception as exc:
-            logger.exception("Task evaluation failed for submission ID %s: %s", submission_id, exc)
+            logger.exception(
+                "Celery task evaluation failed: task_id=%s, submission_id=%s, user_id=%s, error=%s",
+                task_id,
+                submission_id,
+                getattr(submission, "user_id", None),
+                exc,
+            )
             submission.status = SubmissionStatus.ERROR.value
             db.commit()
             return {

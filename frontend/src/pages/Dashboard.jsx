@@ -318,7 +318,7 @@ export default function Dashboard() {
                           {sub.score !== null ? `${sub.score}/100` : '—'}
                         </td>
                         <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                          {formatTimestamp(sub.created_at)}
+                          {formatTimestamp(sub.submitted_at)}
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <Link

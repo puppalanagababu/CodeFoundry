@@ -332,3 +332,280 @@ def test_recruiter_candidate_comparison_success(recruiter_client):
         assert data["candidates"][1]["username"] == "bob"
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+# 6. CF-019 Calibrated Performance Scoring Tests
+def test_performance_scoring_optimal_execution():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(
+        id=1,
+        slug="the-slow-report-generator",
+        time_limit=5,
+        memory_limit=128,
+        challenge_type="PERFORMANCE",
+    )
+    # 5 test cases: T_opt = 5 * 0.15 = 0.75s, M_opt = 32MB
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=5,
+        tests_failed=0,
+        execution_time=0.45,
+        memory_used=22.0,
+    )
+    assert breakdown["scores"]["performance"] == 100
+    assert breakdown["evidence"]["performance"] == "execution_metrics"
+    assert breakdown["scores"]["problem_solving"] == 100
+
+
+def test_performance_scoring_proportional_interpolation():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(
+        id=1,
+        slug="the-slow-report-generator",
+        time_limit=5,
+        memory_limit=128,
+        challenge_type="PERFORMANCE",
+    )
+    # T_opt = 0.75s, T_naive = 6.00s. Midpoint = 3.375s (TimeScore = 0.50)
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=5,
+        tests_failed=0,
+        execution_time=3.375,
+        memory_used=20.0,  # MemScore = 1.0
+    )
+    # 0.75 * 0.50 + 0.25 * 1.0 = 0.625 -> 62.5 -> round half-to-even = 62
+    assert breakdown["scores"]["performance"] == 62
+
+
+def test_performance_scoring_slower_than_naive_threshold():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(
+        id=1,
+        slug="the-slow-report-generator",
+        time_limit=5,
+        memory_limit=128,
+        challenge_type="PERFORMANCE",
+    )
+    # Slower than T_naive (6.00s) and high memory (128MB)
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=5,
+        tests_failed=0,
+        execution_time=7.50,
+        memory_used=128.0,
+    )
+    assert breakdown["scores"]["performance"] == 0
+
+
+def test_performance_scoring_crash_and_timeout_zero_score():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(
+        id=1,
+        slug="the-slow-report-generator",
+        time_limit=5,
+        memory_limit=128,
+        challenge_type="PERFORMANCE",
+    )
+    # 0 passed tests (e.g. timeout or crash)
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=0,
+        tests_failed=5,
+        execution_time=5.0,
+        memory_used=15.0,
+    )
+    assert breakdown["scores"]["performance"] == 0
+    assert breakdown["scores"]["problem_solving"] == 0
+
+
+def test_performance_scoring_missing_and_invalid_inputs():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="fix-the-broken-calculator", time_limit=5, memory_limit=128)
+
+    # Missing execution_time
+    b1 = service.calculate_skill_breakdown(challenge=challenge, tests_total=5, tests_passed=5, tests_failed=0, execution_time=None)
+    assert b1["scores"]["performance"] is None
+    assert b1["evidence"]["performance"] == "not_measured"
+
+    # Negative execution_time
+    b2 = service.calculate_skill_breakdown(challenge=challenge, tests_total=5, tests_passed=5, tests_failed=0, execution_time=-1.0)
+    assert b2["scores"]["performance"] is None
+
+    # Zero tests_total
+    b3 = service.calculate_skill_breakdown(challenge=challenge, tests_total=0, tests_passed=0, tests_failed=0, execution_time=0.1)
+    assert b3["scores"]["performance"] is None
+
+
+def test_performance_scoring_invalid_thresholds_safe_guard():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    # Invalid challenge where t_optimal >= t_naive
+    class CustomChallenge:
+        t_optimal = 10.0
+        t_naive = 5.0
+        time_limit = 5
+        memory_limit = 128
+        challenge_type = "PERFORMANCE"
+        slug = "custom-challenge"
+
+    challenge = CustomChallenge()
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=1,
+        tests_passed=1,
+        tests_failed=0,
+        execution_time=2.0,
+        memory_used=20.0,
+    )
+    assert 0 <= breakdown["scores"]["performance"] <= 100
+
+
+# 7. CF-020 Debugging and Security Measurement Tests
+def test_debugging_scoring_all_defect_and_regression_pass():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="fix-the-broken-calculator", challenge_type="BUG_FIX")
+    test_results = [
+        {"name": "Basic Arithmetic", "passed": True, "is_hidden": False},
+        {"name": "Compound Expression", "passed": True, "is_hidden": False},
+        {"name": "Mixed Operations with Division", "passed": True, "is_hidden": True},
+        {"name": "Division by Zero Handling", "passed": True, "is_hidden": True},
+        {"name": "Chained Multi-Operator Expression", "passed": True, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=5,
+        tests_failed=0,
+        test_results=test_results,
+    )
+    assert breakdown["scores"]["debugging"] == 100
+    assert breakdown["evidence"]["debugging"] == "defect_and_regression_tests"
+
+
+def test_debugging_scoring_regression_failure_drops_score():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="fix-the-broken-calculator", challenge_type="BUG_FIX")
+    # Defect tests all pass, but baseline regression test fails
+    test_results = [
+        {"name": "Basic Arithmetic", "passed": False, "is_hidden": False},  # Regression failed!
+        {"name": "Compound Expression", "passed": True, "is_hidden": False},
+        {"name": "Mixed Operations with Division", "passed": True, "is_hidden": True},
+        {"name": "Division by Zero Handling", "passed": True, "is_hidden": True},
+        {"name": "Chained Multi-Operator Expression", "passed": True, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=4,
+        tests_failed=1,
+        test_results=test_results,
+    )
+    # Defect: 4/4 = 1.0, Regression: 0/1 = 0.0 -> Score = 0
+    assert breakdown["scores"]["debugging"] == 0
+    assert breakdown["scores"]["problem_solving"] == 80  # PS gives partial credit (4/5)
+
+
+def test_debugging_scoring_partial_defect_resolution():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="fix-the-broken-calculator", challenge_type="BUG_FIX")
+    # Baseline passes, but only 2 of 4 defect tests pass
+    test_results = [
+        {"name": "Basic Arithmetic", "passed": True, "is_hidden": False},
+        {"name": "Compound Expression", "passed": True, "is_hidden": False},
+        {"name": "Mixed Operations with Division", "passed": True, "is_hidden": True},
+        {"name": "Division by Zero Handling", "passed": False, "is_hidden": True},
+        {"name": "Chained Multi-Operator Expression", "passed": False, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=3,
+        tests_failed=2,
+        test_results=test_results,
+    )
+    # Defect: 2/4 = 0.5, Regression: 1/1 = 1.0 -> Score = 50
+    assert breakdown["scores"]["debugging"] == 50
+
+
+def test_security_scoring_all_exploit_blocked_and_authorized_pass():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="the-exposed-admin-endpoint", challenge_type="SECURITY")
+    test_results = [
+        {"name": "Administrator access", "passed": True, "is_hidden": False},
+        {"name": "Public endpoint behavior", "passed": True, "is_hidden": False},
+        {"name": "Restricted account access", "passed": True, "is_hidden": True},
+        {"name": "Missing authentication access", "passed": True, "is_hidden": True},
+        {"name": "Secondary non-admin role rejection", "passed": True, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=5,
+        tests_failed=0,
+        test_results=test_results,
+    )
+    assert breakdown["scores"]["security"] == 100
+    assert breakdown["evidence"]["security"] == "exploit_and_authorization_tests"
+
+
+def test_security_scoring_deny_all_exploit_blocked_from_full_score():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="the-exposed-admin-endpoint", challenge_type="SECURITY")
+    # Deny-all: All exploit tests pass (403 returned), but all authorized tests fail (admin denied)
+    test_results = [
+        {"name": "Administrator access", "passed": False, "is_hidden": False},  # Failed!
+        {"name": "Public endpoint behavior", "passed": False, "is_hidden": False},  # Failed!
+        {"name": "Restricted account access", "passed": True, "is_hidden": True},
+        {"name": "Missing authentication access", "passed": True, "is_hidden": True},
+        {"name": "Secondary non-admin role rejection", "passed": True, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=3,
+        tests_failed=2,
+        test_results=test_results,
+    )
+    # Exploit: 3/3 = 1.0 (60%), Auth: 0/2 = 0.0 (0%) -> Score = 60
+    assert breakdown["scores"]["security"] == 60
+    assert breakdown["scores"]["problem_solving"] == 60
+
+
+def test_security_scoring_allow_all_unauthorized_fails_exploit_rejection():
+    from app.services.skill_scoring import SkillScoringService
+    service = SkillScoringService()
+    challenge = Challenge(id=1, slug="the-exposed-admin-endpoint", challenge_type="SECURITY")
+    # Allow-all: Authorized pass (2/2), but exploits fail (0/3 blocked)
+    test_results = [
+        {"name": "Administrator access", "passed": True, "is_hidden": False},
+        {"name": "Public endpoint behavior", "passed": True, "is_hidden": False},
+        {"name": "Restricted account access", "passed": False, "is_hidden": True},
+        {"name": "Missing authentication access", "passed": False, "is_hidden": True},
+        {"name": "Secondary non-admin role rejection", "passed": False, "is_hidden": True},
+    ]
+    breakdown = service.calculate_skill_breakdown(
+        challenge=challenge,
+        tests_total=5,
+        tests_passed=2,
+        tests_failed=3,
+        test_results=test_results,
+    )
+    # Exploit: 0/3 = 0.0 (0%), Auth: 2/2 = 1.0 (40%) -> Score = 40
+    assert breakdown["scores"]["security"] == 40
+
+

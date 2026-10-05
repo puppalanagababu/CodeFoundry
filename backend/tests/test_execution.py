@@ -204,3 +204,15 @@ def test_execution_api_repository_files(client: TestClient, test_user: User, mon
     assert data["status"] == "SUCCESS"
     assert data["stdout"] == "Calculated: 42\n"
     assert data["exit_code"] == 0
+
+
+def test_docker_runner_run_repository_rejects_path_traversal():
+    runner = DockerCodeRunner()
+    # Path traversal in file keys
+    result = runner.run_repository(
+        files={"../secret.py": "print('exploit')", "main.py": "print('ok')"},
+        entrypoint="main.py",
+    )
+    assert result.exit_code == 1
+    assert "Security error" in result.stderr
+

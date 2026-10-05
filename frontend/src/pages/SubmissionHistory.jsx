@@ -173,7 +173,7 @@ export default function SubmissionHistory() {
                   </div>
 
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                    Submission #{sub.id} · {formatTimestamp(sub.submitted_at)}
+                    Submission #{sub.id} · {formatTimestamp(sub.created_at)}
                   </div>
                 </div>
 

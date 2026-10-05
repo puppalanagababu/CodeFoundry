@@ -426,3 +426,283 @@ def test_achievement_service_awarding():
     awarded = service.award_for_user(mock_db, user_id=1)
     assert len(awarded) == 1
     mock_db.commit.assert_called()
+
+
+# 12. CF-016 Readonly File & Test Protection Enforcement Tests
+def test_evaluation_service_readonly_file_cannot_be_overridden():
+    mock_exec_service = MagicMock()
+    mock_exec_service.execute.return_value = ExecutionResult(
+        stdout="42\n",
+        stderr="",
+        exit_code=0,
+        execution_time=0.1,
+        memory_used=5.0,
+    )
+    mock_skill_service = SkillScoringService()
+    mock_ach_service = MagicMock()
+
+    service = EvaluationService(
+        execution_service=mock_exec_service,
+        skill_scoring_service=mock_skill_service,
+        achievement_service=mock_ach_service,
+    )
+
+    challenge = Challenge(
+        id=1,
+        title="Calculator Service",
+        points=100,
+        time_limit=5,
+        memory_limit=128,
+        entrypoint="app/main.py",
+    )
+    readme_file = ChallengeFile(
+        challenge_id=1,
+        path="README.md",
+        content="AUTHORITATIVE_README",
+        is_readonly=True,
+        is_test=False,
+    )
+    req_file = ChallengeFile(
+        challenge_id=1,
+        path="requirements.txt",
+        content="AUTHORITATIVE_REQUIREMENTS",
+        is_readonly=True,
+        is_test=False,
+    )
+    calc_file = ChallengeFile(
+        challenge_id=1,
+        path="app/calculator.py",
+        content="OLD_CALC_IMPLEMENTATION",
+        is_readonly=False,
+        is_test=False,
+    )
+    test_case = TestCase(
+        id=1,
+        challenge_id=1,
+        name="Test 1",
+        input_data="10 20",
+        expected_output="42",
+        points=100,
+        is_hidden=False,
+        is_active=True,
+    )
+    submission = Submission(
+        id=101,
+        user_id=1,
+        challenge_id=1,
+        files={
+            "README.md": "STUDENT_OVERWRITTEN_README",
+            "requirements.txt": "STUDENT_OVERWRITTEN_REQ",
+            "app/calculator.py": "STUDENT_NEW_CALC",
+        },
+        language="Python",
+        challenge=challenge,
+    )
+
+    mock_db = MagicMock(spec=Session)
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [test_case]
+    # challenge_files query
+    mock_db.query.return_value.filter.return_value.all.return_value = [
+        readme_file, req_file, calc_file
+    ]
+
+    service.evaluate(mock_db, submission)
+
+    # Verify files passed to execution_service
+    executed_files = mock_exec_service.execute.call_args.kwargs.get("files", {})
+    assert executed_files["README.md"] == "AUTHORITATIVE_README", "Readonly README.md must retain server content"
+    assert executed_files["requirements.txt"] == "AUTHORITATIVE_REQUIREMENTS", "Readonly requirements.txt must retain server content"
+    assert executed_files["app/calculator.py"] == "STUDENT_NEW_CALC", "Editable calculator.py should be overridden"
+
+
+def test_evaluation_service_test_file_cannot_be_overridden():
+    mock_exec_service = MagicMock()
+    mock_exec_service.execute.return_value = ExecutionResult(
+        stdout="42\n",
+        stderr="",
+        exit_code=0,
+        execution_time=0.1,
+        memory_used=5.0,
+    )
+    service = EvaluationService(
+        execution_service=mock_exec_service,
+        skill_scoring_service=SkillScoringService(),
+        achievement_service=MagicMock(),
+    )
+
+    challenge = Challenge(id=1, title="Calculator", points=100, entrypoint="app/main.py")
+    test_file = ChallengeFile(
+        challenge_id=1,
+        path="tests/test_calculator.py",
+        content="AUTHORITATIVE_SERVER_TEST_SUITE",
+        is_readonly=True,
+        is_test=True,
+    )
+    calc_file = ChallengeFile(
+        challenge_id=1,
+        path="app/calculator.py",
+        content="OLD_CODE",
+        is_readonly=False,
+        is_test=False,
+    )
+    test_case = TestCase(
+        id=1,
+        challenge_id=1,
+        name="Test 1",
+        input_data="",
+        expected_output="42",
+        points=100,
+        is_hidden=False,
+        is_active=True,
+    )
+    submission = Submission(
+        id=102,
+        user_id=1,
+        challenge_id=1,
+        files={
+            "tests/test_calculator.py": "HACKED_TEST_ASSERT_TRUE",
+            "test_exploit.py": "def test_bypass(): pass",
+            "app/calculator.py": "FIXED_CODE",
+        },
+        language="Python",
+        challenge=challenge,
+    )
+
+    mock_db = MagicMock(spec=Session)
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [test_case]
+    mock_db.query.return_value.filter.return_value.all.return_value = [test_file, calc_file]
+
+    service.evaluate(mock_db, submission)
+
+    executed_files = mock_exec_service.execute.call_args.kwargs.get("files", {})
+    assert executed_files["tests/test_calculator.py"] == "AUTHORITATIVE_SERVER_TEST_SUITE"
+    assert "test_exploit.py" not in executed_files
+    assert executed_files["app/calculator.py"] == "FIXED_CODE"
+
+
+def test_evaluation_service_alternate_path_representations_protected():
+    mock_exec_service = MagicMock()
+    mock_exec_service.execute.return_value = ExecutionResult(
+        stdout="42\n",
+        stderr="",
+        exit_code=0,
+        execution_time=0.1,
+        memory_used=5.0,
+    )
+    service = EvaluationService(
+        execution_service=mock_exec_service,
+        skill_scoring_service=SkillScoringService(),
+        achievement_service=MagicMock(),
+    )
+
+    challenge = Challenge(id=1, title="Calculator", points=100, entrypoint="app/main.py")
+    readme_file = ChallengeFile(
+        challenge_id=1,
+        path="README.md",
+        content="SERVER_README",
+        is_readonly=True,
+        is_test=False,
+    )
+    calc_file = ChallengeFile(
+        challenge_id=1,
+        path="app/calculator.py",
+        content="SERVER_CALC",
+        is_readonly=False,
+        is_test=False,
+    )
+    test_case = TestCase(
+        id=1,
+        challenge_id=1,
+        name="Test 1",
+        input_data="",
+        expected_output="42",
+        points=100,
+        is_hidden=False,
+        is_active=True,
+    )
+    submission = Submission(
+        id=103,
+        user_id=1,
+        challenge_id=1,
+        files={
+            "./README.md": "HACKED_README_VIA_DOT_SLASH",
+            ".\\README.md": "HACKED_README_VIA_BACKSLASH",
+            "./app/calculator.py": "UPDATED_CALC_VIA_DOT_SLASH",
+        },
+        language="Python",
+        challenge=challenge,
+    )
+
+    mock_db = MagicMock(spec=Session)
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [test_case]
+    mock_db.query.return_value.filter.return_value.all.return_value = [readme_file, calc_file]
+
+    service.evaluate(mock_db, submission)
+
+    executed_files = mock_exec_service.execute.call_args.kwargs.get("files", {})
+    assert executed_files["README.md"] == "SERVER_README"
+    assert "./README.md" not in executed_files
+    assert ".\\README.md" not in executed_files
+    assert executed_files["app/calculator.py"] == "UPDATED_CALC_VIA_DOT_SLASH"
+
+
+def test_evaluation_service_multi_file_submission_with_new_helpers():
+    mock_exec_service = MagicMock()
+    mock_exec_service.execute.return_value = ExecutionResult(
+        stdout="42\n",
+        stderr="",
+        exit_code=0,
+        execution_time=0.1,
+        memory_used=5.0,
+    )
+    service = EvaluationService(
+        execution_service=mock_exec_service,
+        skill_scoring_service=SkillScoringService(),
+        achievement_service=MagicMock(),
+    )
+
+    challenge = Challenge(id=1, title="Multi-File Challenge", points=100, entrypoint="app/main.py")
+    main_file = ChallengeFile(
+        challenge_id=1,
+        path="app/main.py",
+        content="from app.helper import compute; print(compute())",
+        is_readonly=False,
+        is_test=False,
+    )
+    test_case = TestCase(
+        id=1,
+        challenge_id=1,
+        name="Test 1",
+        input_data="",
+        expected_output="42",
+        points=100,
+        is_hidden=False,
+        is_active=True,
+    )
+    submission = Submission(
+        id=104,
+        user_id=1,
+        challenge_id=1,
+        files={
+            "app/main.py": "from app.helper import compute; print(compute())",
+            "app/helper.py": "def compute(): return 42",
+        },
+        language="Python",
+        challenge=challenge,
+    )
+
+    mock_db = MagicMock(spec=Session)
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+    mock_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = [test_case]
+    mock_db.query.return_value.filter.return_value.all.return_value = [main_file]
+
+    service.evaluate(mock_db, submission)
+
+    executed_files = mock_exec_service.execute.call_args.kwargs.get("files", {})
+    assert "app/main.py" in executed_files
+    assert "app/helper.py" in executed_files
+    assert executed_files["app/helper.py"] == "def compute(): return 42"
+

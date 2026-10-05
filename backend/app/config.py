@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
+    ENVIRONMENT: str = "development"
     SECRET_KEY: str = "codefoundry-dev-fallback-key-only-for-local-testing"
     DEBUG: bool = False
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
@@ -38,13 +39,51 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         if not self.CORS_ALLOWED_ORIGINS:
             return ["http://localhost:5173", "http://127.0.0.1:5173"]
-        return [o.strip() for o in self.CORS_ALLOWED_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in self.CORS_ALLOWED_ORIGINS.split(",") if o.strip()]
+        cleaned = [o for o in origins if o != "*"]
+        return cleaned if cleaned else ["http://localhost:5173", "http://127.0.0.1:5173"]
 
     @property
     def allowed_hosts_list(self) -> List[str]:
         if not self.ALLOWED_HOSTS:
-            return ["*"]
+            return ["localhost", "127.0.0.1"]
         return [h.strip() for h in self.ALLOWED_HOSTS.split(",") if h.strip()]
+
+    def validate_production_configuration(self) -> List[str]:
+        """
+        Validates security and configuration readiness for production environments.
+        Returns a list of error descriptions (empty if configuration is valid).
+        """
+        errors: List[str] = []
+        is_prod = self.ENVIRONMENT.lower() in ["production", "prod"]
+
+        if is_prod and not self.DEBUG:
+            # 1. Secret Key validation
+            insecure_keys = {
+                "codefoundry-dev-fallback-key-only-for-local-testing",
+                "your-production-secret-key-here-minimum-50-chars",
+                "secret",
+                "changeme",
+            }
+            if not self.SECRET_KEY or self.SECRET_KEY in insecure_keys:
+                errors.append("SECRET_KEY must be set to a secure, unique production value and not use development defaults.")
+            elif len(self.SECRET_KEY) < 32:
+                errors.append("SECRET_KEY must be at least 32 characters long for production cryptographic security.")
+
+            # 2. CORS validation
+            raw_cors = [o.strip() for o in self.CORS_ALLOWED_ORIGINS.split(",") if o.strip()]
+            if "*" in raw_cors:
+                errors.append("CORS_ALLOWED_ORIGINS cannot contain wildcard '*' when allow_credentials=True in production.")
+
+            # 3. Allowed Hosts validation
+            if "*" in self.allowed_hosts_list:
+                errors.append("ALLOWED_HOSTS cannot contain wildcard '*' in production.")
+
+            # 4. Database password validation
+            if not self.DATABASE_URL and not self.DB_PASSWORD:
+                errors.append("Production database configuration requires a non-empty DB_PASSWORD or DATABASE_URL.")
+
+        return errors
 
     @property
     def sync_database_url(self) -> str:

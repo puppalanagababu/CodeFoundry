@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 class SkillDimensionItem(BaseModel):
     score: Optional[int] = None
     sample_size: int = 0
+    total_weight: Optional[float] = 0.0
     status: str  # "measured", "insufficient_data", "not_measured"
 
 
@@ -12,6 +13,7 @@ class SkillProfileResponse(BaseModel):
     overall_score: Optional[int] = None
     skills: Dict[str, SkillDimensionItem]
     total_evaluations_analyzed: int = 0
+    measured_dimensions_count: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
 

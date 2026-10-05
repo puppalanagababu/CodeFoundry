@@ -25,6 +25,40 @@ def normalize_output(text: Optional[str]) -> str:
     return "\n".join(line.rstrip() for line in lines).strip()
 
 
+def normalize_path(path_str: str) -> str:
+    """
+    Normalizes a relative path for consistent comparison:
+    - Strips whitespace
+    - Normalizes backslashes to forward slashes
+    - Strips leading './' and leading '/'
+    """
+    if not isinstance(path_str, str):
+        return ""
+    p = path_str.strip().replace("\\", "/")
+    while p.startswith("./"):
+        p = p[2:]
+    return p.lstrip("/")
+
+
+def is_test_file_path(path_str: str) -> bool:
+    """
+    Checks whether a path matches standard test file patterns:
+    - Located within a tests/ or test/ directory
+    - Prefix 'test_' in filename
+    - Suffix '_test.py' in filename
+    """
+    p = normalize_path(path_str)
+    if not p:
+        return False
+    return (
+        p.startswith("tests/")
+        or p.startswith("test/")
+        or "/test_" in p
+        or p.startswith("test_")
+        or p.endswith("_test.py")
+    )
+
+
 class EvaluationService:
     def __init__(
         self,
@@ -70,6 +104,14 @@ class EvaluationService:
         submission.status = SubmissionStatus.RUNNING.value
         db.commit()
 
+        logger.info(
+            "Evaluation started: submission_id=%s, evaluation_id=%s, challenge_id=%s, user_id=%s",
+            submission.id,
+            evaluation.id,
+            submission.challenge_id,
+            submission.user_id,
+        )
+
         try:
             test_cases = (
                 db.query(TestCase)
@@ -80,6 +122,66 @@ class EvaluationService:
                 .order_by(TestCase.id.asc())
                 .all()
             )
+
+            # Check if this challenge is repository-based
+            challenge_files = (
+                db.query(ChallengeFile)
+                .filter(ChallengeFile.challenge_id == submission.challenge_id)
+                .all()
+            )
+            is_repo_challenge = bool(challenge_files) or bool(submission.files)
+
+            repo_file_map: Dict[str, str] = {}
+            entrypoint = ""
+            student_test_code = ""
+
+            if isinstance(submission.files, dict):
+                for raw_path, content in submission.files.items():
+                    norm_p = normalize_path(raw_path)
+                    if is_test_file_path(norm_p) or is_test_file_path(raw_path):
+                        student_test_code = content
+                        break
+
+            if is_repo_challenge:
+                readonly_or_test_paths = set()
+
+                for cf in challenge_files:
+                    repo_file_map[cf.path] = cf.content
+                    norm_cf_path = normalize_path(cf.path)
+                    if cf.is_readonly or cf.is_test or is_test_file_path(norm_cf_path):
+                        readonly_or_test_paths.add(norm_cf_path)
+                        readonly_or_test_paths.add(cf.path)
+
+                # Apply student's submitted file overrides (excluding protected readonly & test files)
+                submitted_files = submission.files
+                if isinstance(submitted_files, dict):
+                    for raw_path, content in submitted_files.items():
+                        norm_path = normalize_path(raw_path)
+
+                        # 1. Ignore client-submitted test file patterns
+                        if is_test_file_path(norm_path) or is_test_file_path(raw_path):
+                            continue
+
+                        # 2. Ignore overrides targeting server-authoritative readonly or test files
+                        if norm_path in readonly_or_test_paths or raw_path in readonly_or_test_paths:
+                            continue
+
+                        # 3. Apply legitimate editable file overrides
+                        matched_key = None
+                        for existing_key in repo_file_map:
+                            if normalize_path(existing_key) == norm_path:
+                                matched_key = existing_key
+                                break
+
+                        if matched_key:
+                            repo_file_map[matched_key] = content
+                        else:
+                            repo_file_map[raw_path] = content
+
+                entrypoint = (
+                    getattr(submission.challenge, "entrypoint", "")
+                    or "app/calculator.py"
+                )
 
             if not test_cases:
                 evaluation.status = EvaluationStatus.FAILED.value
@@ -97,6 +199,11 @@ class EvaluationService:
                     tests_failed=0,
                     execution_time=0.0,
                     memory_used=0.0,
+                    code=submission.code,
+                    files=repo_file_map if is_repo_challenge else None,
+                    challenge_files=challenge_files,
+                    language=submission.language,
+                    student_test_code=student_test_code,
                 )
                 evaluation.evaluated_at = datetime.now(timezone.utc)
 
@@ -117,33 +224,6 @@ class EvaluationService:
             stdout_logs: List[str] = []
             stderr_logs: List[str] = []
 
-            # Check if this challenge is repository-based
-            challenge_files = (
-                db.query(ChallengeFile)
-                .filter(ChallengeFile.challenge_id == submission.challenge_id)
-                .all()
-            )
-            is_repo_challenge = bool(challenge_files) or bool(submission.files)
-
-            repo_file_map: Dict[str, str] = {}
-            entrypoint = ""
-
-            if is_repo_challenge:
-                for cf in challenge_files:
-                    repo_file_map[cf.path] = cf.content
-
-                # Apply student's submitted file overrides (excluding protected test files)
-                submitted_files = submission.files
-                if isinstance(submitted_files, dict):
-                    for path, content in submitted_files.items():
-                        if not path.startswith("tests/") and "test_" not in path:
-                            repo_file_map[path] = content
-
-                entrypoint = (
-                    getattr(submission.challenge, "entrypoint", "")
-                    or "app/calculator.py"
-                )
-
             for test_case in test_cases:
                 if is_repo_challenge:
                     result = self.execution_service.execute(
@@ -160,6 +240,9 @@ class EvaluationService:
                         stdin_data=test_case.input_data,
                         timeout=timeout,
                     )
+
+                if result.stderr and result.stderr.startswith("Execution error:"):
+                    raise RuntimeError(result.stderr)
 
                 actual_normalized = normalize_output(result.stdout)
                 expected_normalized = normalize_output(test_case.expected_output)
@@ -209,6 +292,12 @@ class EvaluationService:
                 tests_failed=tests_failed,
                 execution_time=total_execution_time,
                 memory_used=max_memory_used,
+                test_results=test_results,
+                code=submission.code,
+                files=repo_file_map if is_repo_challenge else None,
+                challenge_files=challenge_files,
+                language=submission.language,
+                student_test_code=student_test_code,
             )
 
             # Update Evaluation
@@ -235,6 +324,21 @@ class EvaluationService:
 
             db.commit()
 
+            logger.info(
+                "Evaluation completed: submission_id=%s, evaluation_id=%s, challenge_id=%s, user_id=%s, submission_status=%s, evaluation_status=%s, score=%s, tests_passed=%s/%s, execution_time=%.3fs, memory_used=%.2fMB",
+                submission.id,
+                evaluation.id,
+                submission.challenge_id,
+                submission.user_id,
+                submission.status,
+                evaluation.status,
+                evaluation.score,
+                evaluation.tests_passed,
+                evaluation.tests_total,
+                evaluation.execution_time,
+                evaluation.memory_used,
+            )
+
             # Automatic Achievement Awarding (Defensive)
             try:
                 if submission.user_id:
@@ -243,7 +347,15 @@ class EvaluationService:
                 logger.exception("Error during automatic achievement evaluation: %s", ach_err)
 
         except Exception as e:
-            logger.exception("Error during evaluation of submission %s: %s", submission.id, e)
+            logger.error(
+                "Evaluation infrastructure/pipeline failure: submission_id=%s, evaluation_id=%s, challenge_id=%s, user_id=%s, error=%s",
+                submission.id,
+                getattr(evaluation, "id", None),
+                getattr(submission, "challenge_id", None),
+                getattr(submission, "user_id", None),
+                str(e),
+                exc_info=True,
+            )
             evaluation.status = EvaluationStatus.FAILED.value
             evaluation.stderr = f"Evaluation error: {str(e)}"
             evaluation.evaluated_at = datetime.now(timezone.utc)
