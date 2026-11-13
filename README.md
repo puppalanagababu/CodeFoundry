@@ -331,6 +331,3 @@ The following enhancements are planned for future iterations:
 
 ---
 
-## 16. License
-
-License: Not yet specified.
