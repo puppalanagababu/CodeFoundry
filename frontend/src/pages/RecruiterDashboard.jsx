@@ -19,12 +19,12 @@ const CHALLENGE_TYPES = [
 ];
 
 const SKILL_DIMENSIONS = [
-  { key: 'problem_solving', name: 'Problem Solving', icon: '⚡', color: '#3b82f6' },
-  { key: 'debugging', name: 'Debugging', icon: '🐛', color: '#f59e0b' },
-  { key: 'security', name: 'Security', icon: '🛡️', color: '#8b5cf6' },
-  { key: 'performance', name: 'Performance', icon: '🚀', color: '#10b981' },
-  { key: 'code_quality', name: 'Code Quality', icon: '📦', color: '#64748b' },
-  { key: 'testing', name: 'Testing', icon: '🧪', color: '#06b6d4' },
+  { key: 'problem_solving', name: 'Problem Solving', icon: '⚡', color: '#6D45C5' },
+  { key: 'debugging', name: 'Debugging', icon: '🐛', color: '#C77A14' },
+  { key: 'security', name: 'Security', icon: '🛡️', color: '#5B34B0' },
+  { key: 'performance', name: 'Performance', icon: '🚀', color: '#21885B' },
+  { key: 'code_quality', name: 'Code Quality', icon: '📦', color: '#1E5EA8' },
+  { key: 'testing', name: 'Testing', icon: '🧪', color: '#0F766E' },
 ];
 
 export default function RecruiterDashboard() {
@@ -136,18 +136,18 @@ export default function RecruiterDashboard() {
   if (isForbidden) {
     return (
       <div className="page-container" style={{ maxWidth: '640px', padding: '4.5rem 1.5rem', textAlign: 'center' }}>
-        <div className="card" style={{ padding: '3.5rem 2rem', borderRadius: '24px' }}>
+        <div className="card panel-pastel-peach" style={{ padding: '3.5rem 2rem', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
           <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1.25rem' }}>🛡️</span>
           <span className="badge badge-SECURITY" style={{ marginBottom: '1rem' }}>
             ACCESS RESTRICTED
           </span>
-          <h1 style={{ fontSize: '1.9rem', fontWeight: 800, margin: '0.25rem 0 0.75rem' }}>
+          <h1 style={{ fontSize: '1.9rem', fontWeight: 800, margin: '0.25rem 0 0.75rem', fontFamily: 'var(--font-display)' }}>
             Recruiter Access Required
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', margin: '0 auto 2rem', lineHeight: 1.6 }}>
-            Your account does not have <strong>Recruiter authorization</strong>. This dashboard is reserved for verified engineering recruitment partners.
+            Your account does not have <strong>Recruiter authorization</strong>. This talent evaluation terminal is reserved for verified engineering recruitment partners.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <Link to="/dashboard" className="btn btn-primary">
               ← Return to Dashboard
             </Link>
@@ -162,35 +162,35 @@ export default function RecruiterDashboard() {
 
   return (
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1240px' }}>
-      {/* Header Banner */}
+      {/* 1. Header Banner */}
       <div className="recruiter-hero-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem' }}>
               ⚡ RECRUITER ASSESSMENT RADAR
             </span>
-            <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--accent-success)', fontWeight: 700 }}>
               ● VERIFIED DOCKER SANDBOX EVIDENCE
             </span>
           </div>
           <h1 className="recruiter-dashboard-title">
-            Recruiter Dashboard
+            Recruiter Talent Terminal
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.96rem', margin: 0, fontWeight: 500 }}>
-            Evaluate developer readiness through verifiable production engineering performance.
+            Evaluate developer production readiness through verifiable engineering telemetry.
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           {comparisonList.length >= 2 && (
             <button
               type="button"
-              className="btn-saas btn-saas-primary"
+              className="btn btn-primary"
               onClick={handleOpenComparison}
-              style={{ padding: '0.75rem 1.6rem', fontSize: '0.9rem' }}
+              style={{ padding: '0.75rem 1.6rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
               <span>Compare ({comparisonList.length})</span>
-              <span className="btn-arrow-icon">→</span>
+              <span>→</span>
             </button>
           )}
 
@@ -198,20 +198,20 @@ export default function RecruiterDashboard() {
             <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--text-muted)' }}>
               ASSESSED CANDIDATES
             </span>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900, color: '#2563eb', lineHeight: 1.1, margin: '0.2rem 0' }}>
-              {candidates.length}
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900, color: 'var(--accent-primary)', lineHeight: 1.1, margin: '0.2rem 0' }}>
+              <AnimatedCounter value={candidates.length} />
             </div>
-            <span style={{ fontSize: '0.74rem', color: '#6366f1', fontWeight: 600 }}>
-              Active Evaluated Engineers
+            <span style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+              Evaluated Engineers
             </span>
           </div>
         </div>
       </div>
 
-      {/* Filter Toolbar */}
+      {/* 2. Filter Toolbar */}
       <div className="recruiter-filter-toolbar">
         <div className="recruiter-search-box">
-          <span className="search-icon">🔍</span>
+          <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>🔍</span>
           <input
             type="text"
             className="recruiter-input"
@@ -251,7 +251,7 @@ export default function RecruiterDashboard() {
               type="button"
               className="btn btn-secondary"
               onClick={handleClearFilters}
-              style={{ padding: '0.65rem 1.1rem', fontSize: '0.85rem' }}
+              style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem' }}
             >
               ↻ Clear
             </button>
@@ -259,24 +259,24 @@ export default function RecruiterDashboard() {
         </div>
       </div>
 
-      {/* Main Table Card */}
+      {/* 3. Main Table Card */}
       {loading ? (
         <div style={{ padding: '4rem 0' }}>
           <Loading message="Loading candidate assessments..." />
         </div>
       ) : error ? (
-        <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', margin: '2rem 0' }}>
+        <div className="card" style={{ padding: '3.5rem 2rem', textAlign: 'center', margin: '2rem 0', borderRadius: '24px' }}>
           <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
-          <h2 style={{ fontSize: '1.3rem', color: '#dc2626', marginBottom: '0.5rem' }}>Failed to Load Candidates</h2>
+          <h2 style={{ fontSize: '1.3rem', color: 'var(--accent-danger)', marginBottom: '0.5rem', fontWeight: 800 }}>Failed to Load Candidates</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{error}</p>
           <button type="button" className="btn btn-primary" onClick={fetchCandidates}>
             ↻ Retry Request
           </button>
         </div>
       ) : candidates.length === 0 ? (
-        <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
+        <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📂</span>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.4rem' }}>No Candidates Found</h2>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.4rem', fontFamily: 'var(--font-display)' }}>No Candidates Found</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
             No evaluated candidates match your active filters. Try broadening your criteria.
           </p>
@@ -287,16 +287,16 @@ export default function RecruiterDashboard() {
           )}
         </div>
       ) : (
-        <div className="card" style={{ padding: '1.75rem', borderRadius: '24px' }}>
+        <div className="card" style={{ padding: '1.75rem', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span style={{ fontSize: '1.15rem' }}>📊</span>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
                 Candidate Assessments ({candidates.length})
               </h2>
             </div>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Select checkbox to compare candidates side-by-side
+              Select checkbox to compare candidates side-by-side (up to 4)
             </span>
           </div>
 
@@ -304,10 +304,10 @@ export default function RecruiterDashboard() {
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: '40px', textAlign: 'center' }}>Compare</th>
+                  <th style={{ width: '44px', textAlign: 'center' }}>Compare</th>
                   <th style={{ width: '50px', textAlign: 'center' }}>#</th>
                   <th>Candidate</th>
-                  <th style={{ textAlign: 'center' }}>Overall Score</th>
+                  <th style={{ textAlign: 'center' }}>Readiness Score</th>
                   <th style={{ textAlign: 'right' }}>Total Points</th>
                   <th style={{ textAlign: 'center' }}>Solved</th>
                   <th style={{ textAlign: 'right' }}>Avg Score</th>
@@ -331,7 +331,7 @@ export default function RecruiterDashboard() {
                           type="checkbox"
                           checked={isCompared}
                           onChange={(e) => toggleCompare(cand.username, e)}
-                          style={{ cursor: 'pointer', width: 16, height: 16 }}
+                          style={{ cursor: 'pointer', width: 17, height: 17, accentColor: 'var(--accent-primary)' }}
                           title="Select to compare"
                         />
                       </td>
@@ -364,9 +364,9 @@ export default function RecruiterDashboard() {
                           <span
                             className="badge"
                             style={{
-                              background: '#eff6ff',
-                              color: '#2563eb',
-                              border: '1px solid #bfdbfe',
+                              background: 'var(--pastel-lavender-light)',
+                              color: 'var(--pastel-lavender-text)',
+                              border: '1px solid var(--pastel-lavender-border)',
                               fontFamily: 'var(--font-mono)',
                               fontWeight: 800,
                               fontSize: '0.85rem',
@@ -380,7 +380,7 @@ export default function RecruiterDashboard() {
                           </span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#2563eb' }}>
+                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--accent-primary)' }}>
                         {cand.total_points}
                       </td>
                       <td style={{ textAlign: 'center' }}>
@@ -391,7 +391,7 @@ export default function RecruiterDashboard() {
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                         {cand.average_score !== null ? cand.average_score : '—'}
                       </td>
-                      <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', color: '#7c3aed', fontWeight: 700 }}>
+                      <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--pastel-lavender-text)', fontWeight: 700 }}>
                         {cand.completion_percentage}%
                       </td>
                       <td style={{ textAlign: 'right' }}>
@@ -416,7 +416,7 @@ export default function RecruiterDashboard() {
         </div>
       )}
 
-      {/* Candidate Assessment Drawer */}
+      {/* 4. Candidate Assessment Drawer */}
       {selectedCandidate && (
         <div className="recruiter-drawer-overlay" onClick={handleCloseDetail}>
           <div className="recruiter-drawer" onClick={(e) => e.stopPropagation()}>
@@ -426,8 +426,8 @@ export default function RecruiterDashboard() {
                   {selectedCandidate.username.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
                       @{selectedCandidate.username}
                     </h2>
                     <Link
@@ -460,29 +460,29 @@ export default function RecruiterDashboard() {
                 <Loading message={`Loading assessment for @${selectedCandidate.username}...`} />
               </div>
             ) : detailError ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#dc2626' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--accent-danger)' }}>
                 <p>{detailError}</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                 {/* Readiness Score Box */}
                 <div
+                  className="panel-pastel-lavender"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(59, 130, 246, 0.06) 100%)',
-                    border: '1px solid #e2e8f0',
                     borderRadius: '16px',
                     padding: '1.5rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    boxShadow: 'var(--shadow-sm)',
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--pastel-lavender-text)' }}>
                       OVERALL READINESS SCORE
                     </span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
-                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', fontWeight: 900, color: selectedCandidate.overall_skill_score !== null ? '#2563eb' : 'var(--text-muted)', lineHeight: 1 }}>
+                      <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 900, color: selectedCandidate.overall_skill_score !== null ? 'var(--pastel-lavender-text)' : 'var(--text-muted)', lineHeight: 1 }}>
                         {selectedCandidate.overall_skill_score !== null ? selectedCandidate.overall_skill_score : '—'}
                       </span>
                       <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', fontWeight: 700 }}>/ 100</span>
@@ -491,25 +491,25 @@ export default function RecruiterDashboard() {
                   <span className="badge badge-SECURITY">Deterministic Composite</span>
                 </div>
 
-                {/* 5-Tile Quick Metrics */}
+                {/* 3-Tile Quick Metrics */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                  <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                  <div style={{ background: 'var(--bg-primary)', padding: '0.85rem', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Total Points</div>
-                    <strong style={{ fontSize: '1.15rem', color: '#2563eb' }}>{selectedCandidate.metrics?.total_points ?? 0}</strong>
+                    <strong style={{ fontSize: '1.2rem', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>{selectedCandidate.metrics?.total_points ?? 0}</strong>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                  <div style={{ background: 'var(--bg-primary)', padding: '0.85rem', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Solved</div>
-                    <strong style={{ fontSize: '1.15rem', color: '#059669' }}>{selectedCandidate.metrics?.challenges_completed ?? 0}</strong>
+                    <strong style={{ fontSize: '1.2rem', color: 'var(--accent-success)', fontFamily: 'var(--font-mono)' }}>{selectedCandidate.metrics?.challenges_completed ?? 0}</strong>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+                  <div style={{ background: 'var(--bg-primary)', padding: '0.85rem', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Avg Score</div>
-                    <strong style={{ fontSize: '1.15rem', color: '#d97706' }}>{selectedCandidate.metrics?.average_score ?? '—'}</strong>
+                    <strong style={{ fontSize: '1.2rem', color: 'var(--accent-warning)', fontFamily: 'var(--font-mono)' }}>{selectedCandidate.metrics?.average_score ?? '—'}</strong>
                   </div>
                 </div>
 
                 {/* Skill Dimensions */}
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.85rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)' }}>
                     🎯 Skill Dimensions
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -518,8 +518,8 @@ export default function RecruiterDashboard() {
                       const isMeas = sData.status === 'measured' && sData.score !== null;
 
                       return (
-                        <div key={dim.key} style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <div key={dim.key} style={{ padding: '0.85rem 1rem', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                               <span>{dim.icon}</span>
                               <strong style={{ fontSize: '0.88rem' }}>{dim.name}</strong>
@@ -541,7 +541,7 @@ export default function RecruiterDashboard() {
 
                 {/* Challenge Evidence Timeline */}
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.85rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)' }}>
                     ⚡ Challenge Evidence ({selectedCandidate.challenge_evidence?.length ?? 0})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -550,16 +550,16 @@ export default function RecruiterDashboard() {
                         key={idx}
                         style={{
                           padding: '0.75rem 1rem',
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '10px',
+                          background: 'var(--bg-primary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '12px',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
                         }}
                       >
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{ev.challenge_title}</div>
+                          <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{ev.challenge_title}</div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                             {ev.challenge_type?.replace('_', ' ')} • {ev.difficulty}
                           </div>
@@ -568,7 +568,7 @@ export default function RecruiterDashboard() {
                           <span className={`badge ${ev.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`} style={{ fontSize: '0.68rem' }}>
                             {ev.status}
                           </span>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.85rem', color: '#2563eb', marginTop: '0.2rem' }}>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.85rem', color: 'var(--accent-primary)', marginTop: '0.2rem' }}>
                             {ev.score} pts
                           </div>
                         </div>
@@ -582,11 +582,11 @@ export default function RecruiterDashboard() {
         </div>
       )}
 
-      {/* Candidate Comparison Modal Matrix */}
+      {/* 5. Candidate Comparison Modal Matrix */}
       {showComparisonModal && (
         <div className="recruiter-drawer-overlay" onClick={() => setShowComparisonModal(false)}>
           <div
-            className="card"
+            className="card animate-scale-in"
             style={{
               maxWidth: '1000px',
               width: '95%',
@@ -599,13 +599,13 @@ export default function RecruiterDashboard() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
               <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
                   Candidate Comparison Matrix
                 </h2>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: '0.2rem 0 0' }}>
-                  Side-by-side engineering readiness comparison
+                  Side-by-side engineering readiness telemetry comparison
                 </p>
               </div>
               <button
@@ -644,7 +644,7 @@ export default function RecruiterDashboard() {
                     <tr>
                       <td><strong>Readiness Score</strong></td>
                       {comparisonDetails.map((c) => (
-                        <td key={c.username} style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.25rem', color: '#2563eb' }}>
+                        <td key={c.username} style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.3rem', color: 'var(--accent-primary)' }}>
                           {c.overall_skill_score ?? '—'}/100
                         </td>
                       ))}
@@ -652,7 +652,7 @@ export default function RecruiterDashboard() {
                     <tr>
                       <td><strong>Total Points</strong></td>
                       {comparisonDetails.map((c) => (
-                        <td key={c.username} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
+                        <td key={c.username} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--accent-primary)' }}>
                           {c.metrics?.total_points ?? 0}
                         </td>
                       ))}

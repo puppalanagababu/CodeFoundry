@@ -46,22 +46,22 @@ export default function Register() {
   };
 
   return (
-    <div className="page-container animate-fade-in-up" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 160px)' }}>
-      <div className="card animate-scale-in" style={{ width: '100%', maxWidth: '460px', padding: '2.75rem 2.25rem', borderRadius: '24px', boxShadow: 'var(--shadow-xl)' }}>
+    <div className="page-container animate-fade-in-up" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 170px)' }}>
+      <div className="card animate-scale-in" style={{ width: '100%', maxWidth: '460px', padding: '2.75rem 2.25rem', borderRadius: '24px', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-color)' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <div style={{ width: 48, height: 48, margin: '0 auto 1.25rem', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '1.3rem', color: '#fff', boxShadow: '0 4px 16px rgba(99, 102, 241, 0.3)' }}>
+          <div style={{ width: 48, height: 48, margin: '0 auto 1.25rem', background: 'linear-gradient(135deg, #6D45C5 0%, #8B5CF6 100%)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '1.3rem', color: '#ffffff', boxShadow: '0 4px 16px rgba(109, 69, 197, 0.3)' }}>
             &gt;_
           </div>
           <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', marginBottom: '0.4rem' }}>
             Join CodeFoundry
           </h1>
           <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)' }}>
-            Start building verified software engineering competencies
+            Practice software engineering on real multi-file repositories
           </p>
         </div>
 
         {error && (
-          <div className="animate-fade-in-up" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+          <div className="animate-fade-in-up" style={{ background: 'var(--accent-danger-light)', border: '1px solid var(--accent-danger-border)', color: 'var(--accent-danger)', borderRadius: 'var(--radius-md)', padding: '0.8rem 1rem', marginBottom: '1.25rem', fontSize: '0.88rem', fontWeight: 500 }}>
             {error}
           </div>
         )}
@@ -150,7 +150,7 @@ export default function Register() {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '1.75rem', paddingTop: '1.25rem', borderTop: '1px solid #f1f5f9', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.75rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           Already have an account?{' '}
           <Link to="/login" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}>
             Sign In →

@@ -34,25 +34,24 @@ export default function Leaderboard() {
 
   return (
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1180px' }}>
-      {/* Hero Header */}
+      {/* 1. Hero Header Banner */}
       <div
-        className="card animate-fade-in-up"
+        className="card panel-pastel-blue animate-fade-in-up"
         style={{
           textAlign: 'center',
           marginBottom: '2.5rem',
-          padding: '2.5rem 2rem',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+          padding: '2.75rem 2rem',
           borderRadius: '24px',
-          border: '1px solid #e2e8f0',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span className="badge badge-SECURITY" style={{ fontSize: '0.78rem', padding: '0.3rem 0.85rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
+          <span className="badge badge-SECURITY" style={{ fontSize: '0.78rem', padding: '0.35rem 0.95rem' }}>
             ⚡ GLOBAL STANDINGS
           </span>
-          <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="status-dot" style={{ backgroundColor: '#059669', width: 7, height: 7 }} />
-            LIVE VERIFIED RANKINGS
+          <span style={{ fontSize: '0.82rem', color: 'var(--pastel-mint-text)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span className="status-dot" style={{ backgroundColor: 'var(--pastel-mint-text)', width: 7, height: 7 }} />
+            VERIFIED BENCHMARKS
           </span>
         </div>
 
@@ -61,7 +60,7 @@ export default function Leaderboard() {
             fontSize: 'clamp(2.2rem, 4vw, 3rem)',
             fontWeight: 800,
             color: 'var(--text-primary)',
-            margin: '0.25rem 0 0.5rem',
+            margin: '0.35rem 0 0.5rem',
           }}
         >
           CodeFoundry Leaderboard
@@ -71,14 +70,14 @@ export default function Leaderboard() {
           style={{
             fontSize: '1.05rem',
             color: 'var(--accent-primary)',
-            fontWeight: 600,
-            margin: '0 auto 0.5rem',
+            fontWeight: 700,
+            margin: '0 auto 0.65rem',
           }}
         >
           &quot;Practice Software Engineering. Not Just Coding.&quot;
         </p>
 
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: '620px', margin: '0 auto' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', maxWidth: '640px', margin: '0 auto' }}>
           Deterministic rankings calculated from completed, evaluated engineering challenges across multiple competency domains.
         </p>
       </div>
@@ -99,13 +98,13 @@ export default function Leaderboard() {
             textAlign: 'center',
             maxWidth: '560px',
             margin: '0 auto',
-            border: '1px solid #fecaca',
-            background: '#fef2f2',
+            border: '1px solid var(--accent-danger-border)',
+            background: 'var(--accent-danger-light)',
             borderRadius: '20px',
           }}
         >
           <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
-          <h2 style={{ fontSize: '1.4rem', color: '#dc2626', marginBottom: '0.5rem' }}>Leaderboard Unavailable</h2>
+          <h2 style={{ fontSize: '1.4rem', color: 'var(--accent-danger)', marginBottom: '0.5rem' }}>Leaderboard Unavailable</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
             {error}
           </p>
@@ -113,7 +112,7 @@ export default function Leaderboard() {
             type="button"
             className="btn btn-primary"
             onClick={fetchLeaderboard}
-            style={{ padding: '0.6rem 1.5rem', fontWeight: 600 }}
+            style={{ padding: '0.65rem 1.6rem', fontWeight: 700 }}
           >
             ↻ Try Again
           </button>
@@ -123,7 +122,7 @@ export default function Leaderboard() {
       {/* Empty State */}
       {!loading && !error && leaderboardData.length === 0 && (
         <div
-          className="card"
+          className="card panel-pastel-lavender"
           style={{
             padding: '4rem 2rem',
             textAlign: 'center',
@@ -137,44 +136,44 @@ export default function Leaderboard() {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.6 }}>
             Rankings are computed dynamically when engineers complete evaluated challenges. Be the first developer on the board!
           </p>
-          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.75rem 1.75rem' }}>
+          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.8rem 2rem' }}>
             <span>Explore Challenges</span>
             <span className="btn-arrow-icon">→</span>
           </Link>
         </div>
       )}
 
-      {/* Leaderboard Content */}
+      {/* 2. Leaderboard Content */}
       {!loading && !error && leaderboardData.length > 0 && (
         <>
           {/* Top 3 Podium Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', alignItems: 'flex-end', marginBottom: '3rem' }}>
-            {/* #2 Rank */}
+            {/* #2 Rank: Silver (Pastel Blue Card) */}
             {top2 && (
               <div
-                className="card animate-fade-in-up"
+                className="card panel-pastel-blue animate-fade-in-up"
                 style={{
                   padding: '2rem 1.5rem',
                   textAlign: 'center',
-                  borderRadius: '20px',
-                  background: top2.is_current_user ? 'rgba(99, 102, 241, 0.04)' : '#ffffff',
-                  border: top2.is_current_user ? '2px solid var(--accent-primary)' : '1px solid #e2e8f0',
+                  borderRadius: '24px',
+                  border: top2.is_current_user ? '2px solid var(--accent-primary)' : '1px solid var(--pastel-blue-border)',
                   order: 1,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#64748b', marginBottom: '0.75rem' }}>🥈 #2 SILVER</div>
-                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'linear-gradient(135deg, #94a3b8, #64748b)' }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-blue-text)', marginBottom: '0.75rem' }}>🥈 #2 SILVER</div>
+                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-blue)', color: 'var(--pastel-blue-text)', border: '2px solid var(--pastel-blue-border)' }}>
                   {top2.username.substring(0, 2).toUpperCase()}
                 </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.25rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
                   <Link to={`/profile/${encodeURIComponent(top2.username)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                     {top2.username}
                   </Link>
                 </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: '#2563eb', margin: '0.4rem 0' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', fontWeight: 800, color: 'var(--pastel-blue-text)', margin: '0.4rem 0' }}>
                   <AnimatedCounter value={top2.total_points} /> <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>PTS</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderTop: '1px solid #f1f5f9', paddingTop: '0.6rem', marginTop: '0.6rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.84rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
                   <span>{top2.challenges_completed} Solved</span>
                   <span>•</span>
                   <span>Score: {top2.overall_skill_score ?? '—'}</span>
@@ -182,35 +181,34 @@ export default function Leaderboard() {
               </div>
             )}
 
-            {/* #1 Rank (Center Podium) */}
+            {/* #1 Rank: Champion (Pastel Yellow Card) */}
             {top1 && (
               <div
-                className="card animate-fade-in-up"
+                className="card panel-pastel-yellow animate-fade-in-up"
                 style={{
-                  padding: '2.5rem 1.75rem',
+                  padding: '2.75rem 1.75rem',
                   textAlign: 'center',
-                  borderRadius: '24px',
-                  background: top1.is_current_user ? 'rgba(99, 102, 241, 0.06)' : 'linear-gradient(180deg, #ffffff 0%, #fefce8 100%)',
-                  border: '2px solid #fbbf24',
+                  borderRadius: '28px',
+                  border: top1.is_current_user ? '2px solid var(--accent-primary)' : '2px solid var(--pastel-yellow-border)',
                   boxShadow: 'var(--shadow-lg)',
                   order: 0,
-                  transform: 'scale(1.02)',
+                  transform: 'scale(1.03)',
                 }}
               >
-                <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>👑</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#d97706', marginBottom: '0.75rem' }}>🥇 #1 CHAMPION</div>
-                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', boxShadow: '0 4px 16px rgba(245, 158, 11, 0.3)' }}>
+                <div style={{ fontSize: '1.6rem', marginBottom: '0.25rem' }}>👑</div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 900, color: 'var(--pastel-yellow-text)', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>🥇 #1 CHAMPION</div>
+                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-yellow)', color: 'var(--pastel-yellow-text)', border: '2px solid var(--pastel-yellow-border)', boxShadow: '0 4px 16px rgba(199, 122, 20, 0.2)' }}>
                   {top1.username.substring(0, 2).toUpperCase()}
                 </div>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginBottom: '0.25rem' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, marginBottom: '0.25rem' }}>
                   <Link to={`/profile/${encodeURIComponent(top1.username)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                     {top1.username}
                   </Link>
                 </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.1rem', fontWeight: 900, color: '#d97706', margin: '0.4rem 0' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', fontWeight: 900, color: 'var(--pastel-yellow-text)', margin: '0.4rem 0' }}>
                   <AnimatedCounter value={top1.total_points} /> <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>PTS</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)', borderTop: '1px solid #fef08a', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.88rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--pastel-yellow-border)', paddingTop: '0.85rem', marginTop: '0.85rem' }}>
                   <span>{top1.challenges_completed} Solved</span>
                   <span>•</span>
                   <span>Score: {top1.overall_skill_score ?? '—'}/100</span>
@@ -218,32 +216,32 @@ export default function Leaderboard() {
               </div>
             )}
 
-            {/* #3 Rank */}
+            {/* #3 Rank: Bronze (Pastel Peach Card) */}
             {top3 && (
               <div
-                className="card animate-fade-in-up"
+                className="card panel-pastel-peach animate-fade-in-up"
                 style={{
                   padding: '2rem 1.5rem',
                   textAlign: 'center',
-                  borderRadius: '20px',
-                  background: top3.is_current_user ? 'rgba(99, 102, 241, 0.04)' : '#ffffff',
-                  border: top3.is_current_user ? '2px solid var(--accent-primary)' : '1px solid #e2e8f0',
+                  borderRadius: '24px',
+                  border: top3.is_current_user ? '2px solid var(--accent-primary)' : '1px solid var(--pastel-peach-border)',
                   order: 2,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.75rem' }}>🥉 #3 BRONZE</div>
-                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'linear-gradient(135deg, #fdba74, #ea580c)' }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-peach-text)', marginBottom: '0.75rem' }}>🥉 #3 BRONZE</div>
+                <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-peach)', color: 'var(--pastel-peach-text)', border: '2px solid var(--pastel-peach-border)' }}>
                   {top3.username.substring(0, 2).toUpperCase()}
                 </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.25rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
                   <Link to={`/profile/${encodeURIComponent(top3.username)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                     {top3.username}
                   </Link>
                 </h3>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 800, color: '#2563eb', margin: '0.4rem 0' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', fontWeight: 800, color: 'var(--pastel-peach-text)', margin: '0.4rem 0' }}>
                   <AnimatedCounter value={top3.total_points} /> <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>PTS</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', borderTop: '1px solid #f1f5f9', paddingTop: '0.6rem', marginTop: '0.6rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', fontSize: '0.84rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
                   <span>{top3.challenges_completed} Solved</span>
                   <span>•</span>
                   <span>Score: {top3.overall_skill_score ?? '—'}</span>
@@ -252,89 +250,75 @@ export default function Leaderboard() {
             )}
           </div>
 
-          {/* Full Rankings Table */}
-          <div className="card" style={{ padding: '2rem', borderRadius: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '1.2rem' }}>📊</span>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>
-                  Developer Standings ({leaderboardData.length})
-                </h2>
-              </div>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                Sorted by Total Points &amp; Evaluations
-              </span>
-            </div>
-
+          {/* 3. Global Ranking Table */}
+          <div className="card animate-fade-in-up stagger-2" style={{ padding: '2rem 2.25rem', borderRadius: '24px' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
+              Developer Standings
+            </h2>
             <div className="table-container">
               <table>
                 <thead>
                   <tr>
                     <th style={{ width: '80px', textAlign: 'center' }}>Rank</th>
                     <th>Developer</th>
+                    <th>Solved</th>
+                    <th>Attempts</th>
+                    <th>Score</th>
                     <th style={{ textAlign: 'right' }}>Total Points</th>
-                    <th style={{ textAlign: 'center' }}>Solved</th>
-                    <th style={{ textAlign: 'right' }}>Avg Score</th>
-                    <th style={{ textAlign: 'center' }}>Skill Score</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {leaderboardData.map((row) => (
-                    <tr
-                      key={row.user_id}
-                      style={{
-                        background: row.is_current_user ? 'rgba(99, 102, 241, 0.05)' : 'inherit',
-                      }}
-                    >
-                      <td style={{ textAlign: 'center', fontWeight: 800 }}>
-                        {row.rank === 1 ? '🥇 1' : row.rank === 2 ? '🥈 2' : row.rank === 3 ? '🥉 3' : `#${row.rank}`}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div className="candidate-avatar">
-                            {row.username.substring(0, 2).toUpperCase()}
+                  {leaderboardData.map((dev, idx) => {
+                    const rank = idx + 1;
+                    const isMe = dev.is_current_user || (user && user.username === dev.username);
+
+                    return (
+                      <tr
+                        key={dev.username}
+                        style={{
+                          background: isMe ? 'var(--pastel-lavender-light)' : 'transparent',
+                          fontWeight: isMe ? 700 : 500,
+                        }}
+                      >
+                        <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.98rem' }}>
+                          {rank === 1 ? '🥇 1' : rank === 2 ? '🥈 2' : rank === 3 ? '🥉 3' : `#${rank}`}
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className="candidate-avatar" style={{ width: 34, height: 34, fontSize: '0.82rem', background: 'var(--pastel-lavender)', color: 'var(--pastel-lavender-text)' }}>
+                              {dev.username.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <Link
+                                to={`/profile/${encodeURIComponent(dev.username)}`}
+                                style={{
+                                  fontWeight: 800,
+                                  color: 'var(--text-primary)',
+                                  textDecoration: 'none',
+                                  fontSize: '0.94rem',
+                                }}
+                              >
+                                {dev.username}
+                              </Link>
+                              {isMe && (
+                                <span className="badge badge-API" style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>
+                                  You
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <Link
-                            to={`/profile/${encodeURIComponent(row.username)}`}
-                            style={{ fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}
-                          >
-                            {row.username}
-                          </Link>
-                          {row.is_current_user && (
-                            <span className="badge badge-API" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-                              YOU
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#2563eb' }}>
-                        {row.total_points}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <span className="badge badge-BUG_FIX" style={{ fontSize: '0.75rem', padding: '0.15rem 0.55rem' }}>
-                          {row.challenges_completed}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
-                        {row.average_score}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        {row.overall_skill_score !== null && row.overall_skill_score !== undefined ? (
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 700,
-                              color: row.overall_skill_score >= 80 ? '#059669' : row.overall_skill_score >= 50 ? '#2563eb' : '#d97706',
-                            }}
-                          >
-                            {row.overall_skill_score} / 100
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>{dev.challenges_completed}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{dev.total_submissions}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                          {dev.overall_skill_score != null ? `${dev.overall_skill_score}/100` : '—'}
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 800, color: 'var(--accent-primary)', fontSize: '1rem' }}>
+                          <AnimatedCounter value={dev.total_points} /> pts
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

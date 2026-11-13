@@ -25,7 +25,7 @@ export default function AnimatedProgress({
       className={`progress-bar-bg ${className}`}
       style={{
         height,
-        background: 'rgba(255, 255, 255, 0.06)',
+        background: 'var(--border-color)',
         borderRadius: 'var(--radius-full)',
         overflow: 'hidden',
         position: 'relative',

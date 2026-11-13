@@ -7,19 +7,9 @@ import Loading from '../components/Loading';
 import CodeEditor from '../components/CodeEditor';
 import RepositoryTree from '../components/RepositoryTree';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
-import AnimatedProgress from '../components/motion/AnimatedProgress';
 
 const MAX_POLL_ATTEMPTS = 60;
 const ACTIVE_SUBMISSION_STORAGE_KEY = 'codefoundry_active_submission_id';
-
-const SKILL_DIMENSION_NAMES = {
-  problem_solving: 'Problem Solving',
-  debugging: 'Debugging',
-  security: 'Security',
-  performance: 'Performance',
-  code_quality: 'Code Quality',
-  testing: 'Testing',
-};
 
 export default function Workspace() {
   const { id } = useParams();
@@ -241,36 +231,20 @@ export default function Workspace() {
   };
 
   const getPrimaryCode = () => {
-    if (isRepoChallenge) {
-      if (challenge.entrypoint && filesState[challenge.entrypoint] !== undefined) {
-        return filesState[challenge.entrypoint];
-      }
-      const pyFile =
-        repoFiles.find((f) => !f.is_readonly && !f.is_test && f.path.endsWith('.py')) ||
-        repoFiles.find((f) => f.path.endsWith('.py'));
-      if (pyFile && filesState[pyFile.path] !== undefined) {
-        return filesState[pyFile.path];
-      }
-      return filesState[activeFilePath] || code;
+    if (!isRepoChallenge) return code;
+    if (challenge.entrypoint && filesState[challenge.entrypoint] !== undefined) {
+      return filesState[challenge.entrypoint];
     }
-    return code;
+    const pyFiles = Object.keys(filesState).filter(
+      (p) => !p.includes('test_') && !p.startsWith('tests/') && p.endsWith('.py')
+    );
+    if (pyFiles.length > 0) {
+      return filesState[pyFiles[0]];
+    }
+    return filesState[activeFilePath] || Object.values(filesState)[0] || '';
   };
 
   const handleRunCode = async () => {
-    if (isRunning) return;
-
-    const filteredFiles = {};
-    if (isRepoChallenge) {
-      Object.entries(filesState).forEach(([path, content]) => {
-        if (!path.startsWith('tests/') && !path.includes('test_')) {
-          filteredFiles[path] = content;
-        }
-      });
-      if (Object.keys(filteredFiles).length === 0) return;
-    } else {
-      if (!code.trim()) return;
-    }
-
     setIsRunning(true);
     setExecutionResult(null);
     setExecutionError(null);
@@ -279,79 +253,59 @@ export default function Workspace() {
     try {
       const payload = isRepoChallenge
         ? {
-            files: filteredFiles,
-            entrypoint: challenge.entrypoint || 'app/calculator.py',
-            language: challenge.programming_language || 'Python',
-            stdin,
-            timeout: challenge.time_limit || 5,
+            files: filesState,
+            entrypoint: challenge.entrypoint || activeFilePath || undefined,
+            stdin: stdin || undefined,
+            language: challenge.programming_language,
           }
         : {
             code,
-            language: challenge.programming_language || 'Python',
-            stdin,
-            timeout: challenge.time_limit || 5,
+            stdin: stdin || undefined,
+            language: challenge.programming_language,
           };
 
-      const res = await runCode(payload);
-      setExecutionResult(res);
+      const result = await runCode(payload);
+      setExecutionResult(result);
     } catch (err) {
-      setExecutionError(err.message || 'Execution request failed.');
+      setExecutionError(err.message || 'Sandbox execution request failed.');
     } finally {
       setIsRunning(false);
     }
   };
 
   const handleSubmitSolution = async () => {
-    if (isSubmitting || isEvaluating) return;
-
-    const filteredFiles = {};
-    if (isRepoChallenge) {
-      Object.entries(filesState).forEach(([path, content]) => {
-        if (!path.startsWith('tests/') && !path.includes('test_')) {
-          filteredFiles[path] = content;
-        }
-      });
-      if (Object.keys(filteredFiles).length === 0) return;
-    } else {
-      if (!code.trim()) return;
-    }
-
     setIsSubmitting(true);
     setSubmissionError(null);
     setSubmissionResult(null);
     setActiveTab('submission');
 
     try {
-      const payload = isRepoChallenge
-        ? {
-            challenge: challenge.id,
-            files: filteredFiles,
-            code: getPrimaryCode(),
-            language: challenge.programming_language || 'Python',
-          }
-        : {
-            challenge: challenge.id,
-            code,
-            language: challenge.programming_language || 'Python',
-          };
+      const primaryCode = getPrimaryCode();
+      const payload = {
+        challenge: challenge.id,
+        code: primaryCode,
+        language: challenge.programming_language,
+        ...(isRepoChallenge ? { files: filesState } : {}),
+      };
 
-      const res = await createSubmission(payload);
+      const sub = await createSubmission(payload);
+      setSubmissionId(sub.id);
       setIsSubmitting(false);
       setIsEvaluating(true);
-      setSubmissionId(res.submission_id);
-      sessionStorage.setItem(ACTIVE_SUBMISSION_STORAGE_KEY, String(res.submission_id));
-      startPolling(res.submission_id);
+
+      sessionStorage.setItem(ACTIVE_SUBMISSION_STORAGE_KEY, String(sub.id));
+      startPolling(sub.id);
     } catch (err) {
       setIsSubmitting(false);
       setIsEvaluating(false);
-      setSubmissionError(err.message || 'Submission creation failed.');
+      setSubmissionError(err.message || 'Failed to dispatch submission.');
     }
   };
 
   if (loading) {
     return (
       <div className="page-container" style={{ padding: '4rem 1.5rem' }}>
-        <Loading message="Loading workspace environment..." />
+        <Loading message="Spinning up isolated engineering workspace..." />
       </div>
     );
   }
@@ -359,13 +313,11 @@ export default function Workspace() {
   if (error || !challenge) {
     return (
       <div className="page-container">
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
-          <p>{error || 'Challenge not found.'}</p>
-          <div style={{ marginTop: '1rem' }}>
-            <Link to="/challenges" className="btn btn-secondary">
-              &larr; Back to Challenges
-            </Link>
-          </div>
+        <div style={{ background: 'var(--accent-danger-light)', border: '1px solid var(--accent-danger-border)', color: 'var(--accent-danger)', borderRadius: 'var(--radius-md)', padding: '1.5rem', textAlign: 'center' }}>
+          <p style={{ marginBottom: '1rem', fontWeight: 600 }}>{error || 'Challenge workspace unavailable.'}</p>
+          <Link to="/challenges" className="btn btn-secondary">
+            &larr; Back to Challenges
+          </Link>
         </div>
       </div>
     );
@@ -374,15 +326,30 @@ export default function Workspace() {
   const evaluation = submissionResult?.evaluation;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', background: '#ffffff', overflow: 'hidden' }}>
-      {/* Top Workspace Toolbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 1.25rem', borderBottom: '1px solid #e2e8f0', background: '#ffffff', gap: '1rem', flexWrap: 'wrap' }}>
+    <div className="workspace-container" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 72px)', background: '#F7F7FB', overflow: 'hidden' }}>
+      {/* 1. Top Workspace Toolbar */}
+      <div
+        className="workspace-toolbar"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.65rem 1.5rem',
+          background: '#ffffff',
+          borderBottom: '1px solid var(--border-color)',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <Link to={`/challenges/${challenge.id}`} style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <span>←</span> Overview
+          <Link
+            to={`/challenges/${challenge.id}`}
+            className="btn btn-secondary"
+            style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+          >
+            &larr; Briefing
           </Link>
-          <span style={{ color: '#cbd5e1' }}>|</span>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
             {challenge.title}
           </h2>
           <span className={`badge badge-${challenge.difficulty}`} style={{ fontSize: '0.72rem' }}>
@@ -393,13 +360,11 @@ export default function Workspace() {
           </span>
         </div>
 
-        {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
-            type="button"
             onClick={handleResetCode}
             className="btn btn-secondary"
-            style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem' }}
             title="Reset code to starter version"
           >
             ↺ Reset
@@ -408,7 +373,7 @@ export default function Workspace() {
             className="btn btn-secondary"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting || isEvaluating || !getPrimaryCode().trim()}
-            style={{ fontSize: '0.82rem', padding: '0.45rem 1.1rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 1.15rem' }}
           >
             {isRunning ? (
               <>
@@ -424,8 +389,8 @@ export default function Workspace() {
             onClick={handleSubmitSolution}
             disabled={isSubmitting || isEvaluating || isRunning || !getPrimaryCode().trim()}
             style={{
-              padding: '0.45rem 1.35rem',
-              fontSize: '0.85rem',
+              padding: '0.48rem 1.45rem',
+              fontSize: '0.88rem',
             }}
           >
             {isSubmitting ? (
@@ -448,22 +413,22 @@ export default function Workspace() {
         </div>
       </div>
 
-      {/* Main Workspace Body */}
+      {/* 2. Main Workspace Body */}
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', flex: 1, overflow: 'hidden' }}>
-        {/* Left Sidebar: Mission Info & Files */}
-        <div style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          {/* Challenge Meta */}
-          <div style={{ padding: '1.25rem', borderBottom: '1px solid #e2e8f0' }}>
-            <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+        {/* Left Sidebar: Mission Info & Repository Explorer */}
+        <div style={{ background: '#FAF9FD', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          {/* Mission Info Box */}
+          <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.45rem' }}>
               Mission Briefing
             </h3>
             <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.55 }}>
               {challenge.description}
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.85rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.85rem', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
               <span>Limit: <strong>{challenge.time_limit}s</strong></span>
               <span>•</span>
-              <span>Memory: <strong>{challenge.memory_limit}MB</strong></span>
+              <span>Mem: <strong>{challenge.memory_limit}MB</strong></span>
               <span>•</span>
               <span>Points: <strong>{challenge.points}</strong></span>
             </div>
@@ -471,10 +436,7 @@ export default function Workspace() {
 
           {/* Repository File Tree */}
           {isRepoChallenge && (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
-                Repository Files
-              </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0.75rem 0.5rem' }}>
               <RepositoryTree
                 files={repoFiles}
                 activeFile={activeFilePath}
@@ -483,9 +445,9 @@ export default function Workspace() {
             </div>
           )}
 
-          {/* Stdin Area */}
-          <div style={{ padding: '1rem', borderTop: '1px solid #e2e8f0', background: '#f1f5f9' }}>
-            <label htmlFor="workspace-stdin" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '0.3rem' }}>
+          {/* Standard Input (stdin) Panel */}
+          <div style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', background: '#F4F3F9' }}>
+            <label htmlFor="workspace-stdin" style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.35rem', letterSpacing: '0.04em' }}>
               Standard Input (stdin)
             </label>
             <textarea
@@ -496,14 +458,14 @@ export default function Workspace() {
               spellCheck="false"
               style={{
                 width: '100%',
-                height: '50px',
+                height: '52px',
                 background: '#ffffff',
-                border: '1px solid #cbd5e1',
+                border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 color: 'var(--text-primary)',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.82rem',
-                padding: '0.4rem 0.6rem',
+                padding: '0.45rem 0.65rem',
                 resize: 'none',
                 outline: 'none',
               }}
@@ -511,26 +473,26 @@ export default function Workspace() {
           </div>
         </div>
 
-        {/* Right Area: Stable Monaco Editor & Bottom Result Panel */}
+        {/* Right Area: Stable Monaco Editor & Bottom Results Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
           {/* Editor Header Tab Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.5rem 1rem', borderBottom: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.84rem', color: 'var(--text-primary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#ffffff', padding: '0.55rem 1.15rem', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.86rem', color: 'var(--text-primary)' }}>
                 {isRepoChallenge ? activeFilePath || 'repository' : 'solution.py'}
               </span>
               {isCurrentFileReadOnly && (
-                <span className="badge" style={{ fontSize: '0.65rem', background: '#e2e8f0', color: 'var(--text-secondary)' }}>
+                <span className="badge" style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
                   🔒 READ-ONLY
                 </span>
               )}
             </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
               {challenge.programming_language}
             </span>
           </div>
 
-          {/* Stable Code Editor Wrapper (NO CSS transforms, transitions or scale applied) */}
+          {/* Stable Code Editor Wrapper (Monaco 'vs-dark' framed cleanly) */}
           <div style={{ flex: 1, minHeight: '280px', position: 'relative' }}>
             {activeFileObj?.is_test && !currentEditorContent ? (
               <div
@@ -562,20 +524,21 @@ export default function Workspace() {
           </div>
 
           {/* Bottom Results Panel */}
-          <div style={{ height: '260px', borderTop: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ height: '270px', borderTop: '1px solid var(--border-color)', background: '#ffffff', display: 'flex', flexDirection: 'column' }}>
             {/* Panel Tabs */}
-            <div style={{ display: 'flex', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '0 0.5rem' }}>
+            <div style={{ display: 'flex', background: '#FAF9FD', borderBottom: '1px solid var(--border-color)', padding: '0 0.75rem' }}>
               <button
                 onClick={() => setActiveTab('execution')}
                 style={{
-                  padding: '0.55rem 1rem',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
+                  padding: '0.6rem 1.15rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
                   border: 'none',
                   borderBottom: activeTab === 'execution' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                  background: 'transparent',
+                  background: activeTab === 'execution' ? '#ffffff' : 'transparent',
                   color: activeTab === 'execution' ? 'var(--accent-primary)' : 'var(--text-secondary)',
                   cursor: 'pointer',
+                  borderRadius: '6px 6px 0 0',
                 }}
               >
                 Execution Output
@@ -583,21 +546,22 @@ export default function Workspace() {
               <button
                 onClick={() => setActiveTab('submission')}
                 style={{
-                  padding: '0.55rem 1rem',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
+                  padding: '0.6rem 1.15rem',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
                   border: 'none',
                   borderBottom: activeTab === 'submission' ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                  background: 'transparent',
+                  background: activeTab === 'submission' ? '#ffffff' : 'transparent',
                   color: activeTab === 'submission' ? 'var(--accent-primary)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.45rem',
+                  borderRadius: '6px 6px 0 0',
                 }}
               >
                 <span>Submission Evaluation</span>
-                {isEvaluating && <span style={{ color: '#d97706', fontSize: '0.72rem' }}>(Grading...)</span>}
+                {isEvaluating && <span style={{ color: 'var(--pastel-peach-text)', fontSize: '0.74rem' }}>(Grading...)</span>}
                 {submissionResult && (
                   <span className={`badge ${submissionResult.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`} style={{ fontSize: '0.65rem' }}>
                     {submissionResult.status}
@@ -608,24 +572,24 @@ export default function Workspace() {
 
             {/* Tab 1: Terminal Output */}
             {activeTab === 'execution' && (
-              <div style={{ flex: 1, padding: '0.85rem 1.25rem', overflowY: 'auto', background: '#0f172a', color: '#f8fafc', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}>
+              <div style={{ flex: 1, padding: '0.85rem 1.25rem', overflowY: 'auto', background: '#1F1E2E', color: '#F0EFF6', fontFamily: 'var(--font-mono)', fontSize: '0.84rem' }}>
                 {isRunning && (
-                  <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ color: '#B4B3C2', display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <span className="spinner-icon" />
-                    <span>Executing code in Docker sandbox...</span>
+                    <span>Executing code in isolated Docker sandbox...</span>
                   </div>
                 )}
-                {executionError && <div style={{ color: '#f87171' }}>{executionError}</div>}
+                {executionError && <div style={{ color: '#F87171' }}>{executionError}</div>}
                 {!isRunning && !executionError && !executionResult && (
-                  <div style={{ color: '#64748b' }}>
-                    Click &quot;Run Tests&quot; to execute your solution in the sandbox environment.
+                  <div style={{ color: '#8E8D9E' }}>
+                    Click &quot;Run Tests&quot; to execute your solution in the Docker sandbox environment.
                   </div>
                 )}
                 {!isRunning && executionResult && (
                   <div>
-                    {executionResult.stdout && <div style={{ whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{executionResult.stdout}</div>}
-                    {executionResult.stderr && <div style={{ whiteSpace: 'pre-wrap', color: '#f87171' }}>{executionResult.stderr}</div>}
-                    <div style={{ borderTop: '1px solid #334155', marginTop: '0.5rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                    {executionResult.stdout && <div style={{ whiteSpace: 'pre-wrap', color: '#EAE8F2' }}>{executionResult.stdout}</div>}
+                    {executionResult.stderr && <div style={{ whiteSpace: 'pre-wrap', color: '#F87171' }}>{executionResult.stderr}</div>}
+                    <div style={{ borderTop: '1px solid #36344B', marginTop: '0.6rem', paddingTop: '0.45rem', fontSize: '0.76rem', color: '#B4B3C2' }}>
                       Status: {executionResult.status} • Time: {executionResult.execution_time?.toFixed(3)}s • Exit Code: {executionResult.exit_code}
                     </div>
                   </div>
@@ -636,39 +600,39 @@ export default function Workspace() {
             {/* Tab 2: Submission Result */}
             {activeTab === 'submission' && (
               <div style={{ flex: 1, padding: '1rem 1.25rem', overflowY: 'auto', background: '#ffffff' }}>
-                {isSubmitting && <div>Queueing submission...</div>}
+                {isSubmitting && <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Queueing submission for evaluation...</div>}
                 {isEvaluating && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
                     <span className="spinner-icon" />
                     <span>Evaluating in Docker sandbox... (Submission #{submissionId})</span>
                   </div>
                 )}
-                {submissionError && <div style={{ color: '#dc2626' }}>{submissionError}</div>}
+                {submissionError && <div style={{ color: 'var(--accent-danger)', fontWeight: 600 }}>{submissionError}</div>}
                 {!isSubmitting && !isEvaluating && !submissionResult && !submissionError && (
-                  <div style={{ color: 'var(--text-muted)' }}>
+                  <div style={{ color: 'var(--text-secondary)' }}>
                     Click &quot;Submit Solution&quot; to grade your solution against all challenge test cases.
                   </div>
                 )}
                 {!isSubmitting && !isEvaluating && submissionResult && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {/* Summary Row */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <div className="card panel-pastel-blue" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderRadius: '16px' }}>
                       <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Status</div>
                         <span className={`badge ${submissionResult.status === 'PASSED' ? 'badge-passed' : 'badge-failed'}`}>
                           {submissionResult.status}
                         </span>
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Score</div>
-                        <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Score</div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                           <AnimatedCounter value={submissionResult.score || 0} duration={800} /> / {challenge.points} pts
                         </div>
                       </div>
                       {evaluation && (
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tests</div>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: evaluation.tests_passed === evaluation.tests_total ? '#059669' : '#dc2626' }}>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tests</div>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: evaluation.tests_passed === evaluation.tests_total ? 'var(--pastel-mint-text)' : 'var(--accent-danger)' }}>
                             {evaluation.tests_passed}/{evaluation.tests_total}
                           </div>
                         </div>
@@ -678,26 +642,26 @@ export default function Workspace() {
                     {/* Test Results Breakdown */}
                     {evaluation?.test_results && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           Test Results Breakdown
                         </div>
                         {evaluation.test_results.map((tc, idx) => (
                           <div
                             key={idx}
                             style={{
-                              padding: '0.65rem 0.85rem',
-                              borderRadius: '8px',
-                              border: `1px solid ${tc.passed ? '#a7f3d0' : '#fecaca'}`,
-                              background: tc.passed ? '#f0fdf4' : '#fef2f2',
+                              padding: '0.75rem 1rem',
+                              borderRadius: '12px',
+                              border: tc.passed ? '1px solid var(--pastel-mint-border)' : '1px solid var(--accent-danger-border)',
+                              background: tc.passed ? 'var(--pastel-mint-light)' : 'var(--accent-danger-light)',
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
                             }}
                           >
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: tc.passed ? '#065f46' : '#991b1b' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: tc.passed ? 'var(--pastel-mint-text)' : 'var(--accent-danger)' }}>
                               {tc.name || `Test Case #${idx + 1}`} {tc.is_hidden && '(Hidden)'}
                             </span>
-                            <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.7rem' }}>
+                            <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.72rem' }}>
                               {tc.passed ? 'Passed ✓' : 'Failed ✕'}
                             </span>
                           </div>

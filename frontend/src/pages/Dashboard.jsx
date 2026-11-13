@@ -11,43 +11,49 @@ const SKILL_DIMENSIONS = [
     key: 'problem_solving',
     name: 'Problem Solving',
     description: 'Functional correctness & algorithm logic',
-    color: '#3b82f6',
+    color: '#1E5EA8',
     icon: '⚡',
+    badgeClass: 'badge-API',
   },
   {
     key: 'debugging',
     name: 'Debugging',
     description: 'Fault localization & bug fix accuracy',
-    color: '#f59e0b',
+    color: '#C77A14',
     icon: '🐛',
+    badgeClass: 'badge-BUG_FIX',
   },
   {
     key: 'security',
     name: 'Security',
     description: 'Vulnerability prevention & authorization',
-    color: '#8b5cf6',
+    color: '#5B34B0',
     icon: '🛡️',
+    badgeClass: 'badge-SECURITY',
   },
   {
     key: 'performance',
     name: 'Performance',
     description: 'Execution speed & memory efficiency',
-    color: '#10b981',
+    color: '#196F4B',
     icon: '🚀',
+    badgeClass: 'badge-PERFORMANCE',
   },
   {
     key: 'code_quality',
     name: 'Code Quality',
     description: 'Maintainability & structure',
-    color: '#64748b',
+    color: '#6B6A7A',
     icon: '📦',
+    badgeClass: 'badge-DATABASE',
   },
   {
     key: 'testing',
     name: 'Testing',
     description: 'Suite completeness & validation',
-    color: '#06b6d4',
+    color: '#0E7490',
     icon: '🧪',
+    badgeClass: 'badge-TESTING',
   },
 ];
 
@@ -100,9 +106,9 @@ export default function Dashboard() {
   };
 
   const getScoreColor = (score) => {
-    if (score >= 80) return '#10b981';
-    if (score >= 50) return '#f59e0b';
-    return '#ef4444';
+    if (score >= 80) return 'var(--pastel-mint-text)';
+    if (score >= 50) return 'var(--pastel-peach-text)';
+    return 'var(--accent-danger)';
   };
 
   if (loading) {
@@ -116,7 +122,7 @@ export default function Dashboard() {
   if (error || !data) {
     return (
       <div className="page-container">
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 'var(--radius-md)', padding: '1.25rem', margin: '2rem 0' }}>
+        <div style={{ background: 'var(--accent-danger-light)', border: '1px solid var(--accent-danger-border)', color: 'var(--accent-danger)', borderRadius: 'var(--radius-md)', padding: '1.25rem', margin: '2rem 0' }}>
           <p>{error || 'Failed to load dashboard data.'}</p>
         </div>
       </div>
@@ -128,30 +134,29 @@ export default function Dashboard() {
 
   return (
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1200px' }}>
-      {/* Top Welcome Header Framed in Modern SaaS Style */}
+      {/* 1. Top Welcome Banner in Light Pastel Framing */}
       <div
-        className="card animate-fade-in-up"
+        className="card panel-pastel-lavender animate-fade-in-up"
         style={{
-          padding: '2.25rem 2.5rem',
+          padding: '2.5rem',
           marginBottom: '2.5rem',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
           borderRadius: '24px',
-          border: '1px solid #e2e8f0',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-              <h1 className="page-title" style={{ margin: 0, fontSize: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.4rem' }}>
+              <h1 className="page-title" style={{ margin: 0, fontSize: '2.1rem' }}>
                 Welcome back, {user?.username}
               </h1>
               <span style={{ fontSize: '1.4rem' }}>👋</span>
             </div>
-            <p className="page-description" style={{ margin: 0 }}>
-              Build verified software engineering competencies across realistic repositories, bug fixes, and sandbox test suites.
+            <p className="page-description" style={{ margin: 0, maxWidth: '640px' }}>
+              Practice software engineering on real multi-file codebases, patch structural defects, and verify your skills in isolated Docker sandboxes.
             </p>
           </div>
-          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.75rem 1.75rem', fontSize: '0.94rem' }}>
+          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.85rem 1.85rem', fontSize: '0.96rem' }}>
             <span>Explore Challenges</span>
             <span className="btn-arrow-icon">→</span>
           </Link>
@@ -159,80 +164,84 @@ export default function Dashboard() {
       </div>
 
       {isBrandNew ? (
-        <div className="card animate-scale-in" style={{ padding: '4.5rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
-          <div style={{ width: 56, height: 56, margin: '0 auto 1.25rem', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)', fontSize: '1.5rem', fontFamily: 'var(--font-mono)' }}>
+        <div className="card panel-pastel-blue animate-scale-in" style={{ padding: '4.5rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
+          <div style={{ width: 56, height: 56, margin: '0 auto 1.25rem', background: '#ffffff', border: '1px solid var(--pastel-blue-border)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--pastel-blue-text)', fontSize: '1.5rem', fontFamily: 'var(--font-mono)', fontWeight: 800, boxShadow: 'var(--shadow-sm)' }}>
             &gt;_
           </div>
-          <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             Welcome to CodeFoundry
           </h3>
-          <p style={{ maxWidth: '520px', margin: '0 auto 1.75rem', color: 'var(--text-secondary)', fontSize: '0.96rem', lineHeight: 1.6 }}>
-            You haven&apos;t attempted any challenges yet. Pick your first engineering scenario to start practicing in the Docker sandbox.
+          <p style={{ maxWidth: '520px', margin: '0 auto 1.75rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.6 }}>
+            You haven&apos;t attempted any challenges yet. Pick your first engineering scenario to begin practicing in isolated Docker sandboxes.
           </p>
-          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.8rem 2rem' }}>
+          <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.85rem 2.2rem' }}>
             <span>Start Your First Challenge</span>
             <span className="btn-arrow-icon">→</span>
           </Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-          {/* 1. Overview Metric Cards Grid */}
+          {/* 2. Top Metric Tiles with Alternating Pastel Accents */}
           <div className="gency-stats-grid" style={{ marginTop: 0 }}>
-            <div className="gency-stat-tile animate-fade-in-up stagger-1">
-              <span className="gency-stat-label">Challenges Attempted</span>
-              <span className="gency-stat-number" style={{ color: '#2563eb' }}>
+            {/* Tile 1: Attempted */}
+            <div className="card panel-pastel-blue animate-fade-in-up stagger-1" style={{ padding: '1.75rem 2rem', borderRadius: '20px' }}>
+              <span className="gency-stat-label" style={{ color: 'var(--pastel-blue-text)' }}>Challenges Attempted</span>
+              <span className="gency-stat-number" style={{ color: 'var(--pastel-blue-text)', marginTop: '0.4rem' }}>
                 <AnimatedCounter value={overview.challenges_attempted} duration={800} />
               </span>
             </div>
 
-            <div className="gency-stat-tile animate-fade-in-up stagger-2">
-              <span className="gency-stat-label">Challenges Passed</span>
-              <span className="gency-stat-number" style={{ color: '#10b981' }}>
+            {/* Tile 2: Passed */}
+            <div className="card panel-pastel-mint animate-fade-in-up stagger-2" style={{ padding: '1.75rem 2rem', borderRadius: '20px' }}>
+              <span className="gency-stat-label" style={{ color: 'var(--pastel-mint-text)' }}>Challenges Passed</span>
+              <span className="gency-stat-number" style={{ color: 'var(--pastel-mint-text)', marginTop: '0.4rem' }}>
                 <AnimatedCounter value={overview.challenges_passed} duration={800} />
               </span>
             </div>
 
-            <div className="gency-stat-tile animate-fade-in-up stagger-3">
-              <span className="gency-stat-label">Total Submissions</span>
-              <span className="gency-stat-number" style={{ color: '#8b5cf6' }}>
+            {/* Tile 3: Total Submissions */}
+            <div className="card panel-pastel-lavender animate-fade-in-up stagger-3" style={{ padding: '1.75rem 2rem', borderRadius: '20px' }}>
+              <span className="gency-stat-label" style={{ color: 'var(--pastel-lavender-text)' }}>Total Submissions</span>
+              <span className="gency-stat-number" style={{ color: 'var(--pastel-lavender-text)', marginTop: '0.4rem' }}>
                 <AnimatedCounter value={overview.total_submissions} duration={800} />
               </span>
             </div>
 
-            <div className="gency-stat-tile animate-fade-in-up stagger-4">
-              <span className="gency-stat-label">Overall Skill Score</span>
-              <div className="gency-stat-number" style={{ color: skillProfile?.overall_score != null ? getScoreColor(skillProfile.overall_score) : 'var(--text-muted)' }}>
+            {/* Tile 4: Overall Score */}
+            <div className="card panel-pastel-peach animate-fade-in-up stagger-4" style={{ padding: '1.75rem 2rem', borderRadius: '20px' }}>
+              <span className="gency-stat-label" style={{ color: 'var(--pastel-peach-text)' }}>Overall Skill Score</span>
+              <div className="gency-stat-number" style={{ marginTop: '0.4rem', color: skillProfile?.overall_score != null ? getScoreColor(skillProfile.overall_score) : 'var(--text-muted)' }}>
                 {skillProfile?.overall_score != null ? (
                   <>
                     <AnimatedCounter value={skillProfile.overall_score} duration={1000} />{' '}
-                    <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>/ 100</span>
+                    <span style={{ fontSize: '1.1rem', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>/ 100</span>
                   </>
                 ) : (
-                  <span style={{ fontSize: '1.1rem', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Pending</span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>Pending</span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* 2. Skill Profile & Competencies Grid */}
-          <div className="card animate-fade-in-up stagger-3" style={{ padding: '2rem 2.25rem', borderRadius: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.75rem' }}>
+          {/* 3. Skill Profile & Competencies Breakdown */}
+          <div className="card animate-fade-in-up stagger-3" style={{ padding: '2.25rem', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2rem' }}>
               <div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   Skill Profile &amp; Competencies
                 </h2>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
                   Deterministic competency evaluations derived from your best challenge submissions.
                 </p>
               </div>
               {skillProfile?.total_evaluations_analyzed !== undefined && (
-                <span className="user-pill" style={{ padding: '0.35rem 0.95rem' }}>
+                <span className="user-pill" style={{ padding: '0.4rem 1rem' }}>
                   Evaluations Analyzed: <strong>{skillProfile.total_evaluations_analyzed}</strong>
                 </span>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.35rem' }}>
               {SKILL_DIMENSIONS.map((dim, idx) => {
                 const skillData = skillProfile?.skills?.[dim.key] || {
                   score: null,
@@ -243,36 +252,37 @@ export default function Dashboard() {
                 const isNotMeasured = skillData.status === 'not_measured';
 
                 return (
-                  <div key={dim.key} className={`skill-card animate-fade-in-up stagger-${(idx % 6) + 1}`} style={{ padding: '1.35rem' }}>
-                    <div className="skill-card-top">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.1rem' }}>{dim.icon}</span>
-                        <span className="skill-name" style={{ fontSize: '0.98rem' }}>{dim.name}</span>
+                  <div key={dim.key} className={`skill-card animate-fade-in-up stagger-${(idx % 6) + 1}`} style={{ padding: '1.5rem', borderRadius: '18px' }}>
+                    <div className="skill-card-top" style={{ marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>{dim.icon}</span>
+                        <span className="skill-name" style={{ fontSize: '1rem' }}>{dim.name}</span>
                       </div>
                       <span className="skill-score" style={{ color: isMeasured ? getScoreColor(skillData.score) : 'var(--text-muted)' }}>
                         {isMeasured ? (
                           <>
-                            <AnimatedCounter value={skillData.score} duration={800} />/100
+                            <AnimatedCounter value={skillData.score} duration={800} />
+                            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500 }}>/100</span>
                           </>
                         ) : isNotMeasured ? (
-                          'Reserved'
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Reserved</span>
                         ) : (
                           '—'
                         )}
                       </span>
                     </div>
 
-                    <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ marginBottom: '0.85rem' }}>
                       <AnimatedProgress
                         value={isMeasured ? skillData.score : 0}
                         color={dim.color}
-                        height={6}
+                        height={7}
                       />
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       <span>{dim.description}</span>
-                      <span>{skillData.sample_size || 0} evals</span>
+                      <span style={{ fontWeight: 600 }}>{skillData.sample_size || 0} evals</span>
                     </div>
                   </div>
                 );
@@ -280,13 +290,13 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* 3. Recent Activity Section */}
-          <div className="card animate-fade-in-up stagger-4" style={{ padding: '2rem 2.25rem', borderRadius: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }}>
+          {/* 4. Recent Activity Section */}
+          <div className="card animate-fade-in-up stagger-4" style={{ padding: '2.25rem', borderRadius: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0 }}>
                 Recent Submissions
               </h2>
-              <Link to="/submissions" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none' }}>
+              <Link to="/submissions" style={{ color: 'var(--accent-primary)', fontSize: '0.92rem', fontWeight: 700, textDecoration: 'none' }}>
                 View All Submissions →
               </Link>
             </div>
@@ -306,7 +316,7 @@ export default function Dashboard() {
                   <tbody>
                     {recent_submissions.map((sub) => (
                       <tr key={sub.id}>
-                        <td style={{ fontWeight: 600 }}>
+                        <td style={{ fontWeight: 700 }}>
                           {sub.challenge_title || `Challenge #${sub.challenge}`}
                         </td>
                         <td>
@@ -314,17 +324,17 @@ export default function Dashboard() {
                             {sub.status}
                           </span>
                         </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-primary)' }}>
                           {sub.score !== null ? `${sub.score}/100` : '—'}
                         </td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.86rem' }}>
                           {formatTimestamp(sub.submitted_at)}
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <Link
                             to={`/workspace/${sub.challenge}`}
                             className="btn btn-secondary"
-                            style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+                            style={{ padding: '0.4rem 0.95rem', fontSize: '0.82rem' }}
                           >
                             Open Workspace →
                           </Link>
@@ -335,7 +345,7 @@ export default function Dashboard() {
                 </table>
               </div>
             ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: '12px' }}>
+              <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', borderRadius: '16px' }}>
                 No recent submissions found.
               </div>
             )}

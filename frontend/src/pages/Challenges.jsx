@@ -98,51 +98,50 @@ export default function Challenges() {
 
   return (
     <div className="page-container animate-fade-in-up" style={{ maxWidth: '1240px' }}>
-      {/* Header Banner */}
+      {/* 1. Header Banner in Soft Pastel Blue */}
       <div
-        className="card animate-fade-in-up"
+        className="card panel-pastel-blue animate-fade-in-up"
         style={{
           padding: '2.5rem',
           marginBottom: '2.5rem',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
           borderRadius: '24px',
-          border: '1px solid #e2e8f0',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-              <span className="badge badge-API" style={{ fontSize: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.4rem' }}>
+              <span className="badge badge-API" style={{ fontSize: '0.76rem' }}>
                 Engineering Sandbox
               </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
                 Production Scenarios
               </span>
             </div>
             <h1 className="page-title" style={{ margin: 0, fontSize: '2.2rem' }}>
               Engineering Challenges
             </h1>
-            <p className="page-description" style={{ marginTop: '0.4rem', marginBottom: 0 }}>
-              Solve production bugs, optimize slow endpoints, and secure vulnerable services in real multi-file codebases.
+            <p className="page-description" style={{ marginTop: '0.4rem', marginBottom: 0, maxWidth: '640px' }}>
+              Solve real bugs, optimize quadratic algorithms, and remediate security vulnerabilities in authentic multi-file codebases.
             </p>
           </div>
 
           {progressSummary && (
-            <div style={{ display: 'flex', gap: '1.5rem', background: '#ffffff', padding: '1rem 1.5rem', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', gap: '1.5rem', background: '#ffffff', padding: '1rem 1.75rem', borderRadius: '18px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em' }}>
                   Passed
                 </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#10b981' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--pastel-mint-text)' }}>
                   {progressSummary.passed}
                 </div>
               </div>
-              <div style={{ width: '1px', backgroundColor: '#e2e8f0' }} />
+              <div style={{ width: '1px', backgroundColor: 'var(--border-color)' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em' }}>
                   Attempted
                 </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#2563eb' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--pastel-blue-text)' }}>
                   {progressSummary.attempted}
                 </div>
               </div>
@@ -151,13 +150,14 @@ export default function Challenges() {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="recruiter-filter-toolbar" style={{ marginBottom: '2.5rem' }}>
-        <div className="recruiter-search-box">
-          <span className="search-icon">🔍</span>
+      {/* 2. Filter Toolbar */}
+      <div className="recruiter-filter-toolbar" style={{ marginBottom: '2.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="recruiter-search-box" style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
+          <span className="search-icon" style={{ position: 'absolute', left: '1.1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
           <input
             type="text"
-            className="recruiter-input"
+            className="input-control"
+            style={{ paddingLeft: '2.75rem', borderRadius: 'var(--radius-full)' }}
             placeholder="Search challenges by title, keywords..."
             value={search}
             onChange={(e) => {
@@ -167,9 +167,10 @@ export default function Challenges() {
           />
         </div>
 
-        <div className="recruiter-filter-selects">
+        <div className="recruiter-filter-selects" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <select
-            className="recruiter-select"
+            className="select-control"
+            style={{ borderRadius: 'var(--radius-full)', padding: '0.75rem 1.25rem', width: 'auto', cursor: 'pointer' }}
             value={difficulty}
             onChange={(e) => {
               setDifficulty(e.target.value);
@@ -184,7 +185,8 @@ export default function Challenges() {
           </select>
 
           <select
-            className="recruiter-select"
+            className="select-control"
+            style={{ borderRadius: 'var(--radius-full)', padding: '0.75rem 1.25rem', width: 'auto', cursor: 'pointer' }}
             value={challengeType}
             onChange={(e) => {
               setChallengeType(e.target.value);
@@ -203,23 +205,23 @@ export default function Challenges() {
               type="button"
               className="btn btn-secondary"
               onClick={handleClearFilters}
-              style={{ padding: '0.65rem 1.1rem', fontSize: '0.85rem' }}
+              style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}
             >
-              ↻ Clear
+              Clear Filters
             </button>
           )}
         </div>
       </div>
 
-      {/* Challenges Grid */}
+      {/* 3. Challenge Cards Grid */}
       {loading ? (
-        <div style={{ padding: '4rem 0' }}>
-          <Loading message="Loading challenge catalog..." />
+        <div style={{ padding: '4rem 1.5rem' }}>
+          <Loading message="Scanning challenge repository catalog..." />
         </div>
       ) : error ? (
-        <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', margin: '2rem 0' }}>
+        <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', margin: '2rem 0', borderRadius: '20px' }}>
           <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
-          <h2 style={{ fontSize: '1.3rem', color: '#ef4444', marginBottom: '0.5rem' }}>Failed to Load Challenges</h2>
+          <h2 style={{ fontSize: '1.3rem', color: 'var(--accent-danger)', marginBottom: '0.5rem' }}>Failed to Load Challenges</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>{error}</p>
           <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
             Reset Filters
@@ -237,7 +239,7 @@ export default function Challenges() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.75rem' }}>
           {challenges.map((ch, idx) => {
             const prog = progressMap[ch.id];
             const isPassed = prog?.status === 'PASSED';
@@ -248,17 +250,18 @@ export default function Challenges() {
                 key={ch.id}
                 className={`card animate-fade-in-up stagger-${(idx % 6) + 1}`}
                 style={{
-                  padding: '1.75rem',
-                  borderRadius: '20px',
+                  padding: '2rem',
+                  borderRadius: '24px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  gap: '1.25rem',
-                  border: isPassed ? '1px solid #a7f3d0' : '1px solid #e2e8f0',
+                  gap: '1.35rem',
+                  border: isPassed ? '1px solid var(--pastel-mint-border)' : '1px solid var(--border-color)',
+                  background: isPassed ? 'linear-gradient(180deg, #FFFFFF 0%, #FAFEFC 100%)' : '#FFFFFF',
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <span className={`badge badge-${ch.challenge_type || 'API'}`}>
                       {ch.challenge_type ? ch.challenge_type.replace('_', ' ') : 'Challenge'}
                     </span>
@@ -267,27 +270,27 @@ export default function Challenges() {
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.6rem', lineHeight: 1.3 }}>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.65rem', lineHeight: 1.3 }}>
                     <Link to={`/challenges/${ch.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                       {ch.title}
                     </Link>
                   </h3>
 
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.55, margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {ch.short_description || ch.description}
                   </p>
                 </div>
 
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9', marginBottom: '1rem', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 0', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     <span>💻 {ch.language || 'Python'}</span>
                     <span>🏆 {ch.points || 100} pts</span>
                     {isPassed ? (
-                      <span style={{ color: '#059669', fontWeight: 700 }}>✓ Solved</span>
+                      <span style={{ color: 'var(--pastel-mint-text)', fontWeight: 800 }}>✓ Solved</span>
                     ) : isAttempted ? (
-                      <span style={{ color: '#d97706', fontWeight: 700 }}>● Attempted</span>
+                      <span style={{ color: 'var(--pastel-peach-text)', fontWeight: 800 }}>● Attempted</span>
                     ) : (
-                      <span>Unattempted</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Unattempted</span>
                     )}
                   </div>
 
@@ -295,14 +298,14 @@ export default function Challenges() {
                     <Link
                       to={`/challenges/${ch.id}`}
                       className="btn btn-secondary"
-                      style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+                      style={{ flex: 1, padding: '0.65rem', fontSize: '0.88rem' }}
                     >
                       Briefing
                     </Link>
                     <Link
                       to={`/workspace/${ch.id}`}
                       className="btn-saas btn-saas-primary"
-                      style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+                      style={{ flex: 1, padding: '0.65rem', fontSize: '0.88rem' }}
                     >
                       <span>Solve</span>
                       <span className="btn-arrow-icon">→</span>
@@ -315,25 +318,25 @@ export default function Challenges() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* 4. Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '3.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.85rem', marginTop: '3.5rem' }}>
           <button
             className="btn btn-secondary"
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1.15rem', fontSize: '0.88rem' }}
           >
             ← Previous
           </button>
-          <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 700, padding: '0.4rem 0.8rem', background: '#ffffff', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)' }}>
             Page {page} of {totalPages}
           </span>
           <button
             className="btn btn-secondary"
             disabled={page === totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1.15rem', fontSize: '0.88rem' }}
           >
             Next →
           </button>

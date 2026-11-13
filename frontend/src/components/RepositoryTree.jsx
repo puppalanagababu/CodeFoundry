@@ -47,11 +47,13 @@ function TreeNode({ name, node, activeFile, onSelectFile, level = 0 }) {
           gap: '8px',
           cursor: 'pointer',
           fontSize: '0.84rem',
-          color: isSelected ? '#fff' : 'var(--text-secondary)',
-          background: isSelected ? 'rgba(99, 102, 241, 0.18)' : 'transparent',
-          borderLeft: isSelected ? '2px solid var(--accent-primary)' : '2px solid transparent',
-          boxShadow: isSelected ? 'inset 0 0 12px rgba(99, 102, 241, 0.12)' : 'none',
-          transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+          color: isSelected ? 'var(--pastel-lavender-text)' : 'var(--text-secondary)',
+          background: isSelected ? 'var(--pastel-lavender)' : 'transparent',
+          borderLeft: isSelected ? '3px solid var(--accent-primary)' : '3px solid transparent',
+          borderRadius: 'var(--radius-xs)',
+          margin: '1px 6px',
+          fontWeight: isSelected ? 700 : 500,
+          transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
         onClick={() => onSelectFile(node.path)}
         title={node.path}

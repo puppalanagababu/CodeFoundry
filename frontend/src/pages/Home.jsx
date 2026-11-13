@@ -8,85 +8,90 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
 
   const techStack = [
-    { name: 'React', category: 'Frontend Architecture', icon: '⚛️' },
-    { name: 'FastAPI', category: 'High-Performance Backend', icon: '⚡' },
-    { name: 'PostgreSQL', category: 'Relational Database', icon: '🐘' },
-    { name: 'Redis', category: 'In-Memory Cache & Queue', icon: '⚡' },
-    { name: 'Celery', category: 'Async Task Pipeline', icon: '🌿' },
-    { name: 'Docker', category: 'Isolated Sandbox Execution', icon: '🐳' },
-    { name: 'Monaco Editor', category: 'VS Code Editor Core', icon: '💻' },
+    { name: 'React', category: 'Frontend Architecture', icon: '⚛️', color: 'var(--pastel-blue-light)' },
+    { name: 'FastAPI', category: 'High-Performance Backend', icon: '⚡', color: 'var(--pastel-mint-light)' },
+    { name: 'PostgreSQL', category: 'Relational Database', icon: '🐘', color: 'var(--pastel-blue-light)' },
+    { name: 'Redis', category: 'In-Memory Cache & Queue', icon: '⚡', color: 'var(--pastel-peach-light)' },
+    { name: 'Celery', category: 'Async Task Pipeline', icon: '🌿', color: 'var(--pastel-mint-light)' },
+    { name: 'Docker', category: 'Isolated Sandbox Execution', icon: '🐳', color: 'var(--pastel-blue-light)' },
+    { name: 'Monaco Editor', category: 'VS Code Editor Core', icon: '💻', color: 'var(--pastel-lavender-light)' },
   ];
 
   const steps = [
     {
       num: '01',
       title: 'Choose',
-      desc: 'Pick a real-world challenge matching your learning goals.',
-      color: '#6366f1',
+      desc: 'Pick a real-world scenario from API debugging to security audit.',
+      panelClass: 'panel-pastel-lavender',
+      accent: 'var(--pastel-lavender-text)',
     },
     {
       num: '02',
-      title: 'Code',
-      desc: 'Work inside a complete multi-file repository with realistic architectures.',
-      color: '#3b82f6',
+      title: 'Inspect',
+      desc: 'Investigate complete multi-file repositories with actual architectures.',
+      panelClass: 'panel-pastel-blue',
+      accent: 'var(--pastel-blue-text)',
     },
     {
       num: '03',
-      title: 'Submit',
-      desc: 'Run your tests iteratively and submit your complete solution.',
-      color: '#06b6d4',
+      title: 'Refactor',
+      desc: 'Fix bugs, patch security exploits, and optimize algorithms inside Monaco.',
+      panelClass: 'panel-pastel-mint',
+      accent: 'var(--pastel-mint-text)',
     },
     {
       num: '04',
       title: 'Evaluate',
-      desc: 'Automated test harnesses evaluate edge cases inside hardened Docker containers.',
-      color: '#10b981',
+      desc: 'Docker sandboxes run authoritative tests against hidden workloads.',
+      panelClass: 'panel-pastel-peach',
+      accent: 'var(--pastel-peach-text)',
     },
     {
       num: '05',
-      title: 'Grow',
-      desc: 'Track verified engineering skills and competency growth over time.',
-      color: '#8b5cf6',
+      title: 'Measure',
+      desc: 'Receive deterministic competency scores across 6 core skill dimensions.',
+      panelClass: 'panel-pastel-yellow',
+      accent: 'var(--pastel-yellow-text)',
     },
   ];
 
   const demoSkills = [
-    { name: 'Problem Solving', score: 88, color: '#3b82f6', icon: '⚡' },
-    { name: 'Debugging', score: 92, color: '#f59e0b', icon: '🐛' },
-    { name: 'Security', score: 85, color: '#8b5cf6', icon: '🛡️' },
-    { name: 'Performance', score: 90, color: '#10b981', icon: '🚀' },
-    { name: 'Code Quality', score: 84, color: '#64748b', icon: '📦' },
-    { name: 'Testing', score: 87, color: '#06b6d4', icon: '🧪' },
+    { name: 'Problem Solving', score: 88, color: '#1E5EA8', icon: '⚡' },
+    { name: 'Debugging', score: 92, color: '#C77A14', icon: '🐛' },
+    { name: 'Security', score: 85, color: '#5B34B0', icon: '🛡️' },
+    { name: 'Performance', score: 90, color: '#196F4B', icon: '🚀' },
+    { name: 'Code Quality', score: 84, color: '#6B6A7A', icon: '📦' },
+    { name: 'Testing', score: 87, color: '#0E7490', icon: '🧪' },
   ];
 
   return (
     <div className="home-page" style={{ width: '100%', overflowX: 'hidden' }}>
       {/* 1. HERO SECTION */}
-      <section className="page-container" style={{ paddingTop: '4.75rem', paddingBottom: '4.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2.5rem', alignItems: 'center' }}>
+      <section className="page-container" style={{ paddingTop: '4.5rem', paddingBottom: '4.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '3rem', alignItems: 'center' }}>
           {/* Left Column: Hero Content */}
           <div className="animate-fade-in-up">
-            <div className="gency-hero-badge" style={{ marginBottom: '0.85rem' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#6366f1', display: 'inline-block' }} />
-              <span>Realistic Engineering Practice Platform</span>
+            <div className="gency-hero-badge" style={{ marginBottom: '1.25rem' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--accent-primary)', display: 'inline-block' }} />
+              <span>Practice Software Engineering. Not Just Coding.</span>
             </div>
 
-            <h1 className="hero-title animate-fade-in-up stagger-1" style={{ marginBottom: '1rem', lineHeight: '1.12' }}>
-              Practice Software<br />
-              <span className="accent-gradient">Engineering.</span><br />
-              Not Just Coding.
+            <h1 className="hero-title animate-fade-in-up stagger-1" style={{ marginBottom: '1.25rem' }}>
+              Real Repositories.<br />
+              <span className="accent-gradient">Real Engineering.</span><br />
+              Zero Toy Puzzles.
             </h1>
 
-            <p className="hero-subtitle animate-fade-in-up stagger-2" style={{ marginBottom: '1.5rem', fontSize: '1.05rem', lineHeight: 1.55 }}>
-              Real-world, repository-based challenges to build practical software engineering skills.
+            <p className="hero-subtitle animate-fade-in-up stagger-2" style={{ marginBottom: '1.75rem' }}>
+              Immerse yourself in authentic multi-file codebases. Diagnose structural regressions, repair REST APIs, patch security exploits, and optimize bottlenecks inside hardened Docker sandboxes.
             </p>
 
             {/* CTAs */}
-            <div className="animate-fade-in-up stagger-3" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}>
+            <div className="animate-fade-in-up stagger-3" style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap', marginBottom: '1.85rem' }}>
               <Link
                 to={isAuthenticated ? '/dashboard' : '/challenges'}
                 className="btn-saas btn-saas-primary"
-                style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}
+                style={{ padding: '0.85rem 2.2rem', fontSize: '1rem' }}
               >
                 <span>Start Practicing</span>
                 <span className="btn-arrow-icon">→</span>
@@ -94,95 +99,92 @@ export default function Home() {
               <Link
                 to="/challenges"
                 className="btn-saas btn-saas-secondary"
-                style={{ padding: '0.8rem 1.85rem', fontSize: '1rem' }}
+                style={{ padding: '0.85rem 2rem', fontSize: '1rem' }}
               >
                 View Challenges
               </Link>
             </div>
 
-            {/* Floating Tags */}
+            {/* Floating Trust Pills */}
             <div className="animate-fade-in-up stagger-4" style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-API" style={{ padding: '0.35rem 0.8rem', fontSize: '0.74rem' }}>
-                ✓ Real Repositories
+              <span className="badge badge-API" style={{ padding: '0.35rem 0.85rem' }}>
+                ✓ Multi-File Repositories
               </span>
-              <span className="badge badge-SECURITY" style={{ padding: '0.35rem 0.8rem', fontSize: '0.74rem' }}>
-                ✓ Real Problems
+              <span className="badge badge-SECURITY" style={{ padding: '0.35rem 0.85rem' }}>
+                ✓ Docker Sandboxes
               </span>
-              <span className="badge badge-PERFORMANCE" style={{ padding: '0.35rem 0.8rem', fontSize: '0.74rem' }}>
-                ✓ Real Skills
+              <span className="badge badge-PERFORMANCE" style={{ padding: '0.35rem 0.85rem' }}>
+                ✓ Deterministic Scoring
               </span>
             </div>
           </div>
 
-          {/* Right Column: Polished Product Mockup */}
-          <div className="animate-scale-in stagger-3 floating-mockup" style={{ position: 'relative' }}>
+          {/* Right Column: Light Pastel Interactive Workspace Preview */}
+          <div className="animate-scale-in stagger-3" style={{ position: 'relative' }}>
             <div
               className="card"
               style={{
-                borderRadius: '18px',
-                border: '1px solid #e2e8f0',
+                borderRadius: '24px',
+                border: '1px solid var(--border-color)',
                 background: '#ffffff',
-                boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.1), 0 6px 20px -4px rgba(99, 102, 241, 0.06)',
+                boxShadow: 'var(--shadow-xl)',
                 overflow: 'hidden',
               }}
             >
-              {/* Mockup Window Header */}
-              <div style={{ background: '#f8fafc', padding: '0.75rem 1.15rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#10b981' }} />
+              {/* Window Header */}
+              <div style={{ background: '#FAF9FD', padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '7px' }}>
+                  <span style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#F87171' }} />
+                  <span style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#FBBF24' }} />
+                  <span style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: '#34D399' }} />
                 </div>
-                <div style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.82rem', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', fontWeight: 600 }}>
                   codefoundry / services / report_generator.py
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button className="btn" style={{ padding: '0.22rem 0.65rem', fontSize: '0.74rem', background: '#ffffff', border: '1px solid #cbd5e1' }}>
-                    ▶ Run Tests
-                  </button>
-                  <button className="btn-saas btn-saas-primary" style={{ padding: '0.22rem 0.65rem', fontSize: '0.74rem' }}>
-                    Submit ✓
-                  </button>
+                <div style={{ display: 'flex', gap: '0.45rem' }}>
+                  <span className="badge badge-passed" style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem' }}>
+                    ● Docker Live
+                  </span>
                 </div>
               </div>
 
               {/* Mockup Workspace Body */}
-              <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', minHeight: '230px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', minHeight: '240px' }}>
                 {/* File Tree Sidebar */}
-                <div style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0', padding: '0.85rem', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                <div style={{ background: '#FAF9FD', borderRight: '1px solid var(--border-color)', padding: '0.85rem', fontSize: '0.78rem', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Repository
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.15rem 0' }}>📁 src/</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.15rem 0 0.15rem 0.7rem' }}>📁 models/</div>
-                  <div style={{ color: 'var(--accent-primary)', fontWeight: 600, padding: '0.15rem 0 0.15rem 0.7rem', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '4px' }}>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0' }}>📁 src/</div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📁 models/</div>
+                  <div style={{ color: 'var(--pastel-lavender-text)', fontWeight: 700, padding: '0.2rem 0.5rem', background: 'var(--pastel-lavender)', borderRadius: '6px' }}>
                     📄 report_gen.py
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.15rem 0 0.15rem 0.7rem' }}>📄 queries.py</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.15rem 0' }}>📁 tests/</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.15rem 0 0.15rem 0.7rem' }}>📄 test_perf.py</div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📄 queries.py</div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0' }}>📁 tests/</div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📄 test_perf.py</div>
                 </div>
 
                 {/* Editor Content Area */}
-                <div style={{ padding: '1rem 1.15rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', lineHeight: '1.55', background: '#ffffff', color: '#1e293b' }}>
-                  <div><span style={{ color: '#8b5cf6' }}>def</span> <span style={{ color: '#2563eb' }}>generate_aggregate_report</span>(dataset: <span style={{ color: '#0891b2' }}>QuerySet</span>):</div>
-                  <div style={{ paddingLeft: '1rem', color: '#64748b' }}># Optimized batch aggregation pipeline</div>
-                  <div style={{ paddingLeft: '1rem' }}><span style={{ color: '#8b5cf6' }}>return</span> dataset.annotate(</div>
-                  <div style={{ paddingLeft: '2rem' }}>total_volume=Sum(<span style={{ color: '#059669' }}>'amount'</span>),</div>
-                  <div style={{ paddingLeft: '2rem' }}>avg_latency=Avg(<span style={{ color: '#059669' }}>'duration_ms'</span>)</div>
-                  <div style={{ paddingLeft: '1rem' }}>).iterator(chunk_size=<span style={{ color: '#d97706' }}>500</span>)</div>
+                <div style={{ padding: '1.15rem 1.35rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', lineHeight: '1.6', background: '#ffffff', color: '#25243A' }}>
+                  <div><span style={{ color: '#6D45C5', fontWeight: 700 }}>def</span> <span style={{ color: '#1E5EA8', fontWeight: 600 }}>generate_aggregate_report</span>(dataset: <span style={{ color: '#0E7490' }}>QuerySet</span>):</div>
+                  <div style={{ paddingLeft: '1rem', color: '#8E8D9E' }}># Refactored O(N) streaming hash map</div>
+                  <div style={{ paddingLeft: '1rem' }}><span style={{ color: '#6D45C5', fontWeight: 700 }}>return</span> dataset.annotate(</div>
+                  <div style={{ paddingLeft: '2rem' }}>total_volume=Sum(<span style={{ color: '#196F4B' }}>'amount'</span>),</div>
+                  <div style={{ paddingLeft: '2rem' }}>avg_latency=Avg(<span style={{ color: '#196F4B' }}>'duration_ms'</span>)</div>
+                  <div style={{ paddingLeft: '1rem' }}>).iterator(chunk_size=<span style={{ color: '#9E4A15' }}>500</span>)</div>
                 </div>
               </div>
 
-              {/* Mockup Evaluation Result Footer */}
-              <div style={{ background: '#ecfdf5', borderTop: '1px solid #a7f3d0', padding: '0.75rem 1.15rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: '#059669', fontWeight: 800, fontSize: '0.95rem' }}>✓</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#065f46' }}>
-                    Evaluation Passed: 4/4 Test Assertions Verified (Latency: 42ms)
+              {/* Evaluation Result Footer */}
+              <div style={{ background: 'var(--pastel-mint-light)', borderTop: '1px solid var(--pastel-mint-border)', padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ color: 'var(--pastel-mint-text)', fontWeight: 800, fontSize: '1rem' }}>✓</span>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--pastel-mint-text)' }}>
+                    Sandbox Evaluator: 4/4 Tests Passed (Execution: 42ms · Memory: 28MB)
                   </span>
                 </div>
-                <span className="badge badge-PERFORMANCE" style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem' }}>
+                <span className="badge badge-PERFORMANCE" style={{ fontSize: '0.74rem' }}>
                   Score: 100/100
                 </span>
               </div>
@@ -191,55 +193,56 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. SIMPLE 5-STEP FLOW */}
-      <section id="features" style={{ backgroundColor: '#f8fafc', padding: '3.75rem 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
+      {/* 2. ALTERNATING PASTEL PANELS: 5-STEP ENGINEERING WORKFLOW */}
+      <section id="features" style={{ backgroundColor: '#ffffff', padding: '4.5rem 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="page-container" style={{ textAlign: 'center', padding: '0 1.5rem' }}>
-          <div className="gency-hero-badge" style={{ marginBottom: '0.5rem' }}>
-            <span>Workflow</span>
+          <div className="gency-hero-badge" style={{ marginBottom: '0.75rem' }}>
+            <span>Structured Progression</span>
           </div>
-          <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
-            It&apos;s that simple.
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+            The Engineering Simulation Workflow
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '560px', margin: '0 auto 2rem' }}>
-            A streamlined workflow designed to simulate real engineering environments from day one.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', maxWidth: '620px', margin: '0 auto 2.5rem' }}>
+            From diagnosis to sandbox verification, practice the exact lifecycle of real production engineering work.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1.25rem' }}>
             {steps.map((step, idx) => (
               <div
                 key={step.num}
-                className="card animate-fade-in-up"
+                className={`card animate-fade-in-up ${step.panelClass}`}
                 style={{
-                  padding: '1.35rem 1.15rem',
+                  padding: '1.6rem 1.35rem',
                   textAlign: 'left',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem',
+                  gap: '0.65rem',
                   animationDelay: `${idx * 60}ms`,
-                  borderRadius: '16px',
+                  borderRadius: '20px',
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <div
                   style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: '10px',
-                    background: `${step.color}15`,
-                    color: step.color,
+                    width: 42,
+                    height: 42,
+                    borderRadius: '12px',
+                    background: '#ffffff',
+                    color: step.accent,
                     fontWeight: 800,
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.98rem',
+                    fontSize: '1rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: `1px solid ${step.color}30`,
+                    boxShadow: 'var(--shadow-sm)',
+                    border: '1px solid rgba(0,0,0,0.05)',
                   }}
                 >
                   {step.num}
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0.15rem 0 0' }}>{step.title}</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.45, margin: 0 }}>
+                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, margin: '0.2rem 0 0' }}>{step.title}</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
                   {step.desc}
                 </p>
               </div>
@@ -248,111 +251,106 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. DEVELOPER SECTION */}
-      <section style={{ padding: '3.75rem 0' }}>
+      {/* 3. CORE CHALLENGE DOMAINS (ALTERNATING PASTEL CARDS) */}
+      <section style={{ padding: '4.5rem 0' }}>
         <div className="page-container" style={{ padding: '0 1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2.5rem', alignItems: 'center' }}>
-            {/* Left side: Explanations & List */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '3rem', alignItems: 'center' }}>
+            {/* Left Column: Description & Skill Pillars */}
             <div>
-              <div className="gency-hero-badge" style={{ marginBottom: '0.5rem' }}>
-                <span>Developer Mastery</span>
+              <div className="gency-hero-badge" style={{ marginBottom: '0.75rem' }}>
+                <span>Core Competencies</span>
               </div>
-              <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.75rem', lineHeight: 1.2 }}>
-                Build real skills<br />for real opportunities.
+              <h2 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.85rem', lineHeight: 1.2 }}>
+                Build verified abilities,<br />not memorized puzzles.
               </h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '1.35rem', lineHeight: 1.55 }}>
-                Master the practical engineering competencies that high-performance engineering teams look for:
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', marginBottom: '1.65rem', lineHeight: 1.6 }}>
+                Every challenge is mapped directly to the competencies evaluated by engineering teams and technical leads:
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem', marginBottom: '1.65rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem', marginBottom: '1.85rem' }}>
                 {[
-                  { title: 'Debugging', icon: '🐛', desc: 'Root cause isolation' },
-                  { title: 'APIs', icon: '⚡', desc: 'Contracts & protocols' },
-                  { title: 'Databases', icon: '🗄️', desc: 'Query & index tuning' },
-                  { title: 'Security', icon: '🛡️', desc: 'Vulnerability audits' },
-                  { title: 'Performance', icon: '🚀', desc: 'Latency & memory' },
-                  { title: 'Testing', icon: '🧪', desc: 'Edge cases & mocks' },
+                  { title: 'Bug Fixing', icon: '🐛', desc: 'Root cause isolation', bg: 'var(--pastel-peach-light)', border: 'var(--pastel-peach-border)' },
+                  { title: 'REST APIs', icon: '⚡', desc: 'Serialization & contracts', bg: 'var(--pastel-blue-light)', border: 'var(--pastel-blue-border)' },
+                  { title: 'Security', icon: '🛡️', desc: 'Access control & RBAC', bg: 'var(--pastel-lavender-light)', border: 'var(--pastel-lavender-border)' },
+                  { title: 'Performance', icon: '🚀', desc: 'Algorithmic optimization', bg: 'var(--pastel-mint-light)', border: 'var(--pastel-mint-border)' },
                 ].map((item) => (
-                  <div key={item.title} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '1.15rem' }}>{item.icon}</span>
+                  <div key={item.title} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: item.bg, border: `1px solid ${item.border}`, padding: '0.85rem 1rem', borderRadius: '14px' }}>
+                    <span style={{ fontSize: '1.35rem' }}>{item.icon}</span>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.title}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.desc}</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{item.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.desc}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.75rem 1.85rem', fontSize: '0.96rem' }}>
-                <span>Explore All Challenges</span>
+              <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.85rem 2rem', fontSize: '0.98rem' }}>
+                <span>Browse Challenge Catalog</span>
                 <span className="btn-arrow-icon">→</span>
               </Link>
             </div>
 
-            {/* Right side: Floating Challenge Card & Analytics Card */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Challenge Card Example */}
+            {/* Right Column: Challenge Spotlight Card */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div
-                className="card animate-fade-in-up"
+                className="card panel-pastel-blue animate-fade-in-up"
                 style={{
-                  padding: '1.5rem',
-                  borderRadius: '16px',
-                  border: '1px solid #e2e8f0',
+                  padding: '2rem',
+                  borderRadius: '24px',
                   boxShadow: 'var(--shadow-md)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div>
-                    <span className="badge badge-PERFORMANCE" style={{ marginBottom: '0.35rem', display: 'inline-block', fontSize: '0.72rem' }}>
-                      Performance
+                    <span className="badge badge-SECURITY" style={{ marginBottom: '0.45rem', display: 'inline-block' }}>
+                      Security Remediations
                     </span>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
-                      The Slow Report Generator
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }}>
+                      The Exposed Admin Endpoint
                     </h3>
                   </div>
-                  <span className="badge badge-INTERMEDIATE" style={{ fontSize: '0.72rem' }}>Intermediate</span>
+                  <span className="badge badge-INTERMEDIATE">Intermediate</span>
                 </div>
 
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.15rem', lineHeight: 1.45 }}>
-                  Optimize report generation for large datasets. Refactor an O(N²) calculation into an efficient streaming aggregation pipeline.
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.94rem', marginBottom: '1.35rem', lineHeight: 1.55 }}>
+                  Investigate a production API service exposing sensitive administrative actions. Remediate privilege escalation vulnerabilities, verify RBAC roles, and enforce JWT claims.
                 </p>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.85rem', borderTop: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', gap: '0.65rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                    <span>🐍 Python</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                    <span>🐍 Python / FastAPI</span>
                     <span>•</span>
-                    <span>🏆 250 Points</span>
+                    <span>🏆 300 Points</span>
                   </div>
-                  <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.45rem 1.15rem', fontSize: '0.82rem' }}>
-                    <span>Start Challenge</span>
+                  <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
+                    <span>Try Challenge</span>
                     <span className="btn-arrow-icon">→</span>
                   </Link>
                 </div>
               </div>
 
-              {/* Floating Analytics Card */}
+              {/* Verified Telemetry Pill Card */}
               <div
-                className="card"
+                className="card panel-pastel-mint"
                 style={{
-                  padding: '1rem 1.35rem',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(59, 130, 246, 0.04) 100%)',
-                  border: '1px solid #e2e8f0',
+                  padding: '1.15rem 1.5rem',
+                  borderRadius: '16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.9rem' }}>
-                    ⚡
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#ffffff', color: 'var(--pastel-mint-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem', boxShadow: 'var(--shadow-sm)' }}>
+                    🛡️
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.86rem' }}>Performance Gain Verified</div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Docker Sandbox: Execution time dropped 92%</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Exploit Vector Neutralized</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>Automated test suite confirmed 403 Forbidden on unprivileged access</div>
                   </div>
                 </div>
-                <span className="badge badge-passed" style={{ fontSize: '0.72rem' }}>+35 pts</span>
+                <span className="badge badge-passed">+50 pts</span>
               </div>
             </div>
           </div>
@@ -360,60 +358,60 @@ export default function Home() {
       </section>
 
       {/* 4. SKILL ANALYTICS SECTION */}
-      <section style={{ backgroundColor: '#f8fafc', padding: '3.75rem 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
+      <section style={{ backgroundColor: '#ffffff', padding: '4.5rem 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="page-container" style={{ textAlign: 'center', padding: '0 1.5rem' }}>
-          <div className="gency-hero-badge" style={{ marginBottom: '0.5rem' }}>
-            <span>Verified Profiling</span>
+          <div className="gency-hero-badge" style={{ marginBottom: '0.75rem' }}>
+            <span>Verified Evaluation</span>
           </div>
-          <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
-            Turn practice into measurable skills.
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+            Deterministic Skill Measurement
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
-            Every challenge submission generates deterministic competency data across six fundamental engineering dimensions.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+            Every challenge submission produces verified engineering telemetry across six fundamental dimensions.
           </p>
 
           {/* Skill Dashboard Mockup Container */}
           <div
-            className="card animate-fade-in-up"
+            className="card panel-pastel-lavender animate-fade-in-up"
             style={{
-              maxWidth: '860px',
+              maxWidth: '880px',
               margin: '0 auto',
-              padding: '1.75rem 2rem',
-              borderRadius: '20px',
+              padding: '2.25rem 2.5rem',
+              borderRadius: '24px',
               textAlign: 'left',
               boxShadow: 'var(--shadow-lg)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.35rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
               <div>
-                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Illustrative Engineering Readiness
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Illustrative Engineering Readiness Profile
                 </span>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0.15rem 0 0' }}>
+                <h3 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0.2rem 0 0' }}>
                   Overall Skill Score
                 </h3>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.35rem', fontWeight: 900, color: 'var(--accent-primary)', lineHeight: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.6rem', fontWeight: 900, color: 'var(--accent-primary)', lineHeight: 1 }}>
                   89
                 </span>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.95rem' }}>/ 100</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '1rem' }}>/ 100</span>
               </div>
             </div>
 
             {/* 6 Skill Progress Bars */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.15rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
               {demoSkills.map((sk) => (
-                <div key={sk.name} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem' }}>
-                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <div key={sk.name} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span>{sk.icon}</span> {sk.name}
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: sk.color }}>
                       {sk.score}%
                     </span>
                   </div>
-                  <AnimatedProgress value={sk.score} color={sk.color} height={7} />
+                  <AnimatedProgress value={sk.score} color={sk.color} height={8} />
                 </div>
               ))}
             </div>
@@ -421,94 +419,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. RECRUITER SECTION */}
-      <section style={{ padding: '3.75rem 0' }}>
+      {/* 5. RECRUITER TALENT OVERVIEW */}
+      <section style={{ padding: '4.5rem 0' }}>
         <div className="page-container" style={{ padding: '0 1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2.5rem', alignItems: 'center' }}>
-            {/* Left: Recruiter Mockup */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '3rem', alignItems: 'center' }}>
+            {/* Left: Recruiter Matrix Card */}
             <div
-              className="card animate-fade-in-up"
+              className="card panel-pastel-peach animate-fade-in-up"
               style={{
-                borderRadius: '18px',
-                padding: '1.35rem',
+                borderRadius: '24px',
+                padding: '1.75rem',
                 boxShadow: 'var(--shadow-md)',
-                border: '1px solid #e2e8f0',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.1rem' }}>📊</span>
-                  <span style={{ fontWeight: 800, fontSize: '0.92rem' }}>Candidate Evaluation Matrix</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <span style={{ fontSize: '1.2rem' }}>📊</span>
+                  <span style={{ fontWeight: 800, fontSize: '0.98rem' }}>Candidate Evaluation Matrix</span>
                 </div>
-                <span className="badge badge-passed" style={{ fontSize: '0.72rem' }}>Verified Data</span>
+                <span className="badge badge-passed">Verified Data</span>
               </div>
 
-              {/* Mini Candidate Row 1 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#f8fafc', borderRadius: '10px', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div className="candidate-avatar" style={{ width: 30, height: 30, fontSize: '0.76rem' }}>AL</div>
+              {/* Candidate Item 1 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '12px', marginBottom: '0.65rem', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--pastel-lavender)', color: 'var(--pastel-lavender-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>AL</div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.84rem' }}>@alex_dev</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>14 Challenges Solved</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>@alex_dev</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>14 Challenges Solved</div>
                   </div>
                 </div>
-                <span className="badge badge-PERFORMANCE" style={{ fontSize: '0.72rem' }}>Score: 92/100</span>
+                <span className="badge badge-PERFORMANCE">Score: 92/100</span>
               </div>
 
-              {/* Mini Candidate Row 2 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#f8fafc', borderRadius: '10px', marginBottom: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div className="candidate-avatar" style={{ width: 30, height: 30, fontSize: '0.76rem', background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' }}>SA</div>
+              {/* Candidate Item 2 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '12px', marginBottom: '0.65rem', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--pastel-blue)', color: 'var(--pastel-blue-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>SA</div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.84rem' }}>@sarah_eng</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>18 Challenges Solved</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>@sarah_eng</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>18 Challenges Solved</div>
                   </div>
                 </div>
-                <span className="badge badge-SECURITY" style={{ fontSize: '0.72rem' }}>Score: 95/100</span>
+                <span className="badge badge-SECURITY">Score: 95/100</span>
               </div>
 
-              {/* Mini Candidate Row 3 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#f8fafc', borderRadius: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div className="candidate-avatar" style={{ width: 30, height: 30, fontSize: '0.76rem', background: 'linear-gradient(135deg, #10b981, #3b82f6)' }}>MK</div>
+              {/* Candidate Item 3 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#ffffff', borderRadius: '12px', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--pastel-mint)', color: 'var(--pastel-mint-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem' }}>MK</div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.84rem' }}>@mike_code</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>11 Challenges Solved</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>@mike_code</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>11 Challenges Solved</div>
                   </div>
                 </div>
-                <span className="badge badge-API" style={{ fontSize: '0.72rem' }}>Score: 88/100</span>
+                <span className="badge badge-API">Score: 88/100</span>
               </div>
             </div>
 
             {/* Right: Explanations */}
             <div>
-              <div className="gency-hero-badge" style={{ marginBottom: '0.5rem' }}>
+              <div className="gency-hero-badge" style={{ marginBottom: '0.75rem' }}>
                 <span>For Engineering Recruiters</span>
               </div>
-              <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.75rem', lineHeight: 1.2 }}>
-                Find job-ready developers.
+              <h2 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.85rem', lineHeight: 1.2 }}>
+                Hire based on verified code,<br />not resume claims.
               </h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '1.25rem', lineHeight: 1.55 }}>
-                Make hiring decisions based on verified engineering evidence rather than resume buzzwords.
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', marginBottom: '1.45rem', lineHeight: 1.6 }}>
+                Recruiters and hiring managers review objective, reproducible candidate assessments generated by automated test runners.
               </p>
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {[
-                  'Verified assessment data from multi-file sandbox evaluations',
-                  'Granular engineering skill dimensions across 6 competencies',
-                  'Candidate filtering by score threshold and challenge domain',
-                  'Side-by-side candidate comparison matrix',
-                  'Auditable challenge evidence and test execution logs',
+                  'Reproducible test results evaluated inside hardened Linux containers',
+                  'Granular skill breakdown across 6 core software engineering dimensions',
+                  'Filter candidates by domain strength, points earned, and overall score',
+                  'Direct side-by-side candidate comparison matrix',
                 ].map((text) => (
-                  <li key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    <span style={{ color: '#6366f1', fontWeight: 800 }}>✓</span>
+                  <li key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.94rem', color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>✓</span>
                     <span>{text}</span>
                   </li>
                 ))}
               </ul>
 
-              <Link to="/recruiter" className="btn-saas btn-saas-primary" style={{ padding: '0.75rem 1.85rem', fontSize: '0.96rem' }}>
-                <span>Explore Recruiter Dashboard</span>
+              <Link to="/recruiter" className="btn-saas btn-saas-primary" style={{ padding: '0.85rem 2rem', fontSize: '0.98rem' }}>
+                <span>Explore Recruiter Hub</span>
                 <span className="btn-arrow-icon">→</span>
               </Link>
             </div>
@@ -516,106 +512,67 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. STATS SECTION */}
-      <section style={{ backgroundColor: '#f8fafc', padding: '2.75rem 0', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="page-container" style={{ padding: '0 1.5rem' }}>
-          <div className="gency-stats-grid" style={{ marginTop: 0, gap: '1rem' }}>
-            <div className="gency-stat-tile" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px' }}>
-              <span className="gency-stat-label" style={{ fontSize: '0.78rem' }}>Repository Challenges</span>
-              <span className="gency-stat-number" style={{ color: '#2563eb', fontSize: '1.95rem' }}>
-                <AnimatedCounter value={12} duration={800} />+
-              </span>
-              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Multi-file real codebases</span>
-            </div>
-
-            <div className="gency-stat-tile" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px' }}>
-              <span className="gency-stat-label" style={{ fontSize: '0.78rem' }}>Engineering Skills</span>
-              <span className="gency-stat-number" style={{ color: '#7c3aed', fontSize: '1.95rem' }}>
-                <AnimatedCounter value={6} duration={600} />
-              </span>
-              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Core competency dimensions</span>
-            </div>
-
-            <div className="gency-stat-tile" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px' }}>
-              <span className="gency-stat-label" style={{ fontSize: '0.78rem' }}>Evaluation Tests</span>
-              <span className="gency-stat-number" style={{ color: '#059669', fontSize: '1.95rem' }}>
-                <AnimatedCounter value={100} suffix="%" duration={900} />
-              </span>
-              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Deterministic test assertions</span>
-            </div>
-
-            <div className="gency-stat-tile" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px' }}>
-              <span className="gency-stat-label" style={{ fontSize: '0.78rem' }}>Challenge Types</span>
-              <span className="gency-stat-number" style={{ color: '#d97706', fontSize: '1.95rem' }}>
-                <AnimatedCounter value={6} duration={700} />
-              </span>
-              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Bug fix, API, Security & more</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. TRUST / TECHNOLOGY SECTION */}
-      <section id="docs" style={{ padding: '3.5rem 0' }}>
+      {/* 6. PLATFORM INFRASTRUCTURE PILLARS */}
+      <section id="docs" style={{ backgroundColor: '#ffffff', padding: '4rem 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="page-container" style={{ textAlign: 'center', padding: '0 1.5rem' }}>
-          <div className="gency-hero-badge" style={{ marginBottom: '0.5rem' }}>
-            <span>Architecture</span>
+          <div className="gency-hero-badge" style={{ marginBottom: '0.75rem' }}>
+            <span>Production Stack</span>
           </div>
-          <h2 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.4rem' }}>
-            Built with modern engineering tools.
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+            Built With Modern Engineering Tools
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '560px', margin: '0 auto 1.75rem' }}>
-            Powered by the same industry-standard technologies used in modern production infrastructure.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 2.25rem' }}>
+            CodeFoundry leverages the same technologies that power high-scale production systems.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
             {techStack.map((tech) => (
               <div
                 key={tech.name}
                 className="card"
                 style={{
-                  padding: '1.15rem 0.85rem',
-                  borderRadius: '14px',
+                  padding: '1.25rem 1rem',
+                  borderRadius: '16px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.35rem',
+                  gap: '0.45rem',
                   textAlign: 'center',
                   boxShadow: 'var(--shadow-sm)',
+                  background: tech.color,
                 }}
               >
-                <span style={{ fontSize: '1.65rem' }}>{tech.icon}</span>
-                <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)' }}>{tech.name}</span>
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{tech.category}</span>
+                <span style={{ fontSize: '1.75rem' }}>{tech.icon}</span>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>{tech.name}</span>
+                <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{tech.category}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 8. FINAL CTA */}
-      <section className="page-container" style={{ padding: '1rem 1.5rem 3.5rem' }}>
+      {/* 7. FINAL CALL TO ACTION (PASTEL GRADIENT) */}
+      <section className="page-container" style={{ padding: '3rem 1.5rem 5rem' }}>
         <div
-          className="card animate-fade-in-up"
+          className="card panel-pastel-lavender animate-fade-in-up"
           style={{
-            padding: '2.75rem 2rem',
+            padding: '3.5rem 2.5rem',
             textAlign: 'center',
-            borderRadius: '20px',
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(16, 185, 129, 0.06) 100%)',
-            border: '1px solid rgba(99, 102, 241, 0.2)',
+            borderRadius: '28px',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
-          <h2 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.35rem)', fontWeight: 800, marginBottom: '0.6rem', color: 'var(--text-primary)' }}>
-            Start your engineering journey with CodeFoundry.
+          <h2 style={{ fontSize: 'clamp(1.9rem, 3.8vw, 2.5rem)', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+            Start Practicing Software Engineering Today
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.02rem', maxWidth: '560px', margin: '0 auto 1.75rem' }}>
-            Real challenges. Real skills. Real engineering practice.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '580px', margin: '0 auto 2rem' }}>
+            Real codebases. Real bugs. Real engineering practice.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <Link
               to={isAuthenticated ? '/dashboard' : '/register'}
               className="btn-saas btn-saas-primary"
-              style={{ padding: '0.8rem 2.2rem', fontSize: '1rem' }}
+              style={{ padding: '0.85rem 2.25rem', fontSize: '1.02rem' }}
             >
               <span>Get Started</span>
               <span className="btn-arrow-icon">→</span>
@@ -623,43 +580,43 @@ export default function Home() {
             <Link
               to="/challenges"
               className="btn-saas btn-saas-secondary"
-              style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}
+              style={{ padding: '0.85rem 2.1rem', fontSize: '1.02rem' }}
             >
-              View Challenges
+              Explore Catalog
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 9. FOOTER */}
-      <footer style={{ borderTop: '1px solid #e2e8f0', background: '#ffffff', padding: '2.25rem 0 1.75rem' }}>
+      {/* 8. FOOTER */}
+      <footer style={{ borderTop: '1px solid var(--border-color)', background: '#ffffff', padding: '2.5rem 0 2rem' }}>
         <div className="page-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', padding: '0 1.5rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.25rem' }}>
-              <span className="logo-icon" style={{ width: 26, height: 26, fontSize: '0.75rem' }}>&gt;_</span>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.08rem' }}>CodeFoundry</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+              <span className="logo-icon" style={{ width: 28, height: 28, fontSize: '0.8rem' }}>&gt;_</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.15rem' }}>CodeFoundry</span>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', margin: 0 }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', margin: 0 }}>
               Practice Software Engineering. Not Just Coding.
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap', fontSize: '0.88rem' }}>
-            <Link to="/challenges" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>
+          <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap', fontSize: '0.9rem' }}>
+            <Link to="/challenges" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>
               Challenges
             </Link>
-            <Link to="/leaderboard" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>
+            <Link to="/leaderboard" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>
               Leaderboard
             </Link>
-            <Link to="/recruiter" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>
+            <Link to="/recruiter" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>
               Recruiters
             </Link>
-            <a href="#docs" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 500 }}>
-              Documentation
+            <a href="#features" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontWeight: 600 }}>
+              Workflow
             </a>
           </div>
         </div>
-        <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9', color: 'var(--text-light)', fontSize: '0.78rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.75rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', color: 'var(--text-light)', fontSize: '0.82rem' }}>
           © {new Date().getFullYear()} CodeFoundry. All rights reserved.
         </div>
       </footer>
