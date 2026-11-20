@@ -5,54 +5,49 @@ import { getDashboard, getSkillProfile } from '../api/dashboard';
 import Loading from '../components/Loading';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
 import AnimatedProgress from '../components/motion/AnimatedProgress';
+import { getSkillIcon } from '../components/RealisticIcons';
 
 const SKILL_DIMENSIONS = [
   {
     key: 'problem_solving',
     name: 'Problem Solving',
     description: 'Functional correctness & algorithm logic',
-    color: '#1E5EA8',
-    icon: '⚡',
+    color: '#1D4ED8',
     badgeClass: 'badge-API',
   },
   {
     key: 'debugging',
     name: 'Debugging',
     description: 'Fault localization & bug fix accuracy',
-    color: '#C77A14',
-    icon: '🐛',
+    color: '#DC2626',
     badgeClass: 'badge-BUG_FIX',
   },
   {
     key: 'security',
     name: 'Security',
     description: 'Vulnerability prevention & authorization',
-    color: '#5B34B0',
-    icon: '🛡️',
+    color: '#6D28D9',
     badgeClass: 'badge-SECURITY',
   },
   {
     key: 'performance',
     name: 'Performance',
     description: 'Execution speed & memory efficiency',
-    color: '#196F4B',
-    icon: '🚀',
+    color: '#047857',
     badgeClass: 'badge-PERFORMANCE',
   },
   {
     key: 'code_quality',
     name: 'Code Quality',
     description: 'Maintainability & structure',
-    color: '#6B6A7A',
-    icon: '📦',
-    badgeClass: 'badge-DATABASE',
+    color: '#D97706',
+    badgeClass: 'badge-CODE_QUALITY',
   },
   {
     key: 'testing',
     name: 'Testing',
     description: 'Suite completeness & validation',
     color: '#0E7490',
-    icon: '🧪',
     badgeClass: 'badge-TESTING',
   },
 ];
@@ -150,7 +145,9 @@ export default function Dashboard() {
               <h1 className="page-title" style={{ margin: 0, fontSize: '2.1rem' }}>
                 Welcome back, {user?.username}
               </h1>
-              <span style={{ fontSize: '1.4rem' }}>👋</span>
+              <span className="badge badge-API" style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem', fontWeight: 700 }}>
+                ACTIVE DEVELOPER
+              </span>
             </div>
             <p className="page-description" style={{ margin: 0, maxWidth: '640px' }}>
               Practice software engineering on real multi-file codebases, patch structural defects, and verify your skills in isolated Docker sandboxes.
@@ -254,8 +251,10 @@ export default function Dashboard() {
                 return (
                   <div key={dim.key} className={`skill-card animate-fade-in-up stagger-${(idx % 6) + 1}`} style={{ padding: '1.5rem', borderRadius: '18px' }}>
                     <div className="skill-card-top" style={{ marginBottom: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>{dim.icon}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          {getSkillIcon(dim.key, 18, dim.color)}
+                        </span>
                         <span className="skill-name" style={{ fontSize: '1rem' }}>{dim.name}</span>
                       </div>
                       <span className="skill-score" style={{ color: isMeasured ? getScoreColor(skillData.score) : 'var(--text-muted)' }}>

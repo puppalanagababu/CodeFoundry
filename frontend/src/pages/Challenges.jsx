@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getChallenges, getChallengeProgress } from '../api/challenges';
 import Loading from '../components/Loading';
+import { Search, SearchX, AlertTriangle, Terminal, Award, CheckCircle2, Clock } from 'lucide-react';
 
 const DIFFICULTIES = [
   { label: 'All Difficulties', value: '' },
@@ -153,7 +154,9 @@ export default function Challenges() {
       {/* 2. Filter Toolbar */}
       <div className="recruiter-filter-toolbar" style={{ marginBottom: '2.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <div className="recruiter-search-box" style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
-          <span className="search-icon" style={{ position: 'absolute', left: '1.1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</span>
+          <span className="search-icon" style={{ position: 'absolute', left: '1.1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+            <Search size={16} />
+          </span>
           <input
             type="text"
             className="input-control"
@@ -220,7 +223,9 @@ export default function Challenges() {
         </div>
       ) : error ? (
         <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', margin: '2rem 0', borderRadius: '20px' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <AlertTriangle size={48} color="#D93847" />
+          </div>
           <h2 style={{ fontSize: '1.3rem', color: 'var(--accent-danger)', marginBottom: '0.5rem' }}>Failed to Load Challenges</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>{error}</p>
           <button type="button" className="btn btn-primary" onClick={handleClearFilters}>
@@ -229,7 +234,9 @@ export default function Challenges() {
         </div>
       ) : challenges.length === 0 ? (
         <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🔍</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <SearchX size={48} color="var(--text-muted)" />
+          </div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>No Challenges Found</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
             No engineering challenges match your search criteria. Try modifying your search or clearing filters.
@@ -283,12 +290,20 @@ export default function Challenges() {
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 0', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    <span>💻 {ch.language || 'Python'}</span>
-                    <span>🏆 {ch.points || 100} pts</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <Terminal size={14} color="#3B82F6" /> {ch.language || 'Python'}
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <Award size={14} color="#C77A14" /> {ch.points || 100} pts
+                    </span>
                     {isPassed ? (
-                      <span style={{ color: 'var(--pastel-mint-text)', fontWeight: 800 }}>✓ Solved</span>
+                      <span style={{ color: 'var(--pastel-mint-text)', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={13} /> Solved
+                      </span>
                     ) : isAttempted ? (
-                      <span style={{ color: 'var(--pastel-peach-text)', fontWeight: 800 }}>● Attempted</span>
+                      <span style={{ color: 'var(--pastel-peach-text)', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={13} /> Attempted
+                      </span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)' }}>Unattempted</span>
                     )}

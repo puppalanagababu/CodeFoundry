@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -46,7 +47,7 @@ export default function Navbar() {
         aria-label="Toggle navigation menu"
         aria-expanded={mobileMenuOpen}
       >
-        {mobileMenuOpen ? '✕' : '☰'}
+        {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
       </button>
 
       <nav className={`navbar-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>

@@ -3,28 +3,36 @@ import { useParams, Link } from 'react-router-dom';
 import { getChallenge } from '../api/challenges';
 import { getChallengeSubmissions } from '../api/submissions';
 import Loading from '../components/Loading';
+import {
+  getIncidentIcon,
+  FileCode2,
+  File,
+  Lock,
+  CheckCircle2,
+  AlertOctagon,
+  AlertTriangle,
+  Terminal,
+} from '../components/RealisticIcons';
 
 const INCIDENT_TYPE_CONFIG = {
   BUG_FIX: {
-    badge: 'Production Defect Alert',
-    headline: 'SOMETHING IS BROKEN.',
-    lead: 'A critical production codebase is throwing runtime exceptions and returning faulty results.',
-    icon: '🐛',
-    color: '#D93847',
+    badge: 'P1 Production Defect Alert',
+    headline: 'CRITICAL RUNTIME REGRESSION DETECTED',
+    lead: 'A critical production module is throwing runtime exceptions and returning corrupted state under live workloads.',
+    color: '#DC2626',
     panelClass: 'panel-pastel-peach',
     diagnostics: [
-      'Scanning repository modules and callgraphs...',
-      'Tracing runtime exception callstacks...',
+      'Scanning repository modules and dependency callgraphs...',
+      'Tracing runtime exception callstacks in sandbox...',
       'Analyzing regression test failure vectors...',
-      'Root cause isolated in service routines!',
+      'Root cause isolated in service routine logic!',
     ],
   },
   DEBUGGING: {
-    badge: 'Fault Localization Alert',
-    headline: 'SOMETHING IS BROKEN.',
-    lead: 'Unexpected program behavior detected during production execution.',
-    icon: '🐛',
-    color: '#D93847',
+    badge: 'Fault Localization Alert · Subsystem Anomaly',
+    headline: 'UNEXPECTED BEHAVIOR IN SERVICE ROUTINE',
+    lead: 'Runtime tracing detected invalid control flow branches and state corruption during execution.',
+    color: '#DC2626',
     panelClass: 'panel-pastel-peach',
     diagnostics: [
       'Scanning repository modules and callgraphs...',
@@ -34,11 +42,10 @@ const INCIDENT_TYPE_CONFIG = {
     ],
   },
   API: {
-    badge: 'Protocol Anomaly Alert',
-    headline: "SOMETHING ISN'T RETURNING CORRECTLY.",
-    lead: 'An HTTP service endpoint is returning invalid payloads or breaking client contracts.',
-    icon: '⚡',
-    color: '#1E5EA8',
+    badge: 'REST API Schema Contract Violation',
+    headline: 'API SERIALIZATION & PAYLOAD ANOMALY',
+    lead: 'An HTTP service endpoint is returning invalid JSON structures and breaking client contract specifications.',
+    color: '#1D4ED8',
     panelClass: 'panel-pastel-blue',
     diagnostics: [
       'Interrogating REST endpoint route handlers...',
@@ -48,11 +55,10 @@ const INCIDENT_TYPE_CONFIG = {
     ],
   },
   SECURITY: {
-    badge: 'Security Vulnerability Alert',
-    headline: 'SOMETHING IS EXPOSED.',
-    lead: 'Sensitive endpoints or parameter validation mechanisms have critical security flaws.',
-    icon: '🛡️',
-    color: '#5B34B0',
+    badge: 'CVE / Privilege Escalation Vulnerability',
+    headline: 'UNAUTHORIZED PRIVILEGE ESCALATION',
+    lead: 'Sensitive endpoints lack role-based access control (RBAC) validation, permitting unauthorized state mutations.',
+    color: '#6D28D9',
     panelClass: 'panel-pastel-lavender',
     diagnostics: [
       'Auditing authentication layers and JWT headers...',
@@ -62,11 +68,10 @@ const INCIDENT_TYPE_CONFIG = {
     ],
   },
   PERFORMANCE: {
-    badge: 'Resource Bottleneck Alert',
-    headline: 'SOMETHING IS TOO SLOW.',
-    lead: 'High algorithmic complexity and excessive memory consumption exceed container constraints.',
-    icon: '🚀',
-    color: '#196F4B',
+    badge: 'Resource Ceiling Saturation Alert',
+    headline: 'QUADRATIC COMPLEXITY & MEMORY BREACH',
+    lead: 'Algorithmic complexity O(N²) breaches the 128MB container memory limit and triggers execution timeouts.',
+    color: '#047857',
     panelClass: 'panel-pastel-mint',
     diagnostics: [
       'Profiling CPU cycles and memory allocations...',
@@ -76,11 +81,10 @@ const INCIDENT_TYPE_CONFIG = {
     ],
   },
   DATABASE: {
-    badge: 'Data Integrity Alert',
-    headline: 'SOMETHING IS WRONG WITH THE DATA.',
-    lead: 'Data persistence layers or relational queries are corrupting record consistency.',
-    icon: '🗄️',
-    color: '#9E4A15',
+    badge: 'Data Persistence & Integrity Alert',
+    headline: 'TRANSACTION CORRUPTION & RELATIONAL INCONSISTENCY',
+    lead: 'Relational queries or transactional rollbacks fail to maintain data consistency across entities.',
+    color: '#9A3412',
     panelClass: 'panel-pastel-peach',
     diagnostics: [
       'Inspecting relational queries and transactional blocks...',
@@ -90,10 +94,9 @@ const INCIDENT_TYPE_CONFIG = {
     ],
   },
   TESTING: {
-    badge: 'Test Coverage Gap',
-    headline: "SOMETHING ISN'T BEING VERIFIED.",
-    lead: 'Missing assertion suites and unverified edge cases leave production systems unprotected.',
-    icon: '🧪',
+    badge: 'Regression Suite Coverage Gap',
+    headline: 'UNVERIFIED EDGE CASES & ASSERTION DEFICIT',
+    lead: 'Missing test assertions and unverified boundary invariants leave production workflows exposed.',
     color: '#0E7490',
     panelClass: 'panel-pastel-blue',
     diagnostics: [
@@ -106,10 +109,9 @@ const INCIDENT_TYPE_CONFIG = {
 };
 
 const DEFAULT_INCIDENT_CONFIG = {
-  badge: 'Engineering Incident Alert',
-  headline: 'SOMETHING IS MISSING.',
-  lead: 'A production service requires implementation and verification against system specifications.',
-  icon: '📦',
+  badge: 'Engineering Implementation Required',
+  headline: 'PRODUCTION SPECIFICATION INCOMPLETE',
+  lead: 'A core repository service requires implementation and verification against system specifications.',
   color: '#6D45C5',
   panelClass: 'panel-pastel-lavender',
   diagnostics: [
@@ -325,10 +327,15 @@ export default function ChallengeDetails() {
               style={{
                 padding: '0.95rem 2.8rem',
                 fontSize: '1.05rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.65rem',
               }}
               aria-label="Investigate engineering incident"
             >
-              <span style={{ fontSize: '1.2rem' }}>{incidentConfig.icon}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                {getIncidentIcon(challenge.challenge_type, 18, '#ffffff')}
+              </span>
               <span>INVESTIGATE INCIDENT</span>
               <span className="btn-arrow-icon">→</span>
             </button>
@@ -432,7 +439,7 @@ export default function ChallengeDetails() {
               )}
               {diagnosticStep >= 4 && (
                 <div className="animate-fade-in-up" style={{ color: '#D8F5E5', fontWeight: 700 }}>
-                  [1.35s] ⚡ {incidentConfig.diagnostics[3]}
+                  [1.35s] [ROOT CAUSE IDENTIFIED] {incidentConfig.diagnostics[3]}
                 </div>
               )}
             </div>
@@ -455,7 +462,7 @@ export default function ChallengeDetails() {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              gap: '0.65rem',
               background: '#ffffff',
               border: '1px solid var(--pastel-mint-border)',
               color: 'var(--pastel-mint-text)',
@@ -466,7 +473,8 @@ export default function ChallengeDetails() {
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <span>⚡ DEFECT DETECTED &amp; ISOLATED</span>
+            <CheckCircle2 size={16} />
+            <span>ROOT CAUSE ISOLATED IN REPOSITORY</span>
           </div>
           <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '1.25rem' }}>
             Preparing Multi-File Repository Environment...
@@ -483,8 +491,8 @@ export default function ChallengeDetails() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.75rem' }}>
             <div style={{ flex: '1 1 500px' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                <span className="badge" style={{ backgroundColor: '#ffffff', color: incidentConfig.color, border: `1px solid ${incidentConfig.color}40` }}>
-                  ⚠ DEFECT IDENTIFIED
+                <span className="badge" style={{ backgroundColor: '#ffffff', color: incidentConfig.color, border: `1px solid ${incidentConfig.color}40`, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <AlertTriangle size={12} color={incidentConfig.color} /> DEFECT IDENTIFIED
                 </span>
                 <span className={`badge badge-${challenge.difficulty}`}>
                   {challenge.difficulty}
@@ -575,20 +583,26 @@ export default function ChallengeDetails() {
                   key={file.path}
                   style={{ padding: '0.85rem 1.15rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.65rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '14px', boxShadow: 'var(--shadow-sm)' }}
                 >
-                  <span style={{ fontSize: '1.1rem' }}>{file.path.endsWith('.py') ? '🐍' : '📄'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {file.path.endsWith('.py') ? (
+                      <FileCode2 size={16} color="#3B82F6" />
+                    ) : (
+                      <File size={16} color="#64748B" />
+                    )}
+                  </span>
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       {file.path}
                     </span>
                   </div>
                   {file.is_readonly && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }} title="Read-only file">
-                      🔒
+                    <span style={{ display: 'inline-flex', alignItems: 'center', color: '#EF4444' }} title="Read-only protected file">
+                      <Lock size={12} />
                     </span>
                   )}
                   {file.is_test && (
-                    <span className="badge badge-SECURITY" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>
-                      test
+                    <span className="badge badge-SECURITY" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <CheckCircle2 size={10} /> test
                     </span>
                   )}
                 </div>

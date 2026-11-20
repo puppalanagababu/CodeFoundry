@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLeaderboard } from '../api/leaderboard';
 import Loading from '../components/Loading';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
+import { Trophy, Medal, Award, Crown, Zap, AlertTriangle, RotateCcw } from 'lucide-react';
 
 export default function Leaderboard() {
   const { user } = useAuth();
@@ -46,8 +47,8 @@ export default function Leaderboard() {
         }}
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
-          <span className="badge badge-SECURITY" style={{ fontSize: '0.78rem', padding: '0.35rem 0.95rem' }}>
-            ⚡ GLOBAL STANDINGS
+          <span className="badge badge-SECURITY" style={{ fontSize: '0.78rem', padding: '0.35rem 0.95rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+            <Zap size={13} /> GLOBAL STANDINGS
           </span>
           <span style={{ fontSize: '0.82rem', color: 'var(--pastel-mint-text)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span className="status-dot" style={{ backgroundColor: 'var(--pastel-mint-text)', width: 7, height: 7 }} />
@@ -103,7 +104,9 @@ export default function Leaderboard() {
             borderRadius: '20px',
           }}
         >
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <AlertTriangle size={48} color="var(--accent-danger)" />
+          </div>
           <h2 style={{ fontSize: '1.4rem', color: 'var(--accent-danger)', marginBottom: '0.5rem' }}>Leaderboard Unavailable</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
             {error}
@@ -112,9 +115,9 @@ export default function Leaderboard() {
             type="button"
             className="btn btn-primary"
             onClick={fetchLeaderboard}
-            style={{ padding: '0.65rem 1.6rem', fontWeight: 700 }}
+            style={{ padding: '0.65rem 1.6rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
-            ↻ Try Again
+            <RotateCcw size={14} /> Try Again
           </button>
         </div>
       )}
@@ -131,7 +134,9 @@ export default function Leaderboard() {
             borderRadius: '24px',
           }}
         >
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🏆</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <Trophy size={48} color="var(--pastel-yellow-text)" />
+          </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>No Ranked Developers Yet</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.6 }}>
             Rankings are computed dynamically when engineers complete evaluated challenges. Be the first developer on the board!
@@ -161,7 +166,9 @@ export default function Leaderboard() {
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-blue-text)', marginBottom: '0.75rem' }}>🥈 #2 SILVER</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-blue-text)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Medal size={16} /> #2 SILVER CONTENDER
+                </div>
                 <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-blue)', color: 'var(--pastel-blue-text)', border: '2px solid var(--pastel-blue-border)' }}>
                   {top2.username.substring(0, 2).toUpperCase()}
                 </div>
@@ -195,8 +202,12 @@ export default function Leaderboard() {
                   transform: 'scale(1.03)',
                 }}
               >
-                <div style={{ fontSize: '1.6rem', marginBottom: '0.25rem' }}>👑</div>
-                <div style={{ fontSize: '0.92rem', fontWeight: 900, color: 'var(--pastel-yellow-text)', marginBottom: '0.75rem', letterSpacing: '0.04em' }}>🥇 #1 CHAMPION</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.35rem' }}>
+                  <Crown size={30} color="#D97706" />
+                </div>
+                <div style={{ fontSize: '0.92rem', fontWeight: 900, color: 'var(--pastel-yellow-text)', marginBottom: '0.75rem', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Trophy size={16} /> #1 GLOBAL CHAMPION
+                </div>
                 <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-yellow)', color: 'var(--pastel-yellow-text)', border: '2px solid var(--pastel-yellow-border)', boxShadow: '0 4px 16px rgba(199, 122, 20, 0.2)' }}>
                   {top1.username.substring(0, 2).toUpperCase()}
                 </div>
@@ -229,7 +240,9 @@ export default function Leaderboard() {
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
-                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-peach-text)', marginBottom: '0.75rem' }}>🥉 #3 BRONZE</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--pastel-peach-text)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Award size={16} /> #3 BRONZE CONTENDER
+                </div>
                 <div className="candidate-avatar-large" style={{ margin: '0 auto 0.75rem', background: 'var(--pastel-peach)', color: 'var(--pastel-peach-text)', border: '2px solid var(--pastel-peach-border)' }}>
                   {top3.username.substring(0, 2).toUpperCase()}
                 </div>
@@ -280,8 +293,16 @@ export default function Leaderboard() {
                           fontWeight: isMe ? 700 : 500,
                         }}
                       >
-                        <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.98rem' }}>
-                          {rank === 1 ? '🥇 1' : rank === 2 ? '🥈 2' : rank === 3 ? '🥉 3' : `#${rank}`}
+                        <td style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '0.92rem' }}>
+                          {rank === 1 ? (
+                            <span style={{ color: '#D97706', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Crown size={14} /> 1</span>
+                          ) : rank === 2 ? (
+                            <span style={{ color: '#4B5563', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Medal size={14} /> 2</span>
+                          ) : rank === 3 ? (
+                            <span style={{ color: '#B45309', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Award size={14} /> 3</span>
+                          ) : (
+                            `#${rank}`
+                          )}
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

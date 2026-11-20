@@ -7,6 +7,7 @@ import Loading from '../components/Loading';
 import CodeEditor from '../components/CodeEditor';
 import RepositoryTree from '../components/RepositoryTree';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
+import { Lock, Terminal, Play, Send, ShieldCheck, CheckCircle2, AlertOctagon, RotateCcw, XCircle } from 'lucide-react';
 
 const MAX_POLL_ATTEMPTS = 60;
 const ACTIVE_SUBMISSION_STORAGE_KEY = 'codefoundry_active_submission_id';
@@ -364,16 +365,16 @@ export default function Workspace() {
           <button
             onClick={handleResetCode}
             className="btn btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 0.95rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             title="Reset code to starter version"
           >
-            ↺ Reset
+            <RotateCcw size={13} /> Reset
           </button>
           <button
             className="btn btn-secondary"
             onClick={handleRunCode}
             disabled={isRunning || isSubmitting || isEvaluating || !getPrimaryCode().trim()}
-            style={{ fontSize: '0.82rem', padding: '0.45rem 1.15rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
           >
             {isRunning ? (
               <>
@@ -381,7 +382,10 @@ export default function Workspace() {
                 <span>Running...</span>
               </>
             ) : (
-              <span>▶ Run Tests</span>
+              <>
+                <Play size={13} fill="currentColor" />
+                <span>Run Tests</span>
+              </>
             )}
           </button>
           <button
@@ -482,8 +486,8 @@ export default function Workspace() {
                 {isRepoChallenge ? activeFilePath || 'repository' : 'solution.py'}
               </span>
               {isCurrentFileReadOnly && (
-                <span className="badge" style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-                  🔒 READ-ONLY
+                <span className="badge" style={{ fontSize: '0.65rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Lock size={10} color="#EF4444" /> READ-ONLY PROTOCOL
                 </span>
               )}
             </div>
@@ -498,10 +502,12 @@ export default function Workspace() {
               <div
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  gap: '0.75rem',
                   height: '100%',
-                  color: 'var(--text-muted)',
+                  color: 'var(--text-secondary)',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.88rem',
                   textAlign: 'center',
@@ -509,7 +515,8 @@ export default function Workspace() {
                   background: '#ffffff',
                 }}
               >
-                🔒 Test suite implementation is protected and executed securely on the evaluation worker.
+                <Lock size={24} color="#EF4444" />
+                <span>Server-Authoritative Test Harness: Test suites are protected and executed within isolated Docker containers.</span>
               </div>
             ) : (
               <CodeEditor
@@ -661,8 +668,16 @@ export default function Workspace() {
                             <span style={{ fontSize: '0.88rem', fontWeight: 700, color: tc.passed ? 'var(--pastel-mint-text)' : 'var(--accent-danger)' }}>
                               {tc.name || `Test Case #${idx + 1}`} {tc.is_hidden && '(Hidden)'}
                             </span>
-                            <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.72rem' }}>
-                              {tc.passed ? 'Passed ✓' : 'Failed ✕'}
+                            <span className={`status-pill ${tc.passed ? 'status-passed' : 'status-failed'}`} style={{ fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              {tc.passed ? (
+                                <>
+                                  <CheckCircle2 size={11} /> Passed
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle size={11} /> Failed
+                                </>
+                              )}
                             </span>
                           </div>
                         ))}

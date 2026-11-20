@@ -4,14 +4,24 @@ import { getPublicProfile } from '../api/profile';
 import Loading from '../components/Loading';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
 import AnimatedProgress from '../components/motion/AnimatedProgress';
+import {
+  getSkillIcon,
+  UserX,
+  AlertTriangle,
+  CheckCircle2,
+  BarChart3,
+  Award,
+  Activity,
+  Zap,
+} from '../components/RealisticIcons';
 
 const SKILL_DIMENSIONS = [
-  { key: 'problem_solving', name: 'Problem Solving', icon: '⚡', color: '#1E5EA8' },
-  { key: 'debugging', name: 'Debugging', icon: '🐛', color: '#C77A14' },
-  { key: 'security', name: 'Security', icon: '🛡️', color: '#5B34B0' },
-  { key: 'performance', name: 'Performance', icon: '🚀', color: '#196F4B' },
-  { key: 'code_quality', name: 'Code Quality', icon: '📦', color: '#6B6A7A' },
-  { key: 'testing', name: 'Testing', icon: '🧪', color: '#0E7490' },
+  { key: 'problem_solving', name: 'Problem Solving', color: '#1D4ED8' },
+  { key: 'debugging', name: 'Debugging', color: '#DC2626' },
+  { key: 'security', name: 'Security', color: '#6D28D9' },
+  { key: 'performance', name: 'Performance', color: '#047857' },
+  { key: 'code_quality', name: 'Code Quality', color: '#D97706' },
+  { key: 'testing', name: 'Testing', color: '#0E7490' },
 ];
 
 const BADGE_VARIANTS = {
@@ -81,7 +91,9 @@ export default function PublicProfile() {
     return (
       <div className="page-container" style={{ maxWidth: '640px', padding: '4rem 1.5rem', textAlign: 'center' }}>
         <div className="card panel-pastel-lavender" style={{ padding: '3.5rem 2rem', borderRadius: '24px' }}>
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>🔍</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <UserX size={48} color="var(--text-muted)" />
+          </div>
           <span className="badge badge-SECURITY" style={{ marginBottom: '1rem' }}>
             404 NOT FOUND
           </span>
@@ -108,7 +120,9 @@ export default function PublicProfile() {
     return (
       <div className="page-container" style={{ maxWidth: '600px', padding: '4rem 1.5rem', textAlign: 'center' }}>
         <div className="card" style={{ padding: '3rem 2rem', border: '1px solid var(--accent-danger-border)', background: 'var(--accent-danger-light)', borderRadius: '24px' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <AlertTriangle size={48} color="var(--accent-danger)" />
+          </div>
           <h2 style={{ fontSize: '1.35rem', color: 'var(--accent-danger)', marginBottom: '0.5rem' }}>Profile Unavailable</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
             {error}
@@ -155,8 +169,8 @@ export default function PublicProfile() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-              <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem' }}>
-                ⚡ VERIFIED CANDIDATE
+              <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle2 size={12} /> VERIFIED CANDIDATE
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--pastel-mint-text)', fontWeight: 800 }}>
                 ● PRODUCTION EVALUATIONS
@@ -238,7 +252,7 @@ export default function PublicProfile() {
         <div className="card animate-fade-in-up" style={{ padding: '2.25rem', borderRadius: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <span style={{ fontSize: '1.3rem' }}>🎯</span>
+              <BarChart3 size={20} color="var(--accent-primary)" />
               <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>
                 Engineering Competencies
               </h2>
@@ -256,8 +270,8 @@ export default function PublicProfile() {
               return (
                 <div key={dim.key} style={{ padding: '1.1rem 1.25rem', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                      <span style={{ fontSize: '1.15rem' }}>{dim.icon}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>{getSkillIcon(dim.key, 18, dim.color)}</span>
                       <strong style={{ fontSize: '0.94rem', color: 'var(--text-primary)' }}>{dim.name}</strong>
                     </div>
                     {isMeasured ? (
@@ -281,7 +295,7 @@ export default function PublicProfile() {
           <div className="card animate-fade-in-up" style={{ padding: '2.25rem', borderRadius: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.35rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>🏆</span>
+                <Award size={20} color="var(--accent-warning)" />
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Achievements</h2>
               </div>
               <span className="badge badge-SECURITY">{achievements.length} EARNED</span>
@@ -313,13 +327,15 @@ export default function PublicProfile() {
                         gap: '0.45rem',
                       }}
                     >
-                      <span style={{ fontSize: '1.6rem' }}>{ach.icon || '🏆'}</span>
+                      <div style={{ marginBottom: '0.25rem' }}>
+                        <Award size={24} color={variant.text} />
+                      </div>
                       <strong style={{ fontSize: '0.94rem', color: 'var(--text-primary)' }}>{ach.name}</strong>
                       <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.45 }}>
                         {ach.description}
                       </p>
-                      <span style={{ fontSize: '0.72rem', color: variant.text, fontWeight: 800, marginTop: 'auto' }}>
-                        ✓ {formatEarnedDate(ach.earned_at)}
+                      <span style={{ fontSize: '0.72rem', color: variant.text, fontWeight: 800, marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} /> {formatEarnedDate(ach.earned_at)}
                       </span>
                     </div>
                   );
@@ -332,7 +348,7 @@ export default function PublicProfile() {
           <div className="card animate-fade-in-up" style={{ padding: '2.25rem', borderRadius: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.35rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>⚡</span>
+                <Activity size={20} color="#1E5EA8" />
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Recent Activity</h2>
               </div>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>Latest {recent_activity.length}</span>

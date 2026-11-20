@@ -4,6 +4,19 @@ import { getRecruiterCandidates, getRecruiterCandidate } from '../api/recruiter'
 import Loading from '../components/Loading';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
 import AnimatedProgress from '../components/motion/AnimatedProgress';
+import {
+  getSkillIcon,
+  ShieldAlert,
+  Search,
+  Users,
+  BarChart3,
+  Award,
+  CheckCircle2,
+  Zap,
+  AlertTriangle,
+  RotateCcw,
+  X,
+} from '../components/RealisticIcons';
 
 const CHALLENGE_TYPES = [
   { value: '', label: 'All Challenge Types' },
@@ -19,12 +32,12 @@ const CHALLENGE_TYPES = [
 ];
 
 const SKILL_DIMENSIONS = [
-  { key: 'problem_solving', name: 'Problem Solving', icon: '⚡', color: '#6D45C5' },
-  { key: 'debugging', name: 'Debugging', icon: '🐛', color: '#C77A14' },
-  { key: 'security', name: 'Security', icon: '🛡️', color: '#5B34B0' },
-  { key: 'performance', name: 'Performance', icon: '🚀', color: '#21885B' },
-  { key: 'code_quality', name: 'Code Quality', icon: '📦', color: '#1E5EA8' },
-  { key: 'testing', name: 'Testing', icon: '🧪', color: '#0F766E' },
+  { key: 'problem_solving', name: 'Problem Solving', color: '#6D45C5' },
+  { key: 'debugging', name: 'Debugging', color: '#C77A14' },
+  { key: 'security', name: 'Security', color: '#5B34B0' },
+  { key: 'performance', name: 'Performance', color: '#21885B' },
+  { key: 'code_quality', name: 'Code Quality', color: '#1E5EA8' },
+  { key: 'testing', name: 'Testing', color: '#0F766E' },
 ];
 
 export default function RecruiterDashboard() {
@@ -137,7 +150,9 @@ export default function RecruiterDashboard() {
     return (
       <div className="page-container" style={{ maxWidth: '640px', padding: '4.5rem 1.5rem', textAlign: 'center' }}>
         <div className="card panel-pastel-peach" style={{ padding: '3.5rem 2rem', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
-          <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1.25rem' }}>🛡️</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <ShieldAlert size={54} color="#D93847" />
+          </div>
           <span className="badge badge-SECURITY" style={{ marginBottom: '1rem' }}>
             ACCESS RESTRICTED
           </span>
@@ -166,8 +181,8 @@ export default function RecruiterDashboard() {
       <div className="recruiter-hero-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem' }}>
-              ⚡ RECRUITER ASSESSMENT RADAR
+            <span className="badge badge-SECURITY" style={{ fontSize: '0.74rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <Zap size={12} /> RECRUITER ASSESSMENT RADAR
             </span>
             <span style={{ fontSize: '0.78rem', color: 'var(--accent-success)', fontWeight: 700 }}>
               ● VERIFIED DOCKER SANDBOX EVIDENCE
@@ -211,7 +226,9 @@ export default function RecruiterDashboard() {
       {/* 2. Filter Toolbar */}
       <div className="recruiter-filter-toolbar">
         <div className="recruiter-search-box">
-          <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>🔍</span>
+          <span style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+            <Search size={16} />
+          </span>
           <input
             type="text"
             className="recruiter-input"
@@ -266,16 +283,20 @@ export default function RecruiterDashboard() {
         </div>
       ) : error ? (
         <div className="card" style={{ padding: '3.5rem 2rem', textAlign: 'center', margin: '2rem 0', borderRadius: '24px' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>⚠️</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <AlertTriangle size={48} color="var(--accent-danger)" />
+          </div>
           <h2 style={{ fontSize: '1.3rem', color: 'var(--accent-danger)', marginBottom: '0.5rem', fontWeight: 800 }}>Failed to Load Candidates</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{error}</p>
-          <button type="button" className="btn btn-primary" onClick={fetchCandidates}>
-            ↻ Retry Request
+          <button type="button" className="btn btn-primary" onClick={fetchCandidates} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <RotateCcw size={14} /> Retry Request
           </button>
         </div>
       ) : candidates.length === 0 ? (
         <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
-          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📂</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <Users size={48} color="var(--text-muted)" />
+          </div>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.4rem', fontFamily: 'var(--font-display)' }}>No Candidates Found</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
             No evaluated candidates match your active filters. Try broadening your criteria.
@@ -290,7 +311,7 @@ export default function RecruiterDashboard() {
         <div className="card" style={{ padding: '1.75rem', borderRadius: '24px', boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <span style={{ fontSize: '1.15rem' }}>📊</span>
+              <BarChart3 size={18} color="var(--accent-primary)" />
               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, fontFamily: 'var(--font-display)' }}>
                 Candidate Assessments ({candidates.length})
               </h2>
@@ -449,9 +470,9 @@ export default function RecruiterDashboard() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={handleCloseDetail}
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
               >
-                ✕ Close
+                <X size={14} /> Close
               </button>
             </div>
 
@@ -509,8 +530,9 @@ export default function RecruiterDashboard() {
 
                 {/* Skill Dimensions */}
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)' }}>
-                    🎯 Skill Dimensions
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <BarChart3 size={18} color="var(--accent-primary)" />
+                    <span>Verified Competency Matrix</span>
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {SKILL_DIMENSIONS.map((dim) => {
@@ -520,8 +542,8 @@ export default function RecruiterDashboard() {
                       return (
                         <div key={dim.key} style={{ padding: '0.85rem 1rem', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                              <span>{dim.icon}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center' }}>{getSkillIcon(dim.key, 16, dim.color)}</span>
                               <strong style={{ fontSize: '0.88rem' }}>{dim.name}</strong>
                             </div>
                             {isMeas ? (
@@ -541,8 +563,8 @@ export default function RecruiterDashboard() {
 
                 {/* Challenge Evidence Timeline */}
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)' }}>
-                    ⚡ Challenge Evidence ({selectedCandidate.challenge_evidence?.length ?? 0})
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Zap size={15} color="var(--accent-primary)" /> Challenge Evidence ({selectedCandidate.challenge_evidence?.length ?? 0})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     {selectedCandidate.challenge_evidence?.map((ev, idx) => (
@@ -612,9 +634,9 @@ export default function RecruiterDashboard() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => setShowComparisonModal(false)}
-                style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
               >
-                ✕ Close
+                <X size={14} /> Close
               </button>
             </div>
 
@@ -676,8 +698,9 @@ export default function RecruiterDashboard() {
                     {SKILL_DIMENSIONS.map((dim) => (
                       <tr key={dim.key}>
                         <td>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span>{dim.icon}</span> {dim.name}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>{getSkillIcon(dim.key, 15, dim.color)}</span>
+                            <span>{dim.name}</span>
                           </span>
                         </td>
                         {comparisonDetails.map((c) => {

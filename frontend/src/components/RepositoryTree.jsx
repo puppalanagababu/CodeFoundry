@@ -1,4 +1,15 @@
 import React, { useState } from 'react';
+import {
+  Folder,
+  FolderOpen,
+  FileCode2,
+  FileText,
+  File,
+  Lock,
+  ChevronRight,
+  ChevronDown,
+  CheckCircle2,
+} from 'lucide-react';
 
 /**
  * Builds a nested tree structure from flat file path list.
@@ -58,20 +69,26 @@ function TreeNode({ name, node, activeFile, onSelectFile, level = 0 }) {
         onClick={() => onSelectFile(node.path)}
         title={node.path}
       >
-        <span style={{ fontSize: '0.9rem', opacity: isSelected ? 1 : 0.8 }}>
-          {node.path.endsWith('.py') ? '🐍' : node.path.endsWith('.md') ? '📝' : '📄'}
+        <span style={{ display: 'inline-flex', alignItems: 'center', opacity: isSelected ? 1 : 0.85 }}>
+          {node.path.endsWith('.py') ? (
+            <FileCode2 size={15} color={isSelected ? 'var(--accent-primary)' : '#3B82F6'} />
+          ) : node.path.endsWith('.md') ? (
+            <FileText size={15} color="#8B5CF6" />
+          ) : (
+            <File size={15} color="#64748B" />
+          )}
         </span>
         <span style={{ fontFamily: 'var(--font-mono)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isSelected ? 600 : 400 }}>
           {name}
         </span>
         {node.is_readonly && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }} title="Read-only file">
-            🔒
+          <span style={{ display: 'inline-flex', alignItems: 'center', color: '#EF4444' }} title="Read-only protected file">
+            <Lock size={12} />
           </span>
         )}
         {node.is_test && (
-          <span className="badge badge-SECURITY" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
-            test
+          <span className="badge badge-SECURITY" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+            <CheckCircle2 size={10} /> test
           </span>
         )}
       </div>
@@ -99,11 +116,11 @@ function TreeNode({ name, node, activeFile, onSelectFile, level = 0 }) {
         }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'inline-block', transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-          ▶
+        <span style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+          {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         </span>
-        <span style={{ fontSize: '0.9rem' }}>
-          {isOpen ? '📂' : '📁'}
+        <span style={{ display: 'inline-flex', alignItems: 'center', color: isOpen ? 'var(--accent-primary)' : '#64748B' }}>
+          {isOpen ? <FolderOpen size={15} /> : <Folder size={15} />}
         </span>
         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
           {name}/

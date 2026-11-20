@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getSubmissions } from '../api/submissions';
 import Loading from '../components/Loading';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
+import { Inbox, CheckCircle2, XCircle, Clock, AlertTriangle } from 'lucide-react';
 
 const STATUS_FILTERS = [
   { label: 'All Statuses', value: '' },
@@ -138,7 +139,9 @@ export default function SubmissionHistory() {
         </div>
       ) : submissions.length === 0 ? (
         <div className="card animate-scale-in" style={{ padding: '4rem 2rem', textAlign: 'center', borderRadius: '24px' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>📂</span>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <Inbox size={48} color="var(--text-muted)" />
+          </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.5rem' }}>
             No submissions recorded under the selected filter criteria.
           </p>

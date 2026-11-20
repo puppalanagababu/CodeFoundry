@@ -28,11 +28,11 @@
   --bg-elevated: #FFFFFF;
   --bg-glass: rgba(255, 255, 255, 0.88);
 
-  /* Primary Typography */
-  --text-primary: #25243A;
-  --text-secondary: #6B6A7A;
-  --text-muted: #8E8D9E;
-  --text-light: #B4B3C2;
+  /* Primary Typography (High-Contrast & WCAG 2.1 AA/AAA Compliant) */
+  --text-primary: #181726;
+  --text-secondary: #484759;
+  --text-muted: #616075;
+  --text-light: #858399;
   --text-inverse: #FFFFFF;
 
   /* Borders & Dividers */
@@ -49,84 +49,88 @@
   --accent-primary-border: rgba(109, 69, 197, 0.22);
 
   /* Success & Status */
-  --accent-success: #21885B;
-  --accent-success-hover: #196F4B;
-  --accent-success-light: #EDFAF2;
-  --accent-success-border: #B6EACD;
+  --accent-success: #047857;
+  --accent-success-hover: #065F46;
+  --accent-success-light: #ECFDF5;
+  --accent-success-border: #A7F3D0;
 
-  --accent-danger: #D93847;
-  --accent-danger-light: #FDF1F2;
-  --accent-danger-border: #F8C8CC;
+  --accent-danger: #DC2626;
+  --accent-danger-light: #FEF2F2;
+  --accent-danger-border: #FECACA;
 
-  --accent-warning: #C77A14;
-  --accent-warning-light: #FFF8EE;
-  --accent-warning-border: #FBE0B5;
+  --accent-warning: #D97706;
+  --accent-warning-light: #FFFBEB;
+  --accent-warning-border: #FDE68A;
 
   /* Pastel Color Swatches */
   /* 1. Lavender */
   --pastel-lavender: #E9DDFB;
   --pastel-lavender-light: #F6F1FE;
   --pastel-lavender-border: #D7C3F8;
-  --pastel-lavender-text: #5B34B0;
+  --pastel-lavender-text: #5B21B6;
 
   /* 2. Pastel Blue */
   --pastel-blue: #DCEBFF;
   --pastel-blue-light: #F0F6FF;
   --pastel-blue-border: #BCD9FF;
-  --pastel-blue-text: #1E5EA8;
+  --pastel-blue-text: #1E40AF;
 
   /* 3. Mint Green */
   --pastel-mint: #D8F5E5;
-  --pastel-mint-light: #EDFAF2;
-  --pastel-mint-border: #B6EACD;
-  --pastel-mint-text: #196F4B;
+  --pastel-mint-light: #ECFDF5;
+  --pastel-mint-border: #A7F3D0;
+  --pastel-mint-text: #065F46;
 
   /* 4. Peach */
   --pastel-peach: #FCE7D8;
   --pastel-peach-light: #FEF4ED;
   --pastel-peach-border: #F8CEB3;
-  --pastel-peach-text: #9E4A15;
+  --pastel-peach-text: #9A3412;
 
   /* 5. Soft Yellow / Sand */
   --pastel-yellow: #FEF3D6;
-  --pastel-yellow-light: #FFFBF0;
-  --pastel-yellow-border: #FCE5A4;
-  --pastel-yellow-text: #8C650A;
+  --pastel-yellow-light: #FFFBEB;
+  --pastel-yellow-border: #FDE68A;
+  --pastel-yellow-text: #92400E;
 
-  /* Challenge Category Tokens */
-  --badge-bug-fix: #D93847;
-  --badge-bug-fix-bg: #FDF1F2;
-  --badge-bug-fix-border: #F8C8CC;
+  /* Challenge Category & Competency Tokens */
+  --badge-bug-fix: #DC2626;
+  --badge-bug-fix-bg: #FEF2F2;
+  --badge-bug-fix-border: #FECACA;
 
-  --badge-api: #1E5EA8;
-  --badge-api-bg: #F0F6FF;
-  --badge-api-border: #BCD9FF;
+  --badge-api: #1D4ED8;
+  --badge-api-bg: #EFF6FF;
+  --badge-api-border: #BFDBFE;
 
-  --badge-security: #5B34B0;
-  --badge-security-bg: #F6F1FE;
-  --badge-security-border: #D7C3F8;
+  --badge-security: #6D28D9;
+  --badge-security-bg: #F5F3FF;
+  --badge-security-border: #DDD6FE;
 
-  --badge-performance: #196F4B;
-  --badge-performance-bg: #EDFAF2;
-  --badge-performance-border: #B6EACD;
+  --badge-performance: #047857;
+  --badge-performance-bg: #ECFDF5;
+  --badge-performance-border: #A7F3D0;
 
-  --badge-database: #9E4A15;
-  --badge-database-bg: #FEF4ED;
-  --badge-database-border: #F8CEB3;
+  --badge-code-quality: #D97706;
+  --badge-code-quality-bg: #FFFBEB;
+  --badge-code-quality-border: #FDE68A;
+
+  --badge-database: #9A3412;
+  --badge-database-bg: #FFF7ED;
+  --badge-database-border: #FED7AA;
 
   --badge-testing: #0E7490;
   --badge-testing-bg: #ECFEFF;
   --badge-testing-border: #BAE6FD;
 
-  /* Difficulty Badges */
-  --badge-beginner: #196F4B;
-  --badge-beginner-bg: #EDFAF2;
-  --badge-intermediate: #9E4A15;
-  --badge-intermediate-bg: #FEF4ED;
-  --badge-advanced: #C77A14;
-  --badge-advanced-bg: #FFF8EE;
-  --badge-expert: #D93847;
-  --badge-expert-bg: #FDF1F2;
+  /* Difficulty Badges (Clear Emerald -> Amber -> Orange -> Crimson Scale) */
+  --badge-beginner: #047857;
+  --badge-beginner-bg: #ECFDF5;
+  --badge-intermediate: #1D4ED8;
+  --badge-intermediate-bg: #EFF6FF;
+  --badge-advanced: #EA580C;
+  --badge-advanced-bg: #FFF7ED;
+  --badge-expert: #DC2626;
+  --badge-expert-bg: #FEF2F2;
 
   /* Geometry & Radii */
   --radius-xs: 6px;
@@ -399,6 +403,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .mobile-nav-toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -646,6 +652,12 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--badge-performance-border);
 }
 
+.badge-CODE_QUALITY {
+  background: var(--badge-code-quality-bg);
+  color: var(--badge-code-quality);
+  border: 1px solid var(--badge-code-quality-border);
+}
+
 .badge-DATABASE {
   background: var(--badge-database-bg);
   color: var(--badge-database);
@@ -661,25 +673,25 @@ h1, h2, h3, h4, h5, h6 {
 .badge-BEGINNER {
   background: var(--badge-beginner-bg);
   color: var(--badge-beginner);
-  border: 1px solid rgba(25, 111, 75, 0.25);
+  border: 1px solid var(--pastel-mint-border);
 }
 
 .badge-INTERMEDIATE {
   background: var(--badge-intermediate-bg);
   color: var(--badge-intermediate);
-  border: 1px solid rgba(158, 74, 21, 0.25);
+  border: 1px solid var(--pastel-blue-border);
 }
 
 .badge-ADVANCED {
   background: var(--badge-advanced-bg);
   color: var(--badge-advanced);
-  border: 1px solid rgba(199, 122, 20, 0.25);
+  border: 1px solid #FED7AA;
 }
 
 .badge-EXPERT {
   background: var(--badge-expert-bg);
   color: var(--badge-expert);
-  border: 1px solid rgba(217, 56, 71, 0.25);
+  border: 1px solid var(--accent-danger-border);
 }
 
 .badge-passed, .status-passed {
@@ -1226,7 +1238,7 @@ tbody tr:hover {
     gap: 0.75rem;
   }
   .mobile-nav-toggle {
-    display: block;
+    display: flex;
   }
   .hero-title {
     font-size: 2.3rem;

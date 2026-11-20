@@ -3,65 +3,84 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AnimatedCounter from '../components/motion/AnimatedCounter';
 import AnimatedProgress from '../components/motion/AnimatedProgress';
+import {
+  TechLogo,
+  getSkillIcon,
+  getIncidentIcon,
+  Bug,
+  Globe,
+  ShieldCheck,
+  Activity,
+  Layers,
+  FlaskConical,
+  Zap,
+  Folder,
+  FileCode2,
+  Terminal,
+  Award,
+  CheckCircle2,
+  BarChart3,
+  Cpu,
+} from '../components/RealisticIcons';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
 
   const techStack = [
-    { name: 'React', category: 'Frontend Architecture', icon: '⚛️', color: 'var(--pastel-blue-light)' },
-    { name: 'FastAPI', category: 'High-Performance Backend', icon: '⚡', color: 'var(--pastel-mint-light)' },
-    { name: 'PostgreSQL', category: 'Relational Database', icon: '🐘', color: 'var(--pastel-blue-light)' },
-    { name: 'Redis', category: 'In-Memory Cache & Queue', icon: '⚡', color: 'var(--pastel-peach-light)' },
-    { name: 'Celery', category: 'Async Task Pipeline', icon: '🌿', color: 'var(--pastel-mint-light)' },
-    { name: 'Docker', category: 'Isolated Sandbox Execution', icon: '🐳', color: 'var(--pastel-blue-light)' },
-    { name: 'Monaco Editor', category: 'VS Code Editor Core', icon: '💻', color: 'var(--pastel-lavender-light)' },
+    { name: 'React', category: 'Frontend Architecture', logo: 'react', accent: '#3B82F6', bg: '#EFF6FF', border: '#DBEAFE' },
+    { name: 'FastAPI', category: 'High-Performance Backend', logo: 'fastapi', accent: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+    { name: 'PostgreSQL', category: 'Relational Database', logo: 'postgresql', accent: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
+    { name: 'Redis', category: 'In-Memory Cache & Queue', logo: 'redis', accent: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
+    { name: 'Celery', category: 'Async Task Pipeline', logo: 'celery', accent: '#047857', bg: '#ECFDF5', border: '#A7F3D0' },
+    { name: 'Docker', category: 'Isolated Sandbox Execution', logo: 'docker', accent: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD' },
+    { name: 'Monaco Editor', category: 'VS Code Editor Core', logo: 'monaco', accent: '#6D28D9', bg: '#F5F3FF', border: '#DDD6FE' },
   ];
 
   const steps = [
     {
       num: '01',
-      title: 'Choose',
-      desc: 'Pick a real-world scenario from API debugging to security audit.',
+      title: 'Investigate',
+      desc: 'Inspect real-world multi-file repositories with production defect alerts.',
       panelClass: 'panel-pastel-lavender',
       accent: 'var(--pastel-lavender-text)',
     },
     {
       num: '02',
-      title: 'Inspect',
-      desc: 'Investigate complete multi-file repositories with actual architectures.',
+      title: 'Diagnose',
+      desc: 'Trace call graphs, test fixtures, and structural dependencies across modules.',
       panelClass: 'panel-pastel-blue',
       accent: 'var(--pastel-blue-text)',
     },
     {
       num: '03',
       title: 'Refactor',
-      desc: 'Fix bugs, patch security exploits, and optimize algorithms inside Monaco.',
+      desc: 'Fix logic faults, remediate security vulnerabilities, and optimize bottlenecks inside Monaco.',
       panelClass: 'panel-pastel-mint',
       accent: 'var(--pastel-mint-text)',
     },
     {
       num: '04',
       title: 'Evaluate',
-      desc: 'Docker sandboxes run authoritative tests against hidden workloads.',
+      desc: 'Isolated Docker sandboxes execute authoritative test suites against hidden workloads.',
       panelClass: 'panel-pastel-peach',
       accent: 'var(--pastel-peach-text)',
     },
     {
       num: '05',
-      title: 'Measure',
-      desc: 'Receive deterministic competency scores across 6 core skill dimensions.',
+      title: 'Benchmark',
+      desc: 'Receive deterministic competency telemetry across 6 verified engineering dimensions.',
       panelClass: 'panel-pastel-yellow',
       accent: 'var(--pastel-yellow-text)',
     },
   ];
 
   const demoSkills = [
-    { name: 'Problem Solving', score: 88, color: '#1E5EA8', icon: '⚡' },
-    { name: 'Debugging', score: 92, color: '#C77A14', icon: '🐛' },
-    { name: 'Security', score: 85, color: '#5B34B0', icon: '🛡️' },
-    { name: 'Performance', score: 90, color: '#196F4B', icon: '🚀' },
-    { name: 'Code Quality', score: 84, color: '#6B6A7A', icon: '📦' },
-    { name: 'Testing', score: 87, color: '#0E7490', icon: '🧪' },
+    { key: 'problem_solving', name: 'Problem Solving', score: 88, color: '#1D4ED8' },
+    { key: 'debugging', name: 'Debugging', score: 92, color: '#DC2626' },
+    { key: 'security', name: 'Security', score: 85, color: '#6D28D9' },
+    { key: 'performance', name: 'Performance', score: 90, color: '#047857' },
+    { key: 'code_quality', name: 'Code Quality', score: 84, color: '#D97706' },
+    { key: 'testing', name: 'Testing', score: 87, color: '#0E7490' },
   ];
 
   return (
@@ -107,14 +126,14 @@ export default function Home() {
 
             {/* Floating Trust Pills */}
             <div className="animate-fade-in-up stagger-4" style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
-              <span className="badge badge-API" style={{ padding: '0.35rem 0.85rem' }}>
-                ✓ Multi-File Repositories
+              <span className="badge badge-API" style={{ padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCircle2 size={13} /> Multi-File Repositories
               </span>
-              <span className="badge badge-SECURITY" style={{ padding: '0.35rem 0.85rem' }}>
-                ✓ Docker Sandboxes
+              <span className="badge badge-SECURITY" style={{ padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCircle2 size={13} /> Docker Sandboxes
               </span>
-              <span className="badge badge-PERFORMANCE" style={{ padding: '0.35rem 0.85rem' }}>
-                ✓ Deterministic Scoring
+              <span className="badge badge-PERFORMANCE" style={{ padding: '0.35rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCircle2 size={13} /> Deterministic Scoring
               </span>
             </div>
           </div>
@@ -155,14 +174,24 @@ export default function Home() {
                   <div style={{ fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Repository
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0' }}>📁 src/</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📁 models/</div>
-                  <div style={{ color: 'var(--pastel-lavender-text)', fontWeight: 700, padding: '0.2rem 0.5rem', background: 'var(--pastel-lavender)', borderRadius: '6px' }}>
-                    📄 report_gen.py
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Folder size={13} /> src/
                   </div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📄 queries.py</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0' }}>📁 tests/</div>
-                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem' }}>📄 test_perf.py</div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Folder size={13} /> models/
+                  </div>
+                  <div style={{ color: 'var(--pastel-lavender-text)', fontWeight: 700, padding: '0.2rem 0.5rem', background: 'var(--pastel-lavender)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FileCode2 size={13} /> report_gen.py
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FileCode2 size={13} /> queries.py
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Folder size={13} /> tests/
+                  </div>
+                  <div style={{ color: 'var(--text-secondary)', padding: '0.2rem 0 0.2rem 0.6rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FileCode2 size={13} /> test_perf.py
+                  </div>
                 </div>
 
                 {/* Editor Content Area */}
@@ -179,7 +208,7 @@ export default function Home() {
               {/* Evaluation Result Footer */}
               <div style={{ background: 'var(--pastel-mint-light)', borderTop: '1px solid var(--pastel-mint-border)', padding: '0.85rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <span style={{ color: 'var(--pastel-mint-text)', fontWeight: 800, fontSize: '1rem' }}>✓</span>
+                  <CheckCircle2 size={16} color="var(--pastel-mint-text)" />
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--pastel-mint-text)' }}>
                     Sandbox Evaluator: 4/4 Tests Passed (Execution: 42ms · Memory: 28MB)
                   </span>
@@ -269,13 +298,13 @@ export default function Home() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem', marginBottom: '1.85rem' }}>
                 {[
-                  { title: 'Bug Fixing', icon: '🐛', desc: 'Root cause isolation', bg: 'var(--pastel-peach-light)', border: 'var(--pastel-peach-border)' },
-                  { title: 'REST APIs', icon: '⚡', desc: 'Serialization & contracts', bg: 'var(--pastel-blue-light)', border: 'var(--pastel-blue-border)' },
-                  { title: 'Security', icon: '🛡️', desc: 'Access control & RBAC', bg: 'var(--pastel-lavender-light)', border: 'var(--pastel-lavender-border)' },
-                  { title: 'Performance', icon: '🚀', desc: 'Algorithmic optimization', bg: 'var(--pastel-mint-light)', border: 'var(--pastel-mint-border)' },
+                  { title: 'Bug Fixing', icon: <Bug size={20} color="#DC2626" />, desc: 'Root cause isolation & patch', bg: 'var(--badge-bug-fix-bg)', border: 'var(--badge-bug-fix-border)' },
+                  { title: 'REST APIs', icon: <Globe size={20} color="#1D4ED8" />, desc: 'Serialization & HTTP schemas', bg: 'var(--badge-api-bg)', border: 'var(--badge-api-border)' },
+                  { title: 'Security', icon: <ShieldCheck size={20} color="#6D28D9" />, desc: 'Access control & RBAC policies', bg: 'var(--badge-security-bg)', border: 'var(--badge-security-border)' },
+                  { title: 'Performance', icon: <Activity size={20} color="#047857" />, desc: 'Algorithmic O(N) optimization', bg: 'var(--badge-performance-bg)', border: 'var(--badge-performance-border)' },
                 ].map((item) => (
                   <div key={item.title} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: item.bg, border: `1px solid ${item.border}`, padding: '0.85rem 1rem', borderRadius: '14px' }}>
-                    <span style={{ fontSize: '1.35rem' }}>{item.icon}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>{item.icon}</span>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)' }}>{item.title}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.desc}</div>
@@ -317,10 +346,14 @@ export default function Home() {
                 </p>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-                    <span>🐍 Python / FastAPI</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <Terminal size={14} color="#3B82F6" /> Python / FastAPI
+                    </span>
                     <span>•</span>
-                    <span>🏆 300 Points</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <Award size={14} color="#C77A14" /> 300 Points
+                    </span>
                   </div>
                   <Link to="/challenges" className="btn-saas btn-saas-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>
                     <span>Try Challenge</span>
@@ -343,7 +376,7 @@ export default function Home() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                   <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#ffffff', color: 'var(--pastel-mint-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1rem', boxShadow: 'var(--shadow-sm)' }}>
-                    🛡️
+                    <ShieldCheck size={22} color="var(--pastel-mint-text)" />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Exploit Vector Neutralized</div>
@@ -404,8 +437,8 @@ export default function Home() {
               {demoSkills.map((sk) => (
                 <div key={sk.name} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span>{sk.icon}</span> {sk.name}
+                    <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {getSkillIcon(sk.key, 16, sk.color)} {sk.name}
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: sk.color }}>
                       {sk.score}%
@@ -434,7 +467,7 @@ export default function Home() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                  <span style={{ fontSize: '1.2rem' }}>📊</span>
+                  <BarChart3 size={20} color="var(--accent-primary)" />
                   <span style={{ fontWeight: 800, fontSize: '0.98rem' }}>Candidate Evaluation Matrix</span>
                 </div>
                 <span className="badge badge-passed">Verified Data</span>
@@ -497,7 +530,7 @@ export default function Home() {
                   'Direct side-by-side candidate comparison matrix',
                 ].map((text) => (
                   <li key={text} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.94rem', color: 'var(--text-secondary)' }}>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>✓</span>
+                    <CheckCircle2 size={16} color="var(--accent-primary)" />
                     <span>{text}</span>
                   </li>
                 ))}
@@ -531,20 +564,34 @@ export default function Home() {
                 key={tech.name}
                 className="card"
                 style={{
-                  padding: '1.25rem 1rem',
+                  padding: '1.35rem 1rem',
                   borderRadius: '16px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '0.45rem',
+                  gap: '0.55rem',
                   textAlign: 'center',
                   boxShadow: 'var(--shadow-sm)',
-                  background: tech.color,
+                  background: '#ffffff',
+                  border: `1px solid ${tech.border}`,
+                  transition: 'all var(--transition-spring)',
                 }}
               >
-                <span style={{ fontSize: '1.75rem' }}>{tech.icon}</span>
-                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>{tech.name}</span>
-                <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{tech.category}</span>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: tech.bg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <TechLogo name={tech.logo} size={28} />
+                </div>
+                <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--text-primary)' }}>{tech.name}</span>
+                <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{tech.category}</span>
               </div>
             ))}
           </div>
